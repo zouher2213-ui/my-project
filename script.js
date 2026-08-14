@@ -23,13 +23,29 @@
     ar: {
       appTitle: 'مستودع الإنتاج',
       appSubtitle: 'نظام إدارة المخازن واللوجستيات المتقدم',
-      loginTitle: 'تسجيل الدخول للنظام',
-      loginSubtitle: 'أدخل بيانات الاعتماد للوصول إلى العمليات المخزنية',
+      loginTitle: 'مستودع الإنتاج الذكي',
+      loginSubtitle: 'منظومة إدارة وحركات المخازن واللوجستيات المتقدمة',
+      loginTab: 'تسجيل الدخول',
+      signupTab: 'إنشاء حساب جديد',
+      emailLabel: 'البريد الإلكتروني',
+      passwordLabel: 'كلمة المرور',
+      confirmPasswordLabel: 'تأكيد كلمة المرور',
+      pwdMinHint: '💡 يجب ألا تقل كلمة المرور عن 6 خانات.',
+      rememberMe: 'تذكر بياناتي',
+      forgotPwd: 'نسيت كلمة المرور؟',
+      signInBtn: 'تسجيل الدخول للنظام',
+      createAccountBtn: 'إنشاء الحساب والمتابعة',
+      demoLogin: 'دخول تجريبي سريع (Admin)',
+      signupNotice: 'ℹ️ ملاحظة: بعد إنشاء الحساب بنجاح، سيتم توجيهك مباشرة لشاشة تسجيل الدخول لإدخال بياناتك والمتابعة.',
+      cloudStatus: 'السحابة متصلة ونشطة (Firebase V10)',
+      featureSync: 'مزامنة سحابية فورية',
+      featureSecure: 'مصادقة آمنة ومشفرة',
+      featureMaterials: 'رخام • بورسلان • خشب',
+      fullAccess: 'كامل الصلاحيات (كل الأقسام)',
+      unrestrictedAccess: 'جميع الأقسام والعمليات المخزنية مفتوحة ومتاحة لك بالكامل',
       username: 'اسم المستخدم',
       password: 'كلمة المرور',
-      signInBtn: 'تسجيل الدخول',
       logoutBtn: 'تسجيل الخروج',
-      demoLogin: 'دخول تجريبي سريع',
       backToHud: '← العودة للوحة الرئيسية',
       backToPorcelain: '← العودة لحركة البورسلان',
       backToMarble: '← العودة لحركة الرخام',
@@ -248,13 +264,29 @@
     en: {
       appTitle: 'AL-ENTEJ WMS',
       appSubtitle: 'Global Warehouse Logistics Hub',
-      loginTitle: 'Sign In to Warehouse System',
-      loginSubtitle: 'Enter your credentials to access warehouse operations',
+      loginTitle: 'Smart Production Warehouse',
+      loginSubtitle: 'Advanced Warehouse & Logistics Operations Platform',
+      loginTab: 'Sign In',
+      signupTab: 'Create New Account',
+      emailLabel: 'Email Address',
+      passwordLabel: 'Password',
+      confirmPasswordLabel: 'Confirm Password',
+      pwdMinHint: '💡 Password must be at least 6 characters.',
+      rememberMe: 'Remember Me',
+      forgotPwd: 'Forgot Password?',
+      signInBtn: 'Sign In to System',
+      createAccountBtn: 'Create Account & Continue',
+      demoLogin: 'Quick Demo Sign In (Admin)',
+      signupNotice: 'ℹ️ Note: After account creation, you will be redirected to sign in to verify credentials.',
+      cloudStatus: 'Cloud Live & Active (Firebase V10)',
+      featureSync: 'Realtime Cloud Sync',
+      featureSecure: 'Encrypted Secure Auth',
+      featureMaterials: 'Marble • Porcelain • Wood',
+      fullAccess: 'Full Access (All Modules)',
+      unrestrictedAccess: 'All warehouse sections & operations are fully unlocked for you',
       username: 'Username',
       password: 'Password',
-      signInBtn: 'Sign In to Hub',
       logoutBtn: 'Logout',
-      demoLogin: 'Quick Demo Sign In',
       backToHud: '← Back to Main Hub',
       backToPorcelain: '← Back to Porcelain Movement',
       backToMarble: '← Back to Marble Movement',
@@ -473,13 +505,27 @@
     bn: {
       appTitle: 'আল-ইনতেজ ডব্লিউএমএস',
       appSubtitle: 'ওয়্যারহাউস ম্যানেজমেন্ট এবং লজিস্টিকস',
-      loginTitle: 'সিস্টেমে লগইন করুন',
-      loginSubtitle: 'ওয়্যারহাউস পরিচালনা করতে আপনার তথ্য প্রবেশ করান',
+      loginTitle: 'স্মার্ট প্রোডাকশন ওয়্যারহাউস',
+      loginSubtitle: 'উন্নত ওয়্যারহাউস এবং লজিস্টিকস প্ল্যাটফর্ম',
+      loginTab: 'লগইন করুন',
+      signupTab: 'নতুন একাউন্ট খুলুন',
+      emailLabel: 'ইমেইল অ্যাড্রেস',
+      passwordLabel: 'পাসওয়ার্ড',
+      confirmPasswordLabel: 'পাসওয়ার্ড নিশ্চিত করুন',
+      pwdMinHint: '💡 পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে।',
+      rememberMe: 'আমাকে মনে রাখুন',
+      forgotPwd: 'পাসওয়ার্ড ভুলে গেছেন?',
+      signInBtn: 'সিস্টেমে লগইন করুন',
+      createAccountBtn: 'একাউন্ট তৈরি করুন এবং এগিয়ে যান',
+      demoLogin: 'দ্রুত ডেমো লগইন (Admin)',
+      signupNotice: 'ℹ️ বিজ্ঞপ্তি: অ্যাকাউন্ট তৈরির পরে, আপনি লগইন করার জন্য পুনর্নির্দেশিত হবেন।',
+      cloudStatus: 'ক্লাউড সক্রিয় (Firebase V10)',
+      featureSync: 'রিয়েলটাইম সিঙ্ক',
+      featureSecure: 'সুরক্ষিত লগইন',
+      featureMaterials: 'মার্বেল • চীনামাটি • কাঠ',
       username: 'ব্যবহারকারীর নাম',
       password: 'পাসওয়ার্ড',
-      signInBtn: 'লগইন করুন',
       logoutBtn: 'লগআউট',
-      demoLogin: 'দ্রুত ডেমো লগইন',
       backToHud: '← মূল মেনুতে ফিরে যান',
       backToPorcelain: '← চীনামাটির বিভাগে ফিরে যান',
       backToMarble: '← মার্বেল বিভাগে ফিরে যান',
@@ -1717,6 +1763,7 @@
       const settings = WMS_DB.getSettings();
       this.setLanguage(settings.lang || 'ar');
       this.setTheme(settings.theme || 'dark');
+      this.updateUserHeader();
 
       if (checkAuth()) {
         const hash = window.location.hash ? window.location.hash.replace('#', '') : 'hud';
@@ -1789,7 +1836,16 @@
       renderReserveChips();
       renderWoodPermitChips();
       renderMarblePermitChips();
+      this.updateUserHeader();
       renderCurrentView();
+    },
+
+    updateUserHeader() {
+      const user = WMS_DB ? WMS_DB.getAuthUser() : null;
+      const emailEl = document.getElementById('header-user-email');
+      if (emailEl && user) {
+        emailEl.textContent = user.email || user.username || 'admin@warehouse.local';
+      }
     },
 
     setTheme(theme) {
@@ -2395,6 +2451,7 @@
   }
 
   window.WMS_APP = WMS_APP;
+  window.showToast = showToast;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => WMS_APP.init());

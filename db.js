@@ -7,7 +7,8 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { 
   getFirestore, 
@@ -337,7 +338,14 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
     // Auth
     login(username, password) {
       if ((username === 'admin' && password === '123456') || username === 'demo') {
-        const user = { username: username || 'admin', role: 'Storekeeper Manager', name: 'أمين المستودع الرئيسي' };
+        const user = { 
+          username: username || 'admin', 
+          email: username === 'admin' ? 'admin@warehouse.local' : `${username}@warehouse.local`,
+          role: 'Super Admin', 
+          name: 'المدير العام للمستودع (كامل الصلاحيات)',
+          fullAccess: true,
+          permissions: ['*']
+        };
         setStored(DB_KEYS.AUTH_USER, user);
         return user;
       }
@@ -1000,40 +1008,190 @@ try {
 const auth = getAuth(app);
 const firestoreDb = getFirestore(app);
 
-// Authentication: Sign Up
+// State flags for auth mode and signup redirect flow
+let isSigningUp = false;
+let currentAuthMode = 'login'; // 'login' or 'signup'
+
+// Helper: Show custom HUD alert inside the Login Card
+function showAuthHUDMessage(message, type = 'info') {
+  const alertBox = document.getElementById("auth-hud-alert");
+  if (!alertBox) {
+    if (window.showToast) window.showToast(message, type === 'danger' ? 'danger' : 'info');
+    return;
+  }
+
+  let icon = 'ℹ️';
+  if (type === 'success') icon = '✅';
+  if (type === 'danger') icon = '⚠️';
+  if (type === 'warning') icon = '⚡';
+
+  alertBox.className = `auth-hud-alert alert-${type}`;
+  alertBox.innerHTML = `
+    <div class="auth-hud-alert-inner">
+      <span class="auth-hud-alert-icon">${icon}</span>
+      <span class="auth-hud-alert-text">${message.replace(/\n/g, '<br>')}</span>
+      <button type="button" class="auth-hud-alert-close" onclick="this.parentElement.parentElement.style.display='none'">✕</button>
+    </div>
+  `;
+  alertBox.style.display = 'block';
+  alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Helper: Switch Auth Mode (Login / Sign Up)
+function switchAuthMode(mode) {
+  currentAuthMode = mode === 'signup' ? 'signup' : 'login';
+  const loginTab = document.getElementById('auth-tab-login');
+  const signupTab = document.getElementById('auth-tab-signup');
+  const confirmPwdGroup = document.getElementById('auth-confirm-password-group');
+  const loginOptions = document.getElementById('auth-login-options');
+  const btnLogin = document.getElementById('btn-login');
+  const btnDemoLogin = document.getElementById('btn-demo-login');
+  const btnSignup = document.getElementById('btn-signup');
+  const signupNote = document.getElementById('auth-signup-note');
+  const alertBox = document.getElementById('auth-hud-alert');
+
+  if (alertBox) alertBox.style.display = 'none';
+
+  if (currentAuthMode === 'signup') {
+    if (loginTab) loginTab.classList.remove('active');
+    if (signupTab) signupTab.classList.add('active');
+    if (confirmPwdGroup) confirmPwdGroup.style.display = 'block';
+    if (loginOptions) loginOptions.style.display = 'none';
+    if (btnLogin) btnLogin.style.display = 'none';
+    if (btnDemoLogin) btnDemoLogin.style.display = 'none';
+    if (btnSignup) btnSignup.style.display = 'flex';
+    if (signupNote) signupNote.style.display = 'block';
+  } else {
+    if (signupTab) signupTab.classList.remove('active');
+    if (loginTab) loginTab.classList.add('active');
+    if (confirmPwdGroup) confirmPwdGroup.style.display = 'none';
+    if (loginOptions) loginOptions.style.display = 'flex';
+    if (btnLogin) btnLogin.style.display = 'flex';
+    if (btnDemoLogin) btnDemoLogin.style.display = 'flex';
+    if (btnSignup) btnSignup.style.display = 'none';
+    if (signupNote) signupNote.style.display = 'none';
+  }
+}
+
+// Helper: Toggle Password Visibility (Eye icon)
+function togglePasswordVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🔒';
+    btn.title = 'إخفاء كلمة المرور';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁';
+    btn.title = 'إظهار كلمة المرور';
+  }
+}
+
+// Helper: Loading Button State
+function setAuthLoading(isLoading, text = "") {
+  const btnLogin = document.getElementById("btn-login");
+  const btnSignup = document.getElementById("btn-signup");
+  const activeBtn = (btnLogin && btnLogin.style.display !== "none") ? btnLogin : btnSignup;
+
+  if (activeBtn) {
+    if (isLoading) {
+      activeBtn.disabled = true;
+      if (!activeBtn.dataset.originalHtml) {
+        activeBtn.dataset.originalHtml = activeBtn.innerHTML;
+      }
+      activeBtn.innerHTML = `<span class="auth-spinner"></span> <span>${text || 'جاري المعالجة...'}</span>`;
+    } else {
+      activeBtn.disabled = false;
+      if (activeBtn.dataset.originalHtml) {
+        activeBtn.innerHTML = activeBtn.dataset.originalHtml;
+      }
+    }
+  }
+}
+
+// Authentication: Sign Up (Create Account -> Do NOT auto login -> Redirect to Sign In)
 async function handleSignUp() {
   const emailInput = document.getElementById("auth-email");
   const passwordInput = document.getElementById("auth-password");
+  const confirmPasswordInput = document.getElementById("auth-password-confirm");
 
   const email = emailInput ? emailInput.value.trim() : "";
   const password = passwordInput ? passwordInput.value : "";
+  const confirmPassword = confirmPasswordInput ? confirmPasswordInput.value : "";
 
   if (!email || !password) {
-    alert("يرجى إدخال البريد الإلكتروني وكلمة المرور!");
+    showAuthHUDMessage("يرجى إدخال البريد الإلكتروني وكلمة المرور للمتابعة!", "warning");
     return;
   }
 
   if (password.length < 6) {
-    alert("تنبيه: يجب أن تتكون كلمة المرور من 6 خانات على الأقل (شروط Firebase).");
+    showAuthHUDMessage("تنبيه: يجب أن تتكون كلمة المرور من 6 خانات على الأقل (شروط Firebase).", "warning");
+    if (passwordInput) passwordInput.focus();
+    return;
+  }
+
+  if (confirmPasswordInput && password !== confirmPassword) {
+    showAuthHUDMessage("كلمتا المرور غير متطابقتين! يرجى التأكد من كتابة كلمة المرور وتأكيدها بدقة.", "danger");
+    if (confirmPasswordInput) confirmPasswordInput.focus();
     return;
   }
 
   try {
+    isSigningUp = true;
+    setAuthLoading(true, "جاري إنشاء الحساب الجديد...");
+
+    // Create user in Firebase
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    alert(`تم إنشاء الحساب بنجاح!\nالبريد: ${user.email}`);
-    if (passwordInput) passwordInput.value = "";
-  } catch (error) {
-    console.error("Sign Up Error:", error);
-    if (error.code === 'auth/operation-not-allowed') {
-      alert("تنبيه مهم: يرجى تفعيل طريقة الدخول 'Email/Password' من لوحة تحكم Firebase:\nFirebase Console -> Authentication -> Sign-in method -> Email/Password -> Enable.");
-    } else if (error.code === 'auth/email-already-in-use') {
-      alert("هذا البريد الإلكتروني مسجل بالفعل! اضغط على زر 'Log In' لتسجيل الدخول به.");
-    } else if (error.code === 'auth/invalid-email') {
-      alert("صيغة البريد الإلكتروني غير صحيحة.");
-    } else {
-      alert(`فشل إنشاء الحساب: ${error.message} (${error.code || ''})`);
+    const registeredEmail = user ? user.email : email;
+
+    // IMPORTANT: Sign out immediately so user is NOT logged in automatically
+    await signOut(auth);
+    isSigningUp = false;
+
+    // Reset local database storage user state
+    if (window.WMS_DB) {
+      window.WMS_DB.setStored("wms_auth_user_v6", null);
     }
+
+    // Switch back to Login Tab view
+    switchAuthMode('login');
+
+    // Fill the registered email, clear passwords, and focus password input
+    if (emailInput) emailInput.value = registeredEmail;
+    if (passwordInput) {
+      passwordInput.value = "";
+      passwordInput.focus();
+    }
+    if (confirmPasswordInput) confirmPasswordInput.value = "";
+
+    // Show prominent success notification requesting explicit login
+    const successMsg = `تم إنشاء الحساب بنجاح (${registeredEmail})! 🎉\nيرجى إدخال كلمة المرور الآن لتسجيل الدخول والمتابعة.`;
+    showAuthHUDMessage(successMsg, "success");
+
+    if (window.showToast) {
+      window.showToast("تم إنشاء الحساب بنجاح! يرجى تسجيل الدخول.", "success");
+    }
+  } catch (error) {
+    isSigningUp = false;
+    console.error("Sign Up Error:", error);
+    let msg = error.message;
+    if (error.code === 'auth/operation-not-allowed') {
+      msg = "تنبيه مهم: يرجى تفعيل طريقة الدخول 'Email/Password' من لوحة تحكم Firebase:\nFirebase Console -> Authentication -> Sign-in method -> Email/Password -> Enable.";
+    } else if (error.code === 'auth/email-already-in-use') {
+      msg = "هذا البريد الإلكتروني مسجل بالفعل! اضغط على تبويب 'تسجيل الدخول' وسجل دخولك مباشرة.";
+    } else if (error.code === 'auth/invalid-email') {
+      msg = "صيغة البريد الإلكتروني المدخل غير صحيحة.";
+    } else if (error.code === 'auth/weak-password') {
+      msg = "كلمة المرور ضعيفة، يرجى اختيار كلمة مرور أكثر أماناً.";
+    } else {
+      msg = `فشل إنشاء الحساب: ${error.message} (${error.code || ''})`;
+    }
+    showAuthHUDMessage(msg, "danger");
+    if (window.showToast) window.showToast(msg, "danger");
+  } finally {
+    setAuthLoading(false);
   }
 }
 
@@ -1046,34 +1204,103 @@ async function handleLogIn() {
   const password = passwordInput ? passwordInput.value : "";
 
   if (!email || !password) {
-    alert("يرجى إدخال البريد الإلكتروني وكلمة المرور!");
+    showAuthHUDMessage("يرجى إدخال البريد الإلكتروني وكلمة المرور!", "warning");
     return;
   }
 
   try {
+    setAuthLoading(true, "جاري التحقق وتسجيل الدخول...");
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    alert(`تم تسجيل الدخول بنجاح!\nمرحباً: ${user.email}`);
+    
     if (passwordInput) passwordInput.value = "";
+
+    if (window.showToast) {
+      window.showToast(`تم تسجيل الدخول بنجاح! مرحباً ${user.email}`, "success");
+    }
   } catch (error) {
     console.error("Log In Error:", error);
+    let msg = error.message;
     if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-      alert("بيانات الدخول غير صحيحة أو الحساب غير موجود. إذا كنت مستخدماً جديداً، اضغط على زر 'Sign Up' أولاً لإنشاء الحساب.");
+      msg = "بيانات الدخول غير صحيحة أو الحساب غير موجود. إذا كنت مستخدماً جديداً، اضغط على تبويب 'إنشاء حساب جديد' أولاً.";
     } else if (error.code === 'auth/operation-not-allowed') {
-      alert("تنبيه مهم: يرجى تفعيل 'Email/Password' من لوحة Firebase Console -> Authentication -> Sign-in method.");
+      msg = "تنبيه مهم: يرجى تفعيل 'Email/Password' من لوحة Firebase Console -> Authentication -> Sign-in method.";
+    } else if (error.code === 'auth/invalid-email') {
+      msg = "صيغة البريد الإلكتروني غير صحيحة.";
+    } else if (error.code === 'auth/too-many-requests') {
+      msg = "تم حظر المحاولات مؤقتاً بسبب تكرار المحاولات الخاطئة. يرجى الانتظار قليلاً ثم المحاولة مجدداً.";
     } else {
-      alert(`فشل تسجيل الدخول: ${error.message} (${error.code || ''})`);
+      msg = `فشل تسجيل الدخول: ${error.message} (${error.code || ''})`;
     }
+    showAuthHUDMessage(msg, "danger");
+    if (window.showToast) window.showToast(msg, "danger");
+  } finally {
+    setAuthLoading(false);
+  }
+}
+
+// Quick Demo Login (Admin Demo)
+function handleQuickDemoLogin() {
+  if (window.WMS_DB) {
+    window.WMS_DB.login('admin', '123456');
+    const authSection = document.getElementById("auth-section");
+    const appSection = document.getElementById("app-section");
+    if (authSection) authSection.style.display = "none";
+    if (appSection) appSection.style.display = "block";
+    if (window.WMS_APP) {
+      window.WMS_APP.navigate('hud');
+      if (window.showToast) window.showToast('تم تسجيل الدخول التجريبي السريع بنجاح!', 'success');
+    }
+  }
+}
+
+// Forgot Password (Send Reset Email)
+async function handleForgotPassword() {
+  const emailInput = document.getElementById("auth-email");
+  const email = emailInput ? emailInput.value.trim() : "";
+
+  if (!email) {
+    showAuthHUDMessage("يرجى كتابة بريدك الإلكتروني أولاً في خانة البريد، ثم الضغط على 'نسيت كلمة المرور' لإرسال رابط الاستعادة.", "warning");
+    if (emailInput) emailInput.focus();
+    return;
+  }
+
+  try {
+    setAuthLoading(true, "جاري إرسال رابط استعادة كلمة المرور...");
+    await sendPasswordResetEmail(auth, email);
+    showAuthHUDMessage(`تم إرسال رابط إعادة تعيين كلمة المرور بنجاح إلى: ${email}\nيرجى تفقد صندوق الوارد ومجلد الرسائل غير المرغوب فيها (Spam).`, "success");
+    if (window.showToast) window.showToast("تم إرسال رابط استعادة كلمة المرور لبريدك.", "success");
+  } catch (error) {
+    console.error("Password reset error:", error);
+    let msg = error.message;
+    if (error.code === 'auth/user-not-found') {
+      msg = "هذا البريد الإلكتروني غير مسجل في النظام. يرجى إنشاء حساب جديد أولاً.";
+    } else if (error.code === 'auth/invalid-email') {
+      msg = "صيغة البريد الإلكتروني غير صحيحة.";
+    } else {
+      msg = `تعذر إرسال الرابط: ${error.message}`;
+    }
+    showAuthHUDMessage(msg, "danger");
+  } finally {
+    setAuthLoading(false);
   }
 }
 
 // Authentication: Log Out
 async function handleLogOut() {
   try {
+    if (window.WMS_DB) {
+      window.WMS_DB.logout();
+    }
     await signOut(auth);
-    alert("You have been logged out.");
+    if (window.showToast) {
+      window.showToast("تم تسجيل الخروج بنجاح.", "info");
+    }
   } catch (error) {
-    alert(`Logout Error: ${error.message}`);
+    console.error("Logout Error:", error);
+    if (window.showToast) {
+      window.showToast(`خطأ في تسجيل الخروج: ${error.message}`, "danger");
+    }
   }
 }
 
@@ -1135,6 +1362,11 @@ function initRealtimeMessagesListener() {
 // Controls visibility of auth-section and app-section & realtime listener
 // ============================================================================
 onAuthStateChanged(auth, (user) => {
+  // If user is undergoing registration flow, ignore auto login navigation
+  if (isSigningUp) {
+    return;
+  }
+
   const authSection = document.getElementById("auth-section");
   const appSection = document.getElementById("app-section");
 
@@ -1144,19 +1376,38 @@ onAuthStateChanged(auth, (user) => {
     if (appSection) appSection.style.display = "block";
 
     if (window.WMS_DB) {
-      window.WMS_DB.setStored("wms_auth_user_v6", { username: user.email, email: user.email });
+      const authUser = { 
+        username: user.email, 
+        email: user.email,
+        name: user.displayName || user.email.split('@')[0],
+        role: 'Super Admin',
+        fullAccess: true,
+        permissions: ['*']
+      };
+      window.WMS_DB.setStored("wms_auth_user_v6", authUser);
+    }
+
+    if (window.WMS_APP && typeof window.WMS_APP.updateUserHeader === 'function') {
+      window.WMS_APP.updateUserHeader();
     }
 
     if (!unsubscribeRealtime) {
       unsubscribeRealtime = initRealtimeMessagesListener();
     }
   } else {
-    // User is logged out: Show auth-section, hide app-section, stop listener
-    if (authSection) authSection.style.display = "flex";
-    if (appSection) appSection.style.display = "none";
+    // Check if WMS_DB has a local demo session
+    const localUser = window.WMS_DB ? window.WMS_DB.getAuthUser() : null;
+    if (localUser && (localUser.username === 'admin' || localUser.username === 'demo')) {
+      if (authSection) authSection.style.display = "none";
+      if (appSection) appSection.style.display = "block";
+    } else {
+      // User is logged out: Show auth-section, hide app-section, stop listener
+      if (authSection) authSection.style.display = "flex";
+      if (appSection) appSection.style.display = "none";
 
-    if (window.WMS_DB) {
-      window.WMS_DB.setStored("wms_auth_user_v6", null);
+      if (window.WMS_DB) {
+        window.WMS_DB.setStored("wms_auth_user_v6", null);
+      }
     }
 
     if (unsubscribeRealtime) {
@@ -1170,6 +1421,11 @@ onAuthStateChanged(auth, (user) => {
 window.handleSignUp = handleSignUp;
 window.handleLogIn = handleLogIn;
 window.handleLogOut = handleLogOut;
+window.handleQuickDemoLogin = handleQuickDemoLogin;
+window.handleForgotPassword = handleForgotPassword;
+window.switchAuthMode = switchAuthMode;
+window.togglePasswordVisibility = togglePasswordVisibility;
+window.showAuthHUDMessage = showAuthHUDMessage;
 window.handleSendMessage = handleSendMessage;
 
 // Attach Event Listeners immediately or on DOM ready
@@ -1178,11 +1434,28 @@ function attachFirebaseEvents() {
   const btnLogIn = document.getElementById("btn-login");
   const btnLogOut = document.getElementById("btn-logout");
   const btnSendMsg = document.getElementById("btn-send-msg");
+  const btnDemoLogin = document.getElementById("btn-demo-login");
 
   if (btnSignUp) btnSignUp.onclick = handleSignUp;
   if (btnLogIn) btnLogIn.onclick = handleLogIn;
   if (btnLogOut) btnLogOut.onclick = handleLogOut;
   if (btnSendMsg) btnSendMsg.onclick = handleSendMessage;
+  if (btnDemoLogin) btnDemoLogin.onclick = handleQuickDemoLogin;
+
+  // Keyboard shortcut: Press Enter to submit active form action
+  const authInputs = document.querySelectorAll("#auth-email, #auth-password, #auth-password-confirm");
+  authInputs.forEach(input => {
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (currentAuthMode === "signup") {
+          handleSignUp();
+        } else {
+          handleLogIn();
+        }
+      }
+    });
+  });
 }
 
 if (document.readyState === "loading") {

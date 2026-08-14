@@ -18,34 +18,169 @@
   <!-- ====================================================================== -->
   <!-- 1. شاشة تسجيل الدخول وإنشاء الحساب (Firebase Authentication) -->
   <!-- ====================================================================== -->
+  <!-- ====================================================================== -->
+  <!-- 1. شاشة تسجيل الدخول وإنشاء الحساب (Firebase Authentication HUD) -->
+  <!-- ====================================================================== -->
   <div id="auth-section" class="auth-wrapper">
-    <div class="auth-card">
-      <div class="auth-logo-box">
-        <img src="logo.png" alt="شعار"
-          style="width: 100%; height: 100%; object-fit: contain; border-radius: var(--radius-lg);"
-          onerror="this.outerHTML='🔐'">
-      </div>
-      <h2 style="margin-bottom:0.35rem;">تسجيل الدخول / إنشاء حساب</h2>
-      <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1.25rem;">Firebase V10 Authentication System</p>
+    <!-- خلفيات وإضاءات النيون الخلفية -->
+    <div class="auth-backdrop-glow glow-1"></div>
+    <div class="auth-backdrop-glow glow-2"></div>
+    <div class="auth-backdrop-glow glow-3"></div>
 
-      <form class="auth-form" onsubmit="event.preventDefault();">
-        <div class="form-group">
-          <label>البريد الإلكتروني (Email)</label>
-          <input type="email" id="auth-email" required placeholder="user@example.com" class="form-input">
+    <!-- الشريط العلوي لشاشة تسجيل الدخول -->
+    <div class="auth-top-bar">
+      <div class="auth-cloud-status" id="auth-cloud-badge">
+        <span class="pulse-dot"></span>
+        <span data-i18n="cloudStatus">السحابة متصلة ونشطة (Firebase V10)</span>
+      </div>
+
+      <div class="auth-top-controls">
+        <!-- محول اللغات الثلاثي -->
+        <div class="lang-selector auth-lang-selector">
+          <button class="lang-btn active" data-lang="ar" onclick="WMS_APP.setLanguage('ar')">عربي</button>
+          <button class="lang-btn" data-lang="en" onclick="WMS_APP.setLanguage('en')">EN</button>
+          <button class="lang-btn" data-lang="bn" onclick="WMS_APP.setLanguage('bn')">বাংলা</button>
         </div>
-        <div class="form-group">
-          <label>كلمة المرور (Password)</label>
-          <input type="password" id="auth-password" required placeholder="••••••••" class="form-input">
+
+        <!-- تبديل الوضع الليلي / الفاتح -->
+        <button class="btn-icon auth-theme-toggle" onclick="WMS_APP.toggleTheme()" title="المظهر">
+          ☀️
+        </button>
+      </div>
+    </div>
+
+    <!-- كارت HUD الرئيسي -->
+    <div class="auth-card auth-hud-panel">
+      <!-- شعار وترويسة المنظومة -->
+      <div class="auth-header">
+        <div class="auth-logo-box-glow">
+          <img src="logo.png" alt="شعار المستودع" class="auth-logo-img"
+            onerror="this.outerHTML='<span style=\'font-size:2.2rem;\'>📦</span>'">
         </div>
-        <div style="display: flex; gap: 0.75rem; margin-top: 0.75rem;">
-          <button type="button" id="btn-login" onclick="handleLogIn()" class="btn-primary" style="flex: 1;">
-            Log In
+        <div class="auth-badge-version">WMS Cloud Platform v6.0</div>
+        <h2 data-i18n="loginTitle" class="auth-main-title">مستودع الإنتاج الذكي</h2>
+        <p data-i18n="loginSubtitle" class="auth-main-subtitle">منظومة إدارة وحركات المخازن واللوجستيات المتقدمة</p>
+      </div>
+
+      <!-- تبويبات التبديل بين تسجيل الدخول وإنشاء الحساب -->
+      <div class="auth-segmented-tabs">
+        <button type="button" id="auth-tab-login" class="auth-tab active" onclick="switchAuthMode('login')">
+          <span class="tab-icon">🔑</span>
+          <span data-i18n="loginTab">تسجيل الدخول</span>
+        </button>
+        <button type="button" id="auth-tab-signup" class="auth-tab" onclick="switchAuthMode('signup')">
+          <span class="tab-icon">✨</span>
+          <span data-i18n="signupTab">إنشاء حساب جديد</span>
+        </button>
+      </div>
+
+      <!-- صندوق رسائل وتنبيهات HUD المدمج -->
+      <div id="auth-hud-alert" class="auth-hud-alert" style="display: none;"></div>
+
+      <!-- نموذج إدخال البيانات -->
+      <form class="auth-form" id="auth-form-el" onsubmit="event.preventDefault();">
+        <!-- حقل البريد الإلكتروني -->
+        <div class="form-group auth-group">
+          <label for="auth-email">
+            <span class="auth-field-icon">✉️</span>
+            <span data-i18n="emailLabel">البريد الإلكتروني</span>
+          </label>
+          <div class="auth-input-wrapper">
+            <input type="email" id="auth-email" required placeholder="user@example.com" class="form-input auth-input"
+              autocomplete="email">
+            <span class="auth-input-focus-border"></span>
+          </div>
+        </div>
+
+        <!-- حقل كلمة المرور -->
+        <div class="form-group auth-group">
+          <label for="auth-password">
+            <span class="auth-field-icon">🔒</span>
+            <span data-i18n="passwordLabel">كلمة المرور</span>
+          </label>
+          <div class="auth-input-wrapper">
+            <input type="password" id="auth-password" required placeholder="••••••••" class="form-input auth-input"
+              autocomplete="current-password">
+            <button type="button" class="btn-pwd-toggle" onclick="togglePasswordVisibility('auth-password', this)"
+              title="إظهار / إخفاء كلمة المرور" tabindex="-1">
+              👁
+            </button>
+            <span class="auth-input-focus-border"></span>
+          </div>
+        </div>
+
+        <!-- حقل تأكيد كلمة المرور (يظهر فقط في وضع إنشاء حساب جديد) -->
+        <div id="auth-confirm-password-group" class="form-group auth-group" style="display: none;">
+          <label for="auth-password-confirm">
+            <span class="auth-field-icon">🛡️</span>
+            <span data-i18n="confirmPasswordLabel">تأكيد كلمة المرور</span>
+          </label>
+          <div class="auth-input-wrapper">
+            <input type="password" id="auth-password-confirm" placeholder="••••••••" class="form-input auth-input"
+              autocomplete="new-password">
+            <button type="button" class="btn-pwd-toggle" onclick="togglePasswordVisibility('auth-password-confirm', this)"
+              title="إظهار / إخفاء كلمة المرور" tabindex="-1">
+              👁
+            </button>
+            <span class="auth-input-focus-border"></span>
+          </div>
+          <small class="auth-hint-text" data-i18n="pwdMinHint">💡 يجب ألا تقل كلمة المرور عن 6 خانات.</small>
+        </div>
+
+        <!-- خيارات إضافية لتسجيل الدخول (تذكرني / نسيت كلمة المرور) -->
+        <div id="auth-login-options" class="auth-options-row">
+          <label class="auth-remember-label">
+            <input type="checkbox" id="auth-remember-me" checked>
+            <span data-i18n="rememberMe">تذكر بياناتي</span>
+          </label>
+          <button type="button" class="auth-link-btn" onclick="handleForgotPassword()" data-i18n="forgotPwd">
+            نسيت كلمة المرور؟
           </button>
-          <button type="button" id="btn-signup" onclick="handleSignUp()" class="btn-secondary" style="flex: 1;">
-            Sign Up
+        </div>
+
+        <!-- أزرار الإجراءات -->
+        <div class="auth-actions-stack">
+          <!-- زر تسجيل الدخول (وضع الدخول) -->
+          <button type="button" id="btn-login" onclick="handleLogIn()" class="btn-primary auth-submit-btn">
+            <span class="btn-text" data-i18n="signInBtn">تسجيل الدخول للنظام</span>
+            <span class="btn-arrow">➔</span>
           </button>
+
+          <!-- زر الدخول التجريبي السريع (وضع الدخول) -->
+          <button type="button" id="btn-demo-login" onclick="handleQuickDemoLogin()" class="btn-secondary auth-demo-btn">
+            <span>⚡</span>
+            <span data-i18n="demoLogin">دخول تجريبي سريع (Admin)</span>
+          </button>
+
+          <!-- زر إنشاء الحساب (وضع التسجيل) -->
+          <button type="button" id="btn-signup" onclick="handleSignUp()" class="btn-primary auth-submit-btn"
+            style="display: none;">
+            <span class="btn-text" data-i18n="createAccountBtn">إنشاء الحساب والمتابعة</span>
+            <span class="btn-arrow">➔</span>
+          </button>
+
+          <!-- تنبيه توضيحي لإنشاء الحساب -->
+          <p id="auth-signup-note" class="auth-signup-note" style="display: none;" data-i18n="signupNotice">
+            ℹ️ ملاحظة: بعد إنشاء الحساب بنجاح، سيتم توجيهك مباشرة لشاشة تسجيل الدخول لإدخال بياناتك والمتابعة.
+          </p>
         </div>
       </form>
+
+      <!-- شريط مميزات النظام السفلية في الـ HUD -->
+      <div class="auth-features-hud">
+        <div class="auth-feature-pill">
+          <span class="feat-icon">⚡</span>
+          <span data-i18n="featureSync">مزامنة سحابية فورية</span>
+        </div>
+        <div class="auth-feature-pill">
+          <span class="feat-icon">🛡️</span>
+          <span data-i18n="featureSecure">مصادقة آمنة ومشفرة</span>
+        </div>
+        <div class="auth-feature-pill">
+          <span class="feat-icon">📦</span>
+          <span data-i18n="featureMaterials">رخام • بورسلان • خشب</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -68,6 +203,15 @@
       </div>
 
       <div class="header-actions">
+        <!-- شارة المستخدم والصلاحيات الكاملة -->
+        <div class="user-profile-header-pill" id="user-header-pill" title="كامل الصلاحيات متاحة لجميع الأقسام">
+          <div class="user-avatar-sm">👤</div>
+          <div class="user-info-text">
+            <span class="user-display-email" id="header-user-email">admin@warehouse.local</span>
+            <span class="user-access-tag">🔓 <span data-i18n="fullAccess">كامل الصلاحيات (كل الأقسام)</span></span>
+          </div>
+        </div>
+
         <!-- محول اللغات الثلاثي -->
         <div class="lang-selector">
           <button class="lang-btn active" data-lang="ar" onclick="WMS_APP.setLanguage('ar')">عربي</button>
@@ -94,6 +238,10 @@
     <main id="view-hud" class="module-view active">
       <div class="hud-container">
         <div class="hud-hero">
+          <div class="hud-access-status-badge">
+            <span class="pulse-dot"></span>
+            <span data-i18n="unrestrictedAccess">جميع الأقسام والعمليات المخزنية مفتوحة ومتاحة لك بالكامل</span>
+          </div>
           <h2 data-i18n="hudTitle">لوحة التحكم والعمليات الرئيسية</h2>
           <p data-i18n="hudSubtitle">اختر القسم المخزني لإدارة الحركات، الحجوزات، الهوالك وإذونات التسليم</p>
         </div>
