@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مستودع الإنتاج - نظام إدارة المخازن المتطور</title>
+  <meta name="description" content="نظام إدارة مخازن البورسلان والرخام والخشب: حركات الألواح، فسوحات التسليم، حجز المواد، هوالك القص والجرد المالي الفوري.">
+
+  <!-- رابط نسبي متوافق 100% مع صفحات GitHub Pages -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="logo.png">
+</head>
+<body>
+
+  <!-- ====================================================================== -->
+  <!-- 1. شاشة تسجيل الدخول -->
+  <!-- ====================================================================== -->
+  <div id="view-login" class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-logo-box">
+        <img src="logo.png" alt="شعار" style="width: 100%; height: 100%; object-fit: contain; border-radius: var(--radius-lg);" onerror="this.outerHTML='📦'">
+      </div>
+      <h2 data-i18n="loginTitle">تسجيل الدخول للنظام</h2>
+      <p data-i18n="loginSubtitle">أدخل بيانات الاعتماد للوصول إلى العمليات المخزنية</p>
+
+      <form class="auth-form" onsubmit="WMS_APP.submitLogin(event)">
+        <div class="form-group">
+          <label data-i18n="username">اسم المستخدم</label>
+          <input type="text" id="login-username" value="admin" required placeholder="admin">
+        </div>
+        <div class="form-group">
+          <label data-i18n="password">كلمة المرور</label>
+          <input type="password" id="login-password" value="123456" required placeholder="••••••">
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.5rem;" data-i18n="signInBtn">
+          تسجيل الدخول
+        </button>
+      </form>
+
+      <div class="demo-credentials-badge">
+        <span>تجريبي: <code>admin</code> / <code>123456</code></span>
+        <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.quickDemoLogin()" data-i18n="demoLogin">
+          دخول تجريبي سريع
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ====================================================================== -->
+  <!-- 2. واجهة النظام الرئيسية -->
+  <!-- ====================================================================== -->
+  <div id="app-shell" style="display: none;">
+
+    <!-- الشريط العلوي -->
+    <header class="app-header">
+      <div class="header-brand" onclick="WMS_APP.navigate('hud')">
+        <div class="brand-icon-sq">
+          <img src="logo.png" alt="شعار" style="width: 28px; height: 28px; object-fit: contain;" onerror="this.outerHTML='📦'">
+        </div>
+        <div>
+          <h1 data-i18n="appTitle">مستودع الإنتاج</h1>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- محول اللغات الثلاثي -->
+        <div class="lang-selector">
+          <button class="lang-btn active" data-lang="ar" onclick="WMS_APP.setLanguage('ar')">عربي</button>
+          <button class="lang-btn" data-lang="en" onclick="WMS_APP.setLanguage('en')">EN</button>
+          <button class="lang-btn" data-lang="bn" onclick="WMS_APP.setLanguage('bn')">বাংলা</button>
+        </div>
+
+        <!-- تبديل الوضع الليلي / الفاتح -->
+        <button class="btn-icon" id="theme-toggle-btn" onclick="WMS_APP.toggleTheme()" title="المظهر">
+          ☀️
+        </button>
+
+        <!-- تسجيل الخروج -->
+        <button class="btn-secondary btn-sm" onclick="WMS_APP.logout()" data-i18n="logoutBtn">
+          تسجيل الخروج
+        </button>
+      </div>
+    </header>
+
+
+    <!-- ==================================================================== -->
+    <!-- الشاشة A: لوحة العمليات والتحكم الرئيسية (#view-hud) -->
+    <!-- ==================================================================== -->
+    <main id="view-hud" class="module-view active">
+      <div class="hud-container">
+        <div class="hud-hero">
+          <h2 data-i18n="hudTitle">لوحة التحكم والعمليات الرئيسية</h2>
+          <p data-i18n="hudSubtitle">اختر القسم المخزني لإدارة الحركات، الحجوزات، الهوالك وإذونات التسليم</p>
+        </div>
+
+        <div class="hud-grid">
+          <!-- كرت 1: حركة مخزون البورسلان -->
+          <div class="hud-card card-porcelain" onclick="WMS_APP.navigate('porcelain')">
+            <div class="hud-card-header">
+              <div class="hud-icon-box">🏛</div>
+              <span class="hud-badge-count" id="hud-badge-porcelain">0 لوح</span>
+            </div>
+            <div class="hud-card-body">
+              <h3 data-i18n="hudPorcelainTitle">حركة مخزون البورسلان</h3>
+              <p data-i18n="hudPorcelainDesc">حركة ألواح البورسلان (باللوح ونصف اللوح)، الحجوزات للمعارض، الرصيد المتاح، هوالك القص والجرد.</p>
+            </div>
+            <div class="hud-card-footer">
+              <span style="color:var(--accent-porcelain);" data-i18n="enterModule">فتح القسم ←</span>
+              <span class="hud-enter-arrow">➔</span>
+            </div>
+          </div>
+
+          <!-- كرت 2: حركة مخزون الرخام -->
+          <div class="hud-card card-marble" onclick="WMS_APP.navigate('marble')">
+            <div class="hud-card-header">
+              <div class="hud-icon-box">💎</div>
+              <span class="hud-badge-count" id="hud-badge-marble">0 لوح</span>
+            </div>
+            <div class="hud-card-body">
+              <h3 data-i18n="hudMarbleTitle">حركة مخزون الرخام</h3>
+              <p data-i18n="hudMarbleDesc">حركة ألواح الرخام الطبيعي، بلد المنشأ، حجز الألواح وأنصاف الألواح، هوالك وقص الألواح وطباعة الجرد.</p>
+            </div>
+            <div class="hud-card-footer">
+              <span style="color:var(--accent-marble);" data-i18n="enterModule">فتح القسم ←</span>
+              <span class="hud-enter-arrow">➔</span>
+            </div>
+          </div>
+
+          <!-- كرت 3: تسليم طلبيات الخشب -->
+          <div class="hud-card card-wood-del" onclick="WMS_APP.navigate('wood-delivery')">
+            <div class="hud-card-header">
+              <div class="hud-icon-box">🪵</div>
+              <span class="hud-badge-count" id="hud-badge-wood-del">0 فسح</span>
+            </div>
+            <div class="hud-card-body">
+              <h3 data-i18n="hudWoodDeliveryTitle">تسليم طلبيات الخشب</h3>
+              <p data-i18n="hudWoodDeliveryDesc">فسوحات خروج الخشب، مندوب المعرض، بيانات العميل ومواعيد التركيب.</p>
+            </div>
+            <div class="hud-card-footer">
+              <span style="color:var(--accent-wood);" data-i18n="enterModule">فتح القسم ←</span>
+              <span class="hud-enter-arrow">➔</span>
+            </div>
+          </div>
+
+          <!-- كرت 4: تسليم طلبيات الرخام -->
+          <div class="hud-card card-marble-del" onclick="WMS_APP.navigate('marble-delivery')">
+            <div class="hud-card-header">
+              <div class="hud-icon-box">🚚</div>
+              <span class="hud-badge-count" id="hud-badge-mar-del">0 فسح</span>
+            </div>
+            <div class="hud-card-body">
+              <h3 data-i18n="hudMarbleDeliveryTitle">تسليم طلبيات الرخام</h3>
+              <p data-i18n="hudMarbleDeliveryDesc">فسوحات خروج الرخام، توثيق المعرض والمشتري ومواعيد التوصيل والتركيب.</p>
+            </div>
+            <div class="hud-card-footer">
+              <span style="color:var(--accent-delivery);" data-i18n="enterModule">فتح القسم ←</span>
+              <span class="hud-enter-arrow">➔</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+
+    <!-- ==================================================================== -->
+    <!-- الشاشة B: حركة مخزون البورسلان (#view-porcelain) -->
+    <!-- ==================================================================== -->
+    <section id="view-porcelain" class="module-view">
+      <div class="module-top-bar">
+        <button class="btn-back-hud" onclick="WMS_APP.navigate('hud')">
+          <span data-i18n="backToHud">← العودة للوحة الرئيسية</span>
+        </button>
+
+        <div class="module-title-group">
+          <h2>🏛 <span data-i18n="hudPorcelainTitle">حركة مخزون البورسلان</span></h2>
+          <p data-i18n="porcelainSubtitle">ألواح البورسلان (باللوح ونصف اللوح)، حجوزات المعارض، أزرار الحركات، وسجل الهوالك</p>
+        </div>
+
+        <div class="module-actions-bar">
+          <button class="btn-secondary" onclick="WMS_APP.previewInventory('porcelain')" data-i18n="previewInventoryBtn">
+            👁 معاينة الجرد
+          </button>
+          <button class="btn-secondary" onclick="WMS_APP.printInventoryDirect('porcelain')" data-i18n="printInventoryBtn">
+            🖨 طباعة الجرد
+          </button>
+          <button class="btn-secondary" onclick="WMS_APP.exportFormattedExcel('porcelain')" data-i18n="exportExcel">
+            📊 تصدير Excel منسق
+          </button>
+          <button class="btn-primary" onclick="WMS_APP.openAddMaterialModal('porcelain')" data-i18n="addItem">
+            + إضافة صنف / لوح
+          </button>
+        </div>
+      </div>
+
+      <!-- تبويبات قسم البورسلان -->
+      <div class="view-tabs-header">
+        <button class="tab-btn porcelain-tab-btn active" data-tab="catalog" onclick="WMS_APP.switchTab('porcelain', 'catalog')" data-i18n="catalogTab">
+          المخزون والحركات
+        </button>
+        <button class="tab-btn porcelain-tab-btn" data-tab="leftovers" onclick="WMS_APP.switchTab('porcelain', 'leftovers')" data-i18n="leftoversTab">
+          سجل قطع وقص الهوالك
+        </button>
+        <button class="tab-btn porcelain-tab-btn" data-tab="reservations" onclick="WMS_APP.switchTab('porcelain', 'reservations')" data-i18n="reservationsTab">
+          قائمة الحجوزات النشطة
+        </button>
+      </div>
+
+      <!-- تبويب 1: قائمة الأصناف والحركات -->
+      <div id="porcelain-tab-catalog" class="porcelain-tab-content">
+        <div class="filter-bar" style="display:flex; justify-content:space-between; margin-bottom:1.25rem;">
+          <div class="filter-group" style="display:flex; gap:0.6rem;">
+            <input type="text" id="porcelain-search-input" class="form-input" placeholder="بحث في ألواح البورسلان (الاسم، الكود، الموقع)..." data-i18n-placeholder="searchPorcelainPlaceholder" oninput="WMS_APP.filterRoute('porcelain')">
+            <select id="porcelain-stock-filter" class="form-select" onchange="WMS_APP.filterRoute('porcelain')">
+              <option value="all" data-i18n="filterAllStock">كافة الأصناف</option>
+              <option value="normal" data-i18n="filterAvailable">المتوفر</option>
+              <option value="reserved" data-i18n="filterReserved">المحجوز</option>
+              <option value="low" data-i18n="filterLowStock">المخزون المنخفض</option>
+            </select>
+          </div>
+          <button class="btn-primary btn-sm" onclick="WMS_APP.openLeftoverModal('porcelain')" data-i18n="recordLeftover">
+            ✂ تسجيل هوالك وقص
+          </button>
+        </div>
+
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="wms-table">
+              <thead>
+                <tr>
+                  <th data-i18n="thSku">رمز الصنف / الكود</th>
+                  <th data-i18n="thName">بيان الصنف والنوع (اضغط الصورة للتكبير)</th>
+                  <th data-i18n="thLocation">موقع التخزين</th>
+                  <th data-i18n="thTotalQty">إجمالي الألواح (±1 / ±½)</th>
+                  <th data-i18n="thReservedQty">الألواح المحجوزة</th>
+                  <th data-i18n="thAvailableQty">الألواح المتاحة</th>
+                  <th data-i18n="thStatus">الحالة</th>
+                  <th data-i18n="thActions">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="porcelain-items-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- تبويب 2: سجل الهوالك والقص -->
+      <div id="porcelain-tab-leftovers" class="porcelain-tab-content" style="display: none;">
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="wms-table">
+              <thead>
+                <tr>
+                  <th data-i18n="thLabelCode">كود الملصق</th>
+                  <th data-i18n="thPieceName">بيان القطعة</th>
+                  <th data-i18n="thOrigSku">الكود الأصلي</th>
+                  <th data-i18n="thDimensionsThickness">الأبعاد والسماكة</th>
+                  <th data-i18n="thQtySlabs">الكمية باللوح</th>
+                  <th data-i18n="thStorageLocation">موقع التخزين</th>
+                  <th data-i18n="thActions">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="porcelain-leftovers-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- تبويب 3: الحجوزات النشطة -->
+      <div id="porcelain-tab-reservations" class="porcelain-tab-content" style="display: none;">
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="wms-table">
+              <thead>
+                <tr>
+                  <th data-i18n="thSku">رمز الصنف</th>
+                  <th data-i18n="thMaterialName">اسم المادة</th>
+                  <th data-i18n="thReservedSlabs">الألواح المحجوزة</th>
+                  <th data-i18n="thRepName">اسم المندوب</th>
+                  <th data-i18n="thShowroom">اسم المعرض</th>
+                  <th data-i18n="thClientBuyer">اسم المشتري (عميل المعرض)</th>
+                  <th data-i18n="thActions">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="porcelain-reservations-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==================================================================== -->
+    <!-- الشاشة B-2: صفحة معاينة جرد البورسلان الكاملة المخصصة (#view-porcelain-preview) -->
+    <!-- ==================================================================== -->
+    <section id="view-porcelain-preview" class="module-view">
+      <div class="module-top-bar">
+        <button class="btn-back-hud" onclick="WMS_APP.navigate('porcelain')">
+          <span data-i18n="backToPorcelain">← العودة لحركة البورسلان</span>
+        </button>
+
+        <div class="module-title-group">
+          <h2>🏛 <span data-i18n="porcelainPreviewTitle">معاينة الجرد والتثمين المالي لألواح البورسلان</span></h2>
+          <p data-i18n="porcelainPreviewSubtitle">عرض تفصيلي متكامل لأرصدة الألواح والتقييم المالي الشامل</p>
+        </div>
+
+        <div class="module-actions-bar">
+          <button class="btn-secondary" onclick="WMS_APP.printInventoryDirect('porcelain')" data-i18n="printInventoryBtn">
+            🖨 طباعة الجرد
+          </button>
+          <button class="btn-secondary" onclick="WMS_APP.exportFormattedExcel('porcelain')" data-i18n="exportExcel">
+            📊 تصدير Excel منسق
+          </button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card" style="border-top: 3px solid var(--primary);">
+          <div class="kpi-card-title" data-i18n="kpiTotalSlabs">إجمالي الألواح بالمستودع</div>
+          <div class="kpi-card-value" id="porcelain-kpi-total">0 لوح</div>
+        </div>
+        <div class="kpi-card" style="border-top: 3px solid var(--success);">
+          <div class="kpi-card-title" data-i18n="kpiAvailableSlabs">الألواح المتاحة</div>
+          <div class="kpi-card-value" style="color:var(--success);" id="porcelain-kpi-avail">0 لوح</div>
+        </div>
+        <div class="kpi-card" style="border-top: 3px solid var(--warning);">
+          <div class="kpi-card-title" data-i18n="kpiReservedSlabs">الألواح المحجوزة للمعارض</div>
+          <div class="kpi-card-value" style="color:var(--warning);" id="porcelain-kpi-res">0 لوح</div>
+        </div>
+        <div class="kpi-card" style="border-top: 3px solid var(--accent-porcelain);">
+          <div class="kpi-card-title" data-i18n="kpiTotalValuation">القيمة المالية الإجمالية للمخزون</div>
+          <div class="kpi-card-value" style="color:var(--accent-porcelain);" id="porcelain-kpi-val">$ 0.00</div>
+        </div>
+      </div>
+
+      <div class="filter-bar" style="margin-bottom: 1.25rem;">
+        <input type="text" id="porcelain-prev-search-input" class="form-input" placeholder="بحث فوري في أصناف الجرد..." data-i18n-placeholder="searchPreviewPlaceholder" oninput="WMS_APP.navigate('porcelain-preview')">
+      </div>
+
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="wms-table">
+            <thead>
+              <tr>
+                <th data-i18n="thSku">رمز الصنف</th>
+                <th data-i18n="thNameImage">بيان الصنف وصورة اللوح</th>
+                <th data-i18n="thLocation">موقع التخزين</th>
+                <th data-i18n="thTotalQty">إجمالي الألواح</th>
+                <th data-i18n="thReservedQty">المحجوز</th>
+                <th data-i18n="thAvailableQty">المتاح للبيع</th>
+                <th data-i18n="thPrice">سعر اللوح ($)</th>
+                <th data-i18n="thValuation">القيمة الإجمالية ($)</th>
+              </tr>
+            </thead>
+            <tbody id="porcelain-preview-table-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==================================================================== -->
+    <!-- الشاشة C: حركة مخزون الرخام (#view-marble) -->
+    <!-- ==================================================================== -->
+    <section id="view-marble" class="module-view">
+      <div class="module-top-bar">
+        <button class="btn-back-hud" onclick="WMS_APP.navigate('hud')">
+          <span data-i18n="backToHud">← العودة للوحة الرئيسية</span>
+        </button>
+
+        <div class="module-title-group">
+          <h2>💎 <span data-i18n="hudMarbleTitle">حركة مخزون الرخام</span></h2>
+          <p data-i18n="marbleSubtitle">ألواح الرخام الطبيعي، بلد المنشأ، حجوزات المعارض، وأزرار الحركات والجرد</p>
+        </div>
+
+        <div class="module-actions-bar">
+          <button class="btn-secondary" onclick="WMS_APP.previewInventory('marble')" data-i18n="previewInventoryBtn">
+            👁 معاينة الجرد
+          </button>
+          <button class="btn-secondary" onclick="WMS_APP.printInventoryDirect('marble')" data-i18n="printInventoryBtn">
+            🖨 طباعة الجرد
+          </button>
+          <button class="btn-secondary" onclick="WMS_APP.exportFormattedExcel('marble')" data-i18n="exportExcel">
+            📊 تصدير Excel منسق
+          </button>
+          <button class="btn-primary" onclick="WMS_APP.openAddMaterialModal('marble')" data-i18n="addItem">
+            + إضافة صنف / لوح
+          </button>
+        </div>
+      </div>
+
+      <!-- تبويبات الرخام -->
+      <div class="view-tabs-header">
+        <button class="tab-btn marble-tab-btn active" data-tab="catalog" onclick="WMS_APP.switchTab('marble', 'catalog')" data-i18n="catalogTab">
+          المخزون والحركات
+        </button>
+        <button class="tab-btn marble-tab-btn" data-tab="leftovers" onclick="WMS_APP.switchTab('marble', 'leftovers')" data-i18n="leftoversTab">
+          سجل قطع وقص الهوالك
+        </button>
+        <button class="tab-btn marble-tab-btn" data-tab="reservations" onclick="WMS_APP.switchTab('marble', 'reservations')" data-i18n="reservationsTab">
+          قائمة الحجوزات النشطة
+        </button>
+      </div>
+
+      <!-- تبويب 1: مخزون الرخام -->
+      <div id="marble-tab-catalog" class="marble-tab-content">
+        <div class="filter-bar" style="display:flex; justify-content:space-between; margin-bottom:1.25rem;">
+          <div class="filter-group" style="display:flex; gap:0.6rem;">
+            <input type="text" id="marble-search-input" class="form-input" placeholder="بحث في ألواح الرخام (الاسم، الكود، المنشأ)..." data-i18n-placeholder="searchMarblePlaceholder" oninput="WMS_APP.filterRoute('marble')">
+            <select id="marble-stock-filter" class="form-select" onchange="WMS_APP.filterRoute('marble')">
+              <option value="all" data-i18n="filterAllStock">كافة الأصناف</option>
+              <option value="normal" data-i18n="filterAvailable">المتوفر</option>
+              <option value="reserved" data-i18n="filterReserved">المحجوز</option>
+              <option value="low" data-i18n="filterLowStock">المخزون المنخفض</option>
+            </select>
+          </div>
+          <button class="btn-primary btn-sm" onclick="WMS_APP.openLeftoverModal('marble')" data-i18n="recordLeftover">
+            ✂ تسجيل هوالك وقص
+          </button>
+        </div>
+
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="wms-table">
+              <thead>
+                <tr>
+                  <th data-i18n="thSku">رمز الصنف / الكود</th>
+                  <th data-i18n="thMarbleOrigin">نوع الرخام والمنشأ (اضغط الصورة للتكبير)</th>
+                  <th data-i18n="thLocation">موقع التخزين</th>
+                  <th data-i18n="thTotalQty">إجمالي الألواح (±1 / ±½)</th>
+                  <th data-i18n="thReservedQty">الألواح المحجوزة</th>
+                  <th data-i18n="thAvailableQty">الألواح المتاحة</th>
+                  <th data-i18n="thStatus">الحالة</th>
+                  <th data-i18n="thActions">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="marble-items-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- تبويب 2: هوالك الرخام -->
+      <div id="marble-tab-leftovers" class="marble-tab-content" style="display: none;">
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="wms-table">
+              <thead>
+                <tr>
+                  <th data-i18n="thLabelCode">كود الملصق</th>
+                  <th data-i18n="thPieceName">بيان القطعة</th>
+                  <th data-i18n="thOrigSku">الكود الأصلي</th>
+                  <th data-i18n="thDimensionsThickness">الأبعاد والسماكة</th>
+                  <th data-i18n="thQtySlabs">الكمية باللوح</th>
+                  <th data-i18n="thStorageLocation">موقع التخزين</th>
+                  <th data-i18n="thActions">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="marble-leftovers-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- تبويب 3: حجوزات الرخام -->
+      <div id="marble-tab-reservations" class="marble-tab-content" style="display: none;">
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="wms-table">
+              <thead>
+                <tr>
+                  <th data-i18n="thSku">رمز الصنف</th>
+                  <th data-i18n="thMaterialName">نوع الرخام</th>
+                  <th data-i18n="thReservedSlabs">الألواح المحجوزة</th>
+                  <th data-i18n="thRepName">اسم المندوب</th>
+                  <th data-i18n="thShowroom">اسم المعرض</th>
+                  <th data-i18n="thClientBuyer">اسم المشتري (عميل المعرض)</th>
+                  <th data-i18n="thActions">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="marble-reservations-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==================================================================== -->
+    <!-- الشاشة C-2: صفحة معاينة جرد الرخام الكاملة المخصصة (#view-marble-preview) -->
+    <!-- ==================================================================== -->
+    <section id="view-marble-preview" class="module-view">
+      <div class="module-top-bar">
+        <button class="btn-back-hud" onclick="WMS_APP.navigate('marble')">
+          <span data-i18n="backToMarble">← العودة لحركة الرخام</span>
+        </button>
+
+        <div class="module-title-group">
+          <h2>💎 <span data-i18n="marblePreviewTitle">معاينة الجرد والتثمين المالي لألواح الرخام الطبيعي</span></h2>
+          <p data-i18n="marblePreviewSubtitle">عرض تفصيلي متكامل لأرصدة الألواح والتقييم المالي لساحات الرخام</p>
+        </div>
+
+        <div class="module-actions-bar">
+          <button class="btn-secondary" onclick="WMS_APP.printInventoryDirect('marble')" data-i18n="printInventoryBtn">
+            🖨 طباعة الجرد
+          </button>
+          <button class="btn-secondary" onclick="WMS_APP.exportFormattedExcel('marble')" data-i18n="exportExcel">
+            📊 تصدير Excel منسق
+          </button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card" style="border-top: 3px solid var(--accent-marble);">
+          <div class="kpi-card-title" data-i18n="kpiTotalSlabs">إجمالي الألواح بالمستودع</div>
+          <div class="kpi-card-value" id="marble-kpi-total">0 لوح</div>
+        </div>
+        <div class="kpi-card" style="border-top: 3px solid var(--success);">
+          <div class="kpi-card-title" data-i18n="kpiAvailableSlabs">الألواح المتاحة</div>
+          <div class="kpi-card-value" style="color:var(--success);" id="marble-kpi-avail">0 لوح</div>
+        </div>
+        <div class="kpi-card" style="border-top: 3px solid var(--warning);">
+          <div class="kpi-card-title" data-i18n="kpiReservedSlabs">الألواح المحجوزة للمعارض</div>
+          <div class="kpi-card-value" style="color:var(--warning);" id="marble-kpi-res">0 لوح</div>
+        </div>
+        <div class="kpi-card" style="border-top: 3px solid #a855f7;">
+          <div class="kpi-card-title" data-i18n="kpiTotalValuation">القيمة المالية الإجمالية للمخزون</div>
+          <div class="kpi-card-value" style="color:#a855f7;" id="marble-kpi-val">$ 0.00</div>
+        </div>
+      </div>
+
+      <div class="filter-bar" style="margin-bottom: 1.25rem;">
+        <input type="text" id="marble-prev-search-input" class="form-input" placeholder="بحث فوري في أصناف جرد الرخام..." data-i18n-placeholder="searchPreviewPlaceholder" oninput="WMS_APP.navigate('marble-preview')">
+      </div>
+
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="wms-table">
+            <thead>
+              <tr>
+                <th data-i18n="thSku">رمز الصنف</th>
+                <th data-i18n="thNameImage">نوع الرخام والمنشأ</th>
+                <th data-i18n="thLocation">موقع التخزين</th>
+                <th data-i18n="thTotalQty">إجمالي الألواح</th>
+                <th data-i18n="thReservedQty">المحجوز</th>
+                <th data-i18n="thAvailableQty">المتاح للبيع</th>
+                <th data-i18n="thPrice">سعر اللوح ($)</th>
+                <th data-i18n="thValuation">القيمة الإجمالية ($)</th>
+              </tr>
+            </thead>
+            <tbody id="marble-preview-table-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==================================================================== -->
+    <!-- الشاشة D: تسليم طلبيات الخشب (#view-wood-delivery) -->
+    <!-- ==================================================================== -->
+    <section id="view-wood-delivery" class="module-view">
+      <div class="module-top-bar">
+        <button class="btn-back-hud" onclick="WMS_APP.navigate('hud')">
+          <span data-i18n="backToHud">← العودة للوحة الرئيسية</span>
+        </button>
+
+        <div class="module-title-group">
+          <h2>🪵 <span data-i18n="hudWoodDeliveryTitle">تسليم طلبيات الخشب</span></h2>
+          <p data-i18n="woodDeliverySubtitle">إدارة فسوحات خروج الخشب، المندوب، المعرض، العميل ومواعيد التركيب</p>
+        </div>
+
+        <div class="module-actions-bar">
+          <button class="btn-primary" onclick="WMS_APP.openAddWoodPermitModal()" data-i18n="addWoodPermitBtn">
+            + إضافة فسح خشب
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-bar" style="display:flex; justify-content:space-between; margin-bottom:1.25rem;">
+        <div class="filter-group" style="display:flex; gap:0.6rem; width:100%; max-width:650px;">
+          <input type="text" id="wood-del-search-input" class="form-input" style="flex:1;" placeholder="بحث برقم الفسح، اسم الزبون، المعرض، المندوب، الهاتف أو كود الطلبية..." data-i18n-placeholder="searchDeliveryPlaceholder" oninput="WMS_APP.filterRoute('wood-delivery')">
+          <select id="wood-del-status-filter" class="form-select" onchange="WMS_APP.filterRoute('wood-delivery')">
+            <option value="all" data-i18n="filterAllStatus">كافة الحالات</option>
+            <option value="Scheduled" data-i18n="filterScheduled">مجدول للتسليم</option>
+            <option value="In Delivery" data-i18n="filterInDelivery">جاري التوصيل</option>
+            <option value="Delivered" data-i18n="filterDelivered">تم التركيب / التسليم</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="wms-table">
+            <thead>
+              <tr>
+                <th data-i18n="thPermitNo">رقم الفسح</th>
+                <th data-i18n="thOrderCode">كود الطلبية</th>
+                <th data-i18n="thRepName">اسم المندوب</th>
+                <th data-i18n="thShowroom">اسم المعرض</th>
+                <th data-i18n="thWorkType">نوع العمل</th>
+                <th data-i18n="thClientBuyer">اسم المشتري (عميل المعرض)</th>
+                <th data-i18n="thExpectedDate">تاريخ التوصيل / التركيب</th>
+                <th data-i18n="thDay">اليوم</th>
+                <th data-i18n="thStatus">الحالة</th>
+                <th data-i18n="thActions">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="wood-orders-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==================================================================== -->
+    <!-- الشاشة E: تسليم طلبيات الرخام (#view-marble-delivery) -->
+    <!-- ==================================================================== -->
+    <section id="view-marble-delivery" class="module-view">
+      <div class="module-top-bar">
+        <button class="btn-back-hud" onclick="WMS_APP.navigate('hud')">
+          <span data-i18n="backToHud">← العودة للوحة الرئيسية</span>
+        </button>
+
+        <div class="module-title-group">
+          <h2>🚚 <span data-i18n="hudMarbleDeliveryTitle">تسليم طلبيات الرخام</span></h2>
+          <p data-i18n="marbleDeliverySubtitle">إدارة فسوحات خروج ألواح الرخام، المندوب، المعرض، العميل ومواعيد التركيب</p>
+        </div>
+
+        <div class="module-actions-bar">
+          <button class="btn-primary" onclick="WMS_APP.openAddMarblePermitModal()" data-i18n="addMarblePermitBtn">
+            + إضافة فسح رخام
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-bar" style="display:flex; justify-content:space-between; margin-bottom:1.25rem;">
+        <div class="filter-group" style="display:flex; gap:0.6rem; width:100%; max-width:650px;">
+          <input type="text" id="marble-del-search-input" class="form-input" style="flex:1;" placeholder="بحث برقم الفسح، اسم الزبون، المعرض، المندوب، الهاتف أو كود الطلبية..." data-i18n-placeholder="searchDeliveryPlaceholder" oninput="WMS_APP.filterRoute('marble-delivery')">
+          <select id="marble-del-status-filter" class="form-select" onchange="WMS_APP.filterRoute('marble-delivery')">
+            <option value="all" data-i18n="filterAllStatus">كافة الحالات</option>
+            <option value="Scheduled" data-i18n="filterScheduled">مجدول للتسليم</option>
+            <option value="In Delivery" data-i18n="filterInDelivery">جاري التوصيل</option>
+            <option value="Delivered" data-i18n="filterDelivered">تم التركيب / التسليم</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="wms-table">
+            <thead>
+              <tr>
+                <th data-i18n="thPermitNo">رقم الفسح</th>
+                <th data-i18n="thOrderCode">كود الطلبية</th>
+                <th data-i18n="thRepName">اسم المندوب</th>
+                <th data-i18n="thShowroom">اسم المعرض</th>
+                <th data-i18n="thClientBuyer">اسم المشتري (عميل المعرض)</th>
+                <th data-i18n="thExpectedDate">تاريخ التوصيل / التركيب</th>
+                <th data-i18n="thDay">اليوم</th>
+                <th data-i18n="thStatus">الحالة</th>
+                <th data-i18n="thActions">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="marble-orders-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+
+  <!-- ====================================================================== -->
+  <!-- النوافذ المنبثقة: 100% مترجمة لجميع اللغات -->
+  <!-- ====================================================================== -->
+
+  <!-- نافذة تكبير الصورة (Image Zoom Lightbox) -->
+  <div class="modal-overlay" id="modal-image-lightbox">
+    <div class="modal-content lightbox-card">
+      <div class="modal-header">
+        <div>
+          <h3 id="lightbox-preview-title" style="margin-bottom:0.2rem;" data-i18n="modalZoomTitle">معاينة صورة اللوح بالحجم الكامل</h3>
+          <span class="sku-code" id="lightbox-preview-sku"></span>
+        </div>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-image-lightbox')">✕</button>
+      </div>
+      <div class="modal-body" style="padding:0;">
+        <div class="lightbox-img-wrapper">
+          <img id="lightbox-preview-img" src="" alt="Slab Full Size">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-image-lightbox')" data-i18n="closeBtn">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة 1: حجز المواد (يدعم 0.5) -->
+  <div class="modal-overlay" id="modal-reserve-material">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="modalReserveTitle">حجز ألواح لعميل معرض</h3>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-reserve-material')">✕</button>
+      </div>
+      <form onsubmit="WMS_APP.submitReserve(event)">
+        <input type="hidden" id="res-item-id">
+        <div class="modal-body">
+          <div style="background:var(--bg-input); padding:1rem; border-radius:var(--radius-md); margin-bottom:1.25rem; border:var(--border-glass);">
+            <div style="font-size:0.85rem; color:var(--text-muted);" data-i18n="lblSelectedMaterial">المادة المحددة للحجز:</div>
+            <h4 id="res-item-title" style="margin:0.25rem 0; font-size:1.15rem;">-</h4>
+            <div style="font-size:0.92rem; color:var(--text-secondary);"><span data-i18n="lblAvailableToSell">الرصيد المتاح للبيع:</span> <strong id="res-available-qty" style="color:var(--success);">-</strong></div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group form-full">
+              <label data-i18n="lblReservedQtySlabs">الكمية المحجوزة (باللوح أو بنصف اللوح 0.5)</label>
+              <input type="number" id="res-qty-input" min="0.5" step="0.5" required>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblRepName">اسم مندوب المبيعات</label>
+              <input type="text" id="res-rep-input" placeholder="اسم المندوب..." data-i18n-placeholder="addNewRepPlaceholder" required>
+              <div class="quick-chips-row" id="res-rep-chips"></div>
+              <div class="custom-preset-creator">
+                <input type="text" id="custom-new-rep-res" placeholder="إضافة اسم مندوب جديد للقائمة..." data-i18n-placeholder="addNewRepPlaceholder">
+                <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.addNewRepPreset('custom-new-rep-res', 'res-rep-input', 'res-rep-chips')" data-i18n="addBtn">+ إضافة</button>
+              </div>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblShowroom">اسم المعرض</label>
+              <input type="text" id="res-showroom-input" placeholder="اسم المعرض..." data-i18n-placeholder="addNewShowroomPlaceholder" required>
+              <div class="quick-chips-row" id="res-showroom-chips"></div>
+              <div class="custom-preset-creator">
+                <input type="text" id="custom-new-show-res" placeholder="إضافة اسم معرض جديد للقائمة..." data-i18n-placeholder="addNewShowroomPlaceholder">
+                <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.addNewShowroomPreset('custom-new-show-res', 'res-showroom-input', 'res-showroom-chips')" data-i18n="addBtn">+ إضافة</button>
+              </div>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblBuyerName">اسم العميل / المشتري</label>
+              <input type="text" id="res-client-input" placeholder="مثال: د. فيصل الصباح" data-i18n-placeholder="plhBuyerEx" required>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblProjectRef">كود مرجع المشروع</label>
+              <input type="text" id="res-project-input" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-reserve-material')" data-i18n="cancelBtn">إلغاء</button>
+          <button type="submit" class="btn-primary" data-i18n="confirmReserveBtn">تأكيد الحجز</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة 2: تعديل الحجز (يدعم 0.5) -->
+  <div class="modal-overlay" id="modal-edit-reservation">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="modalEditReservationTitle">تعديل بيانات الحجز</h3>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-edit-reservation')">✕</button>
+      </div>
+      <form onsubmit="WMS_APP.submitEditReservation(event)">
+        <input type="hidden" id="edit-res-id">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group form-full">
+              <label data-i18n="lblReservedQtySlabs">الكمية المحجوزة (باللوح أو بنصف اللوح 0.5)</label>
+              <input type="number" id="edit-res-qty" min="0.5" step="0.5" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblRepName">اسم مندوب المبيعات</label>
+              <input type="text" id="edit-res-rep" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblShowroom">اسم المعرض</label>
+              <input type="text" id="edit-res-showroom" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblBuyerName">اسم العميل / المشتري</label>
+              <input type="text" id="edit-res-client" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblProjectRef">كود مرجع المشروع</label>
+              <input type="text" id="edit-res-project" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-edit-reservation')" data-i18n="cancelBtn">إلغاء</button>
+          <button type="submit" class="btn-primary" data-i18n="saveChangesBtn">حفظ التعديلات</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة 3: إضافة فسح خشب (مع حقل رقم الفسح المخصص) -->
+  <div class="modal-overlay" id="modal-wood-permit">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="modalAddWoodPermit">إضافة فسح خشب</h3>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-wood-permit')">✕</button>
+      </div>
+      <form onsubmit="WMS_APP.submitWoodPermit(event)">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group form-full">
+              <label data-i18n="lblPermitNo">رقم الفسح</label>
+              <input type="text" id="wood-permit-no" required placeholder="مثال: FSH-WOD-2026-01" data-i18n-placeholder="plhPermitNoEx">
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblRepName">اسم المندوب</label>
+              <input type="text" id="wood-rep-name" placeholder="اسم المندوب..." data-i18n-placeholder="addNewRepPlaceholder" required>
+              <div class="quick-chips-row" id="wood-rep-chips"></div>
+              <div class="custom-preset-creator">
+                <input type="text" id="custom-new-rep-wood" placeholder="إضافة اسم مندوب جديد للقائمة..." data-i18n-placeholder="addNewRepPlaceholder" onkeydown="if(event.key==='Enter'){event.preventDefault(); WMS_APP.addNewRepPreset('custom-new-rep-wood', 'wood-rep-name', 'wood-rep-chips');}">
+                <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.addNewRepPreset('custom-new-rep-wood', 'wood-rep-name', 'wood-rep-chips')" data-i18n="addBtn">+ إضافة</button>
+              </div>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblShowroom">اسم العميل (المعرض)</label>
+              <input type="text" id="wood-client-name" placeholder="اسم المعرض..." data-i18n-placeholder="addNewShowroomPlaceholder" required>
+              <div class="quick-chips-row" id="wood-showroom-chips"></div>
+              <div class="custom-preset-creator">
+                <input type="text" id="custom-new-show-wood" placeholder="إضافة اسم معرض جديد للقائمة..." data-i18n-placeholder="addNewShowroomPlaceholder" onkeydown="if(event.key==='Enter'){event.preventDefault(); WMS_APP.addNewShowroomPreset('custom-new-show-wood', 'wood-client-name', 'wood-showroom-chips');}">
+                <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.addNewShowroomPreset('custom-new-show-wood', 'wood-client-name', 'wood-showroom-chips')" data-i18n="addBtn">+ إضافة</button>
+              </div>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblWorkType">نوع العمل</label>
+              <input type="text" id="wood-work-type" placeholder="مثال: خزانة، أبواب، مطبخ..." data-i18n-placeholder="plhWorkTypeEx" required>
+              <div class="quick-chips-row" id="wood-work-type-chips"></div>
+              <div class="custom-preset-creator">
+                <input type="text" id="custom-new-work-wood" placeholder="إضافة نوع عمل جديد للقائمة..." data-i18n-placeholder="addNewWorkTypePlaceholder" onkeydown="if(event.key==='Enter'){event.preventDefault(); WMS_APP.addNewWoodJobTypePreset('custom-new-work-wood', 'wood-work-type', 'wood-work-type-chips');}">
+                <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.addNewWoodJobTypePreset('custom-new-work-wood', 'wood-work-type', 'wood-work-type-chips')" data-i18n="addBtn">+ إضافة</button>
+              </div>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblBuyerName">اسم المشتري (عميل المعرض)</label>
+              <input type="text" id="wood-buyer-name" placeholder="مثال: م. خالد الصباح" data-i18n-placeholder="plhBuyerEx" required>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblPhone">رقم هاتف المشتري</label>
+              <input type="text" id="wood-phone" placeholder="مثال: 0501234567" data-i18n-placeholder="plhPhoneEx" required>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblExpectedDate">تاريخ التركيب أو التوصيل المتوقع</label>
+              <div class="date-picker-row">
+                <input type="date" id="wood-date" required onchange="WMS_APP.updateDateDayBadge('wood-date', 'wood-day-badge')">
+                <div class="date-day-badge" id="wood-day-badge">📅 اليوم</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-wood-permit')" data-i18n="cancelBtn">إلغاء</button>
+          <button type="submit" class="btn-primary" data-i18n="savePermitBtn">حفظ الفسح</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة 4: تعديل فسح خشب -->
+  <div class="modal-overlay" id="modal-edit-wood-permit">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="modalEditWoodPermitTitle">تعديل بيانات فسح الخشب</h3>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-edit-wood-permit')">✕</button>
+      </div>
+      <form onsubmit="WMS_APP.submitEditWoodPermit(event)">
+        <input type="hidden" id="edit-wood-id">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group form-full">
+              <label data-i18n="lblPermitNo">رقم الفسح</label>
+              <input type="text" id="edit-wood-permit-no" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblRepName">اسم المندوب</label>
+              <input type="text" id="edit-wood-rep" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblShowroom">اسم العميل (المعرض)</label>
+              <input type="text" id="edit-wood-showroom" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblWorkType">نوع العمل</label>
+              <input type="text" id="edit-wood-work-type" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblBuyerName">اسم المشتري (عميل المعرض)</label>
+              <input type="text" id="edit-wood-buyer" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblPhone">رقم هاتف المشتري</label>
+              <input type="text" id="edit-wood-phone" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblExpectedDate">تاريخ التركيب أو التوصيل المتوقع</label>
+              <div class="date-picker-row">
+                <input type="date" id="edit-wood-date" required onchange="WMS_APP.updateDateDayBadge('edit-wood-date', 'edit-wood-day-badge')">
+                <div class="date-day-badge" id="edit-wood-day-badge">📅 اليوم</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-edit-wood-permit')" data-i18n="cancelBtn">إلغاء</button>
+          <button type="submit" class="btn-primary" data-i18n="saveChangesBtn">حفظ التعديلات</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة 5: إضافة فسح رخام (مع حقل رقم الفسح المخصص) -->
+  <div class="modal-overlay" id="modal-marble-permit">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="modalAddMarblePermit">إضافة فسح رخام</h3>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-marble-permit')">✕</button>
+      </div>
+      <form onsubmit="WMS_APP.submitMarblePermit(event)">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group form-full">
+              <label data-i18n="lblPermitNo">رقم الفسح</label>
+              <input type="text" id="mar-permit-no" required placeholder="مثال: FSH-MAR-2026-01" data-i18n-placeholder="plhPermitNoEx">
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblRepName">اسم المندوب</label>
+              <input type="text" id="mar-rep-name" placeholder="اسم المندوب..." data-i18n-placeholder="addNewRepPlaceholder" required>
+              <div class="quick-chips-row" id="mar-rep-chips"></div>
+              <div class="custom-preset-creator">
+                <input type="text" id="custom-new-rep-mar" placeholder="إضافة اسم مندوب جديد للقائمة..." data-i18n-placeholder="addNewRepPlaceholder">
+                <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.addNewRepPreset('custom-new-rep-mar', 'mar-rep-name', 'mar-rep-chips')" data-i18n="addBtn">+ إضافة</button>
+              </div>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblShowroom">اسم العميل (المعرض)</label>
+              <input type="text" id="mar-client-name" placeholder="اسم المعرض..." data-i18n-placeholder="addNewShowroomPlaceholder" required>
+              <div class="quick-chips-row" id="mar-showroom-chips"></div>
+              <div class="custom-preset-creator">
+                <input type="text" id="custom-new-show-mar" placeholder="إضافة اسم معرض جديد للقائمة..." data-i18n-placeholder="addNewShowroomPlaceholder">
+                <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.addNewShowroomPreset('custom-new-show-mar', 'mar-client-name', 'mar-showroom-chips')" data-i18n="addBtn">+ إضافة</button>
+              </div>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblBuyerName">اسم المشتري (عميل المعرض)</label>
+              <input type="text" id="mar-buyer-name" placeholder="مثال: مشروع قصر الشيخ منصور" data-i18n-placeholder="plhMarbleBuyerEx" required>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblPhone">رقم هاتف المشتري</label>
+              <input type="text" id="mar-phone" placeholder="مثال: 0529001122" data-i18n-placeholder="plhPhoneEx" required>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblExpectedDate">تاريخ التركيب أو التوصيل المتوقع</label>
+              <div class="date-picker-row">
+                <input type="date" id="mar-date" required onchange="WMS_APP.updateDateDayBadge('mar-date', 'mar-day-badge')">
+                <div class="date-day-badge" id="mar-day-badge">📅 اليوم</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-marble-permit')" data-i18n="cancelBtn">إلغاء</button>
+          <button type="submit" class="btn-primary" data-i18n="savePermitBtn">حفظ الفسح</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة 6: تعديل فسح رخام -->
+  <div class="modal-overlay" id="modal-edit-marble-permit">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="modalEditMarblePermitTitle">تعديل بيانات فسح الرخام</h3>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-edit-marble-permit')">✕</button>
+      </div>
+      <form onsubmit="WMS_APP.submitEditMarblePermit(event)">
+        <input type="hidden" id="edit-mar-id">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group form-full">
+              <label data-i18n="lblPermitNo">رقم الفسح</label>
+              <input type="text" id="edit-mar-permit-no" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblRepName">اسم المندوب</label>
+              <input type="text" id="edit-mar-rep" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblShowroom">اسم العميل (المعرض)</label>
+              <input type="text" id="edit-mar-showroom" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblBuyerName">اسم المشتري (عميل المعرض)</label>
+              <input type="text" id="edit-mar-buyer" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblPhone">رقم هاتف المشتري</label>
+              <input type="text" id="edit-mar-phone" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblExpectedDate">تاريخ التركيب أو التوصيل المتوقع</label>
+              <div class="date-picker-row">
+                <input type="date" id="edit-mar-date" required onchange="WMS_APP.updateDateDayBadge('edit-mar-date', 'edit-mar-day-badge')">
+                <div class="date-day-badge" id="edit-mar-day-badge">📅 اليوم</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-edit-marble-permit')" data-i18n="cancelBtn">إلغاء</button>
+          <button type="submit" class="btn-primary" data-i18n="saveChangesBtn">حفظ التعديلات</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة 7: إضافة لوح مادة جديدة (يدعم 0.5) -->
+  <div class="modal-overlay" id="modal-add-material">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="modalAddMaterialTitle">إضافة لوح مادة جديدة للمخزن</h3>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-add-material')">✕</button>
+      </div>
+      <form onsubmit="WMS_APP.submitAddMaterial(event)">
+        <input type="hidden" id="new-item-category">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label data-i18n="lblSku">رمز الصنف / الكود</label>
+              <input type="text" id="new-item-sku" required placeholder="مثال: MAR-101 أو POR-201" data-i18n-placeholder="plhSkuPlaceholder">
+            </div>
+            <div class="form-group">
+              <label data-i18n="lblLocation">موقع التخزين بالمستودع</label>
+              <input type="text" id="new-item-loc" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblName">اسم وبيان الصنف والنوع</label>
+              <input type="text" id="new-item-name" required placeholder="مثال: ألواح بورسلان ستاتوريو الملكي" data-i18n-placeholder="plhMaterialNameEx">
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblImage">صورة اللوح</label>
+              <input type="file" accept="image/*" onchange="WMS_APP.handleImageUpload(event)">
+              <div id="new-item-img-preview" style="margin-top:0.4rem;"></div>
+            </div>
+
+            <div class="form-group">
+              <label data-i18n="lblDimensions">الأبعاد (سم)</label>
+              <input type="text" id="new-item-dim" required>
+            </div>
+            <div class="form-group">
+              <label data-i18n="lblThickness">السماكة</label>
+              <input type="text" id="new-item-thick" required>
+            </div>
+            <div class="form-group">
+              <label data-i18n="lblFinish">نوع السطح</label>
+              <input type="text" id="new-item-finish" value="ملمع" required>
+            </div>
+            <div class="form-group">
+              <label data-i18n="lblTotalQty">إجمالي عدد الألواح (يقبل كسور 0.5)</label>
+              <input type="number" id="new-item-qty" min="0" step="0.5" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblUnitPrice">سعر اللوح ($)</label>
+              <input type="number" id="new-item-price" min="0" step="any" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-add-material')" data-i18n="cancelBtn">إلغاء</button>
+          <button type="submit" class="btn-primary" data-i18n="saveMaterialBtn">حفظ المادة</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة 8: تعديل لوح مادة (يدعم 0.5) -->
+  <div class="modal-overlay" id="modal-edit-material">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="modalEditMaterialTitle">تعديل بيانات لوح المادة</h3>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-edit-material')">✕</button>
+      </div>
+      <form onsubmit="WMS_APP.submitEditMaterial(event)">
+        <input type="hidden" id="edit-item-id">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label data-i18n="lblSku">رمز الصنف / الكود</label>
+              <input type="text" id="edit-item-sku" required>
+            </div>
+            <div class="form-group">
+              <label data-i18n="lblLocation">موقع التخزين بالمستودع</label>
+              <input type="text" id="edit-item-loc" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblName">اسم وبيان الصنف والنوع</label>
+              <input type="text" id="edit-item-name" required>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblImageOptional">صورة اللوح (اختياري)</label>
+              <input type="file" accept="image/*" onchange="WMS_APP.handleEditImageUpload(event)">
+              <div id="edit-item-img-preview" style="margin-top:0.4rem;"></div>
+            </div>
+
+            <div class="form-group">
+              <label data-i18n="lblDimensions">الأبعاد (سم)</label>
+              <input type="text" id="edit-item-dim" required>
+            </div>
+            <div class="form-group">
+              <label data-i18n="lblThickness">السماكة</label>
+              <input type="text" id="edit-item-thick" required>
+            </div>
+            <div class="form-group">
+              <label data-i18n="lblFinish">نوع السطح</label>
+              <input type="text" id="edit-item-finish" required>
+            </div>
+            <div class="form-group">
+              <label data-i18n="lblTotalQty">إجمالي عدد الألواح (يقبل 0.5)</label>
+              <input type="number" id="edit-item-qty" min="0" step="0.5" required>
+            </div>
+            <div class="form-group form-full">
+              <label data-i18n="lblUnitPrice">سعر اللوح ($)</label>
+              <input type="number" id="edit-item-price" min="0" step="any" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-edit-material')" data-i18n="cancelBtn">إلغاء</button>
+          <button type="submit" class="btn-primary" data-i18n="saveChangesBtn">حفظ التعديلات</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة 9: تسجيل قص الهدر وتوليد ملصق اللوح -->
+  <div class="modal-overlay" id="modal-cut-leftover">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="modalLeftoverTitle">تسجيل قص الهدر وتوليد ملصق اللوح</h3>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-cut-leftover')">✕</button>
+      </div>
+      <form onsubmit="WMS_APP.submitLeftover(event)">
+        <input type="hidden" id="cut-material-type">
+        <input type="hidden" id="cut-orig-sku">
+        <input type="hidden" id="cut-name">
+        <input type="hidden" id="cut-thickness">
+        <input type="hidden" id="cut-location">
+        <input type="hidden" id="cut-slabs-qty" value="0.5">
+        
+        <div class="modal-body">
+          <!-- كرت معلومات اللوح الأصلي -->
+          <div style="background:var(--bg-input); padding:1.1rem; border-radius:var(--radius-md); margin-bottom:1.25rem; border:var(--border-glass);">
+            <div style="font-size:0.85rem; color:var(--text-muted);" data-i18n="lblOrigSlabInfo">بيانات اللوح الأصلي:</div>
+            <h4 id="cut-orig-item-title" style="margin:0.3rem 0; font-size:1.18rem; color:var(--text-primary);">-</h4>
+            <div style="font-size:0.92rem; color:var(--text-secondary);" id="cut-orig-item-specs">-</div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group form-full">
+              <label data-i18n="lblRemainingDimensions" style="font-size:1.05rem; font-weight:800; color:var(--primary);">📐 المقاسات الباقية للوح (سم)</label>
+              <input type="text" id="cut-dimensions" required placeholder="مثال: 140x60 سم أو 210x75 سم" data-i18n-placeholder="plhCutRemainingEx" style="font-size:1.15rem; font-weight:800; padding:0.85rem;" autofocus>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-cut-leftover')" data-i18n="cancelBtn">إلغاء</button>
+          <button type="submit" class="btn-primary" data-i18n="generateStickerBtn">🏷️ توليد ملصق اللوح</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة 10: تعديل قطعة الهالك -->
+  <div class="modal-overlay" id="modal-edit-leftover">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="modalEditLeftoverTitle">تعديل بيانات قطعة الهالك</h3>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-edit-leftover')">✕</button>
+      </div>
+      <form onsubmit="WMS_APP.submitEditLeftover(event)">
+        <input type="hidden" id="edit-cut-id">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group form-full">
+              <label data-i18n="lblPieceName">بيان القطعة المقصوصة</label>
+              <input type="text" id="edit-cut-name" required>
+            </div>
+            <div class="form-group">
+              <label data-i18n="lblCutDimensions">الأبعاد المقصوصة (سم)</label>
+              <input type="text" id="edit-cut-dim" required>
+            </div>
+            <div class="form-group">
+              <label data-i18n="lblCutThickness">السماكة</label>
+              <input type="text" id="edit-cut-thick" required>
+            </div>
+            <div class="form-group">
+              <label data-i18n="lblCutSlabsQty">عدد الألواح (يقبل 0.5)</label>
+              <input type="number" id="edit-cut-qty" min="0.1" step="0.5" required>
+            </div>
+            <div class="form-group">
+              <label data-i18n="lblCutLocation">موقع تخزين الهالك</label>
+              <input type="text" id="edit-cut-loc" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-edit-leftover')" data-i18n="cancelBtn">إلغاء</button>
+          <button type="submit" class="btn-primary" data-i18n="saveChangesBtn">حفظ التعديلات</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة 11: طباعة ملصق الباركود -->
+  <div class="modal-overlay" id="modal-print-sticker">
+    <div class="modal-content" style="max-width: 460px;">
+      <div class="modal-header">
+        <h3 data-i18n="printLabelBtn">طباعة ملصق القطعة</h3>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-print-sticker')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="sticker-tag-render-box"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-print-sticker')" data-i18n="closeBtn">إغلاق</button>
+        <button type="button" class="btn-primary" onclick="WMS_APP.printStickerOnly()" data-i18n="printStickerBtn">🖨 طباعة الملصق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة 12: طباعة مستند الجرد الرسمي A4 -->
+  <div class="modal-overlay" id="modal-inventory-a4">
+    <div class="modal-content" style="max-width: 860px;">
+      <div class="modal-header">
+        <h3 data-i18n="modalInventoryA4Title">مستند الجرد الفعلي للمستودع (A4)</h3>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-inventory-a4')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="a4-print-content-box" style="background:#ffffff; color:#000000; padding:1.5rem; border-radius:var(--radius-md);"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-inventory-a4')" data-i18n="closeBtn">إغلاق</button>
+        <button type="button" class="btn-primary" onclick="window.print()" data-i18n="printOfficialDocBtn">🖨 طباعة المستند الرسمي</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- حاوية الإشعارات السريعة -->
+  <div id="toast-container"></div>
+
+  <!-- ملفات الجافاسكريبت -->
+  <script src="db.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
