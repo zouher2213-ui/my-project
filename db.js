@@ -1213,7 +1213,31 @@ async function handleLogIn() {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     
+    if (window.WMS_DB) {
+      const authUser = { 
+        username: user.email, 
+        email: user.email,
+        name: user.displayName || user.email.split('@')[0],
+        role: 'Super Admin',
+        fullAccess: true,
+        permissions: ['*']
+      };
+      window.WMS_DB.setStored("wms_auth_user_v6", authUser);
+    }
+
+    const authSection = document.getElementById("auth-section");
+    const appSection = document.getElementById("app-section");
+    if (authSection) authSection.style.display = "none";
+    if (appSection) appSection.style.display = "block";
+
     if (passwordInput) passwordInput.value = "";
+
+    if (window.WMS_APP) {
+      if (typeof window.WMS_APP.updateUserHeader === 'function') {
+        window.WMS_APP.updateUserHeader();
+      }
+      window.WMS_APP.navigate('hud');
+    }
 
     if (window.showToast) {
       window.showToast(`تم تسجيل الدخول بنجاح! مرحباً ${user.email}`, "success");
@@ -1248,6 +1272,9 @@ function handleQuickDemoLogin() {
     if (authSection) authSection.style.display = "none";
     if (appSection) appSection.style.display = "block";
     if (window.WMS_APP) {
+      if (typeof window.WMS_APP.updateUserHeader === 'function') {
+        window.WMS_APP.updateUserHeader();
+      }
       window.WMS_APP.navigate('hud');
       if (window.showToast) window.showToast('تم تسجيل الدخول التجريبي السريع بنجاح!', 'success');
     }
@@ -1292,7 +1319,17 @@ async function handleLogOut() {
     if (window.WMS_DB) {
       window.WMS_DB.logout();
     }
-    await signOut(auth);
+    const authSection = document.getElementById("auth-section");
+    const appSection = document.getElementById("app-section");
+    if (authSection) authSection.style.display = "flex";
+    if (appSection) appSection.style.display = "none";
+
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.warn("Firebase signout warn:", err);
+    }
+
     if (window.showToast) {
       window.showToast("تم تسجيل الخروج بنجاح.", "info");
     }
@@ -1371,7 +1408,7 @@ onAuthStateChanged(auth, (user) => {
   const appSection = document.getElementById("app-section");
 
   if (user) {
-    // User is logged in: Hide auth-section, show app-section, start realtime messages listener
+    // User is logged in via Firebase
     if (authSection) authSection.style.display = "none";
     if (appSection) appSection.style.display = "block";
 
@@ -1395,19 +1432,18 @@ onAuthStateChanged(auth, (user) => {
       unsubscribeRealtime = initRealtimeMessagesListener();
     }
   } else {
-    // Check if WMS_DB has a local demo session
+    // Check if WMS_DB has any active session (local demo or stored user)
     const localUser = window.WMS_DB ? window.WMS_DB.getAuthUser() : null;
-    if (localUser && (localUser.username === 'admin' || localUser.username === 'demo')) {
+    if (localUser) {
       if (authSection) authSection.style.display = "none";
       if (appSection) appSection.style.display = "block";
+      if (window.WMS_APP && typeof window.WMS_APP.updateUserHeader === 'function') {
+        window.WMS_APP.updateUserHeader();
+      }
     } else {
-      // User is logged out: Show auth-section, hide app-section, stop listener
+      // Truly logged out
       if (authSection) authSection.style.display = "flex";
       if (appSection) appSection.style.display = "none";
-
-      if (window.WMS_DB) {
-        window.WMS_DB.setStored("wms_auth_user_v6", null);
-      }
     }
 
     if (unsubscribeRealtime) {

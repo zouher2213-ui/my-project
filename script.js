@@ -854,7 +854,9 @@
     const validRoutes = ['hud', 'porcelain', 'marble', 'wood-delivery', 'marble-delivery', 'porcelain-preview', 'marble-preview'];
     const targetRoute = validRoutes.includes(route) ? route : 'hud';
     APP.currentRoute = targetRoute;
-    window.location.hash = `#${targetRoute}`;
+    if (window.location.hash !== `#${targetRoute}`) {
+      window.location.hash = `#${targetRoute}`;
+    }
 
     document.querySelectorAll('.module-view').forEach(v => {
       if (v.id === `view-${targetRoute}`) {
