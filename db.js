@@ -989,7 +989,14 @@ const firebaseConfig = {
 
 // Initialize Firebase App, Auth, Firestore & Analytics
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+
+let analytics = null;
+try {
+  analytics = getAnalytics(app);
+} catch (err) {
+  console.warn("Firebase Analytics could not be initialized:", err);
+}
+
 const auth = getAuth(app);
 const firestoreDb = getFirestore(app);
 
@@ -1002,17 +1009,31 @@ async function handleSignUp() {
   const password = passwordInput ? passwordInput.value : "";
 
   if (!email || !password) {
-    alert("Please enter both email and password.");
+    alert("يرجى إدخال البريد الإلكتروني وكلمة المرور!");
+    return;
+  }
+
+  if (password.length < 6) {
+    alert("تنبيه: يجب أن تتكون كلمة المرور من 6 خانات على الأقل (شروط Firebase).");
     return;
   }
 
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    alert(`Success! User account created: ${user.email}`);
+    alert(`تم إنشاء الحساب بنجاح!\nالبريد: ${user.email}`);
     if (passwordInput) passwordInput.value = "";
   } catch (error) {
-    alert(`Registration Error: ${error.message}`);
+    console.error("Sign Up Error:", error);
+    if (error.code === 'auth/operation-not-allowed') {
+      alert("تنبيه مهم: يرجى تفعيل طريقة الدخول 'Email/Password' من لوحة تحكم Firebase:\nFirebase Console -> Authentication -> Sign-in method -> Email/Password -> Enable.");
+    } else if (error.code === 'auth/email-already-in-use') {
+      alert("هذا البريد الإلكتروني مسجل بالفعل! اضغط على زر 'Log In' لتسجيل الدخول به.");
+    } else if (error.code === 'auth/invalid-email') {
+      alert("صيغة البريد الإلكتروني غير صحيحة.");
+    } else {
+      alert(`فشل إنشاء الحساب: ${error.message} (${error.code || ''})`);
+    }
   }
 }
 
@@ -1025,17 +1046,24 @@ async function handleLogIn() {
   const password = passwordInput ? passwordInput.value : "";
 
   if (!email || !password) {
-    alert("Please enter both email and password.");
+    alert("يرجى إدخال البريد الإلكتروني وكلمة المرور!");
     return;
   }
 
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    alert(`Success! Logged in as: ${user.email}`);
+    alert(`تم تسجيل الدخول بنجاح!\nمرحباً: ${user.email}`);
     if (passwordInput) passwordInput.value = "";
   } catch (error) {
-    alert(`Login Error: ${error.message}`);
+    console.error("Log In Error:", error);
+    if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+      alert("بيانات الدخول غير صحيحة أو الحساب غير موجود. إذا كنت مستخدماً جديداً، اضغط على زر 'Sign Up' أولاً لإنشاء الحساب.");
+    } else if (error.code === 'auth/operation-not-allowed') {
+      alert("تنبيه مهم: يرجى تفعيل 'Email/Password' من لوحة Firebase Console -> Authentication -> Sign-in method.");
+    } else {
+      alert(`فشل تسجيل الدخول: ${error.message} (${error.code || ''})`);
+    }
   }
 }
 
@@ -1138,15 +1166,27 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// Attach Event Listeners on DOM Ready
-document.addEventListener("DOMContentLoaded", () => {
+// Export functions globally so inline onclick handlers and console work 100%
+window.handleSignUp = handleSignUp;
+window.handleLogIn = handleLogIn;
+window.handleLogOut = handleLogOut;
+window.handleSendMessage = handleSendMessage;
+
+// Attach Event Listeners immediately or on DOM ready
+function attachFirebaseEvents() {
   const btnSignUp = document.getElementById("btn-signup");
   const btnLogIn = document.getElementById("btn-login");
   const btnLogOut = document.getElementById("btn-logout");
   const btnSendMsg = document.getElementById("btn-send-msg");
 
-  if (btnSignUp) btnSignUp.addEventListener("click", handleSignUp);
-  if (btnLogIn) btnLogIn.addEventListener("click", handleLogIn);
-  if (btnLogOut) btnLogOut.addEventListener("click", handleLogOut);
-  if (btnSendMsg) btnSendMsg.addEventListener("click", handleSendMessage);
-});
+  if (btnSignUp) btnSignUp.onclick = handleSignUp;
+  if (btnLogIn) btnLogIn.onclick = handleLogIn;
+  if (btnLogOut) btnLogOut.onclick = handleLogOut;
+  if (btnSendMsg) btnSendMsg.onclick = handleSendMessage;
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", attachFirebaseEvents);
+} else {
+  attachFirebaseEvents();
+}

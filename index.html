@@ -38,10 +38,10 @@
           <input type="password" id="auth-password" required placeholder="••••••••" class="form-input">
         </div>
         <div style="display: flex; gap: 0.75rem; margin-top: 0.75rem;">
-          <button type="button" id="btn-login" class="btn-primary" style="flex: 1;">
+          <button type="button" id="btn-login" onclick="handleLogIn()" class="btn-primary" style="flex: 1;">
             Log In
           </button>
-          <button type="button" id="btn-signup" class="btn-secondary" style="flex: 1;">
+          <button type="button" id="btn-signup" onclick="handleSignUp()" class="btn-secondary" style="flex: 1;">
             Sign Up
           </button>
         </div>
@@ -81,7 +81,7 @@
         </button>
 
         <!-- تسجيل الخروج -->
-        <button type="button" id="btn-logout" class="btn-secondary btn-sm" onclick="WMS_APP.logout()" data-i18n="logoutBtn">
+        <button type="button" id="btn-logout" class="btn-secondary btn-sm" onclick="handleLogOut()" data-i18n="logoutBtn">
           تسجيل الخروج
         </button>
       </div>
@@ -179,7 +179,7 @@
 
           <div style="display: flex; gap: 0.6rem; margin-bottom: 1rem;">
             <input type="text" id="message-input" class="form-input" placeholder="اكتب رسالة للمزامنة الفورية مع السيرفر..." style="flex: 1;">
-            <button type="button" id="btn-send-msg" class="btn-primary" style="min-width: 100px;">Send</button>
+            <button type="button" id="btn-send-msg" onclick="handleSendMessage()" class="btn-primary" style="min-width: 100px;">Send</button>
           </div>
 
           <div style="background: var(--bg-input); border: var(--border-glass); border-radius: var(--radius-md); padding: 0.85rem; max-height: 220px; overflow-y: auto;">
