@@ -1,3 +1,25 @@
+// ============================================================================
+// Firebase V10 Modular SDK Imports (ES Modules via CDN)
+// ============================================================================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  onSnapshot, 
+  serverTimestamp, 
+  query, 
+  orderBy 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+
 /**
  * AL-ENTEJ WMS - LocalStorage Database Engine (v6.0)
  * Upgrades:
@@ -6,6 +28,7 @@
  * - Universal CRUD: Full Edit and Delete across Items, Leftovers, Reservations, and Permits.
  * - 100% Arabic, English, and Bengali data models.
  * - Dynamic customizable Sales Reps & Showroom shortcuts.
+ * - Seamless Firebase V10 (Auth State Observer & Firestore Realtime) Integration.
  */
 
 (function () {
@@ -348,14 +371,14 @@
       const showKey = lang === 'en' ? 'showrooms_en' : lang === 'bn' ? 'showrooms_bn' : 'showrooms_ar';
       const jobKey = lang === 'en' ? 'wood_job_types_en' : lang === 'bn' ? 'wood_job_types_bn' : 'wood_job_types_ar';
 
-      const reps = (Array.isArray(presets[repsKey]) && presets[repsKey].length > 0) 
-        ? presets[repsKey] 
+      const reps = (Array.isArray(presets[repsKey]) && presets[repsKey].length > 0)
+        ? presets[repsKey]
         : (INITIAL_PRESETS[repsKey] || ['طارق منصور', 'عدنان زيد', 'سامي حسن']);
-      const showrooms = (Array.isArray(presets[showKey]) && presets[showKey].length > 0) 
-        ? presets[showKey] 
+      const showrooms = (Array.isArray(presets[showKey]) && presets[showKey].length > 0)
+        ? presets[showKey]
         : (INITIAL_PRESETS[showKey] || ['معرض الرويال الكبير', 'معرض الحرمين الفاخر']);
-      const woodJobTypes = (Array.isArray(presets[jobKey]) && presets[jobKey].length > 0) 
-        ? presets[jobKey] 
+      const woodJobTypes = (Array.isArray(presets[jobKey]) && presets[jobKey].length > 0)
+        ? presets[jobKey]
         : (INITIAL_PRESETS[jobKey] || ['تصنيع وتركيب أبواب', 'مطابخ وخزائن خشبية', 'ديكورات وتكسيات جدارية']);
 
       return {
@@ -760,7 +783,7 @@
         'ديكورات وتكسيات',
         'أثاث مخصص'
       ];
-      
+
       let updated = false;
       orders.forEach((o, i) => {
         if (!o.workType || o.workType === 'General Woodwork' || o.workType === 'أعمال خشبية عامة' || o.workTypeAr === 'أعمال خشبية عامة' || o.workType === 'أعمال خشبية' || o.workTypeAr === 'أعمال خشبية') {
@@ -808,8 +831,8 @@
     addWoodOrder(data) {
       const orders = getStored(DB_KEYS.WOOD_ORDERS, INITIAL_WOOD_ORDERS);
       const count = orders.length + 1;
-      const permitNo = data.permitNo && data.permitNo.trim() 
-        ? data.permitNo.trim() 
+      const permitNo = data.permitNo && data.permitNo.trim()
+        ? data.permitNo.trim()
         : this.generateNextPermitNo('wood');
 
       const workType = data.workType && data.workType.trim() ? data.workType.trim() : 'خزانة';
@@ -898,8 +921,8 @@
     addMarbleOrder(data) {
       const orders = getStored(DB_KEYS.MARBLE_ORDERS, INITIAL_MARBLE_ORDERS);
       const count = orders.length + 1;
-      const permitNo = data.permitNo && data.permitNo.trim() 
-        ? data.permitNo.trim() 
+      const permitNo = data.permitNo && data.permitNo.trim()
+        ? data.permitNo.trim()
         : this.generateNextPermitNo('marble');
 
       const newOrder = {
@@ -947,4 +970,183 @@
       return true;
     }
   };
+
+  window.WMS_DB = WMS_DB;
 })();
+
+// ============================================================================
+// Firebase V10 Modular SDK Initialization & Auth State Observer
+// ============================================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyDD2DDMeqTh9mfC2kbCIeo7BGCi37Kalso",
+  authDomain: "my-project-4a10e.firebaseapp.com",
+  projectId: "my-project-4a10e",
+  storageBucket: "my-project-4a10e.firebasestorage.app",
+  messagingSenderId: "342485426366",
+  appId: "1:342485426366:web:e229f708a86ee04d86feef",
+  measurementId: "G-HS3G0B2XTF"
+};
+
+// Initialize Firebase App, Auth, Firestore & Analytics
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const auth = getAuth(app);
+const firestoreDb = getFirestore(app);
+
+// Authentication: Sign Up
+async function handleSignUp() {
+  const emailInput = document.getElementById("auth-email");
+  const passwordInput = document.getElementById("auth-password");
+
+  const email = emailInput ? emailInput.value.trim() : "";
+  const password = passwordInput ? passwordInput.value : "";
+
+  if (!email || !password) {
+    alert("Please enter both email and password.");
+    return;
+  }
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    alert(`Success! User account created: ${user.email}`);
+    if (passwordInput) passwordInput.value = "";
+  } catch (error) {
+    alert(`Registration Error: ${error.message}`);
+  }
+}
+
+// Authentication: Log In
+async function handleLogIn() {
+  const emailInput = document.getElementById("auth-email");
+  const passwordInput = document.getElementById("auth-password");
+
+  const email = emailInput ? emailInput.value.trim() : "";
+  const password = passwordInput ? passwordInput.value : "";
+
+  if (!email || !password) {
+    alert("Please enter both email and password.");
+    return;
+  }
+
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    alert(`Success! Logged in as: ${user.email}`);
+    if (passwordInput) passwordInput.value = "";
+  } catch (error) {
+    alert(`Login Error: ${error.message}`);
+  }
+}
+
+// Authentication: Log Out
+async function handleLogOut() {
+  try {
+    await signOut(auth);
+    alert("You have been logged out.");
+  } catch (error) {
+    alert(`Logout Error: ${error.message}`);
+  }
+}
+
+// Firestore: Save Message ('messages' collection)
+async function handleSendMessage() {
+  const messageInput = document.getElementById("message-input");
+  const messageText = messageInput ? messageInput.value.trim() : "";
+
+  if (!messageText) {
+    alert("Please type a message before sending.");
+    return;
+  }
+
+  try {
+    await addDoc(collection(firestoreDb, "messages"), {
+      text: messageText,
+      timestamp: serverTimestamp()
+    });
+    if (messageInput) messageInput.value = "";
+  } catch (error) {
+    alert(`Error sending message: ${error.message}`);
+  }
+}
+
+// Firestore: Realtime Snapshot Listener
+let unsubscribeRealtime = null;
+
+function initRealtimeMessagesListener() {
+  const messagesList = document.getElementById("messages-list");
+  if (!messagesList) return null;
+
+  const messagesQuery = query(collection(firestoreDb, "messages"), orderBy("timestamp", "asc"));
+
+  return onSnapshot(messagesQuery, (snapshot) => {
+    messagesList.innerHTML = "";
+
+    if (snapshot.empty) {
+      messagesList.innerHTML = `<li style="color:var(--text-muted); font-size:0.85rem; text-align:center; padding:1rem 0;">No messages yet. Send one above!</li>`;
+      return;
+    }
+
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      const li = document.createElement("li");
+      li.style.cssText = "background:var(--card-bg); border:var(--border-glass); border-left:4px solid var(--primary); padding:0.6rem 0.85rem; border-radius:6px; font-size:0.9rem; line-height:1.4; word-break:break-word;";
+      li.textContent = data.text || "";
+      messagesList.appendChild(li);
+    });
+
+    const container = messagesList.parentElement;
+    if (container) container.scrollTop = container.scrollHeight;
+  }, (error) => {
+    console.error("Firestore snapshot error:", error);
+  });
+}
+
+// ============================================================================
+// Auth State Observer (onAuthStateChanged)
+// Controls visibility of auth-section and app-section & realtime listener
+// ============================================================================
+onAuthStateChanged(auth, (user) => {
+  const authSection = document.getElementById("auth-section");
+  const appSection = document.getElementById("app-section");
+
+  if (user) {
+    // User is logged in: Hide auth-section, show app-section, start realtime messages listener
+    if (authSection) authSection.style.display = "none";
+    if (appSection) appSection.style.display = "block";
+
+    if (window.WMS_DB) {
+      window.WMS_DB.setStored("wms_auth_user_v6", { username: user.email, email: user.email });
+    }
+
+    if (!unsubscribeRealtime) {
+      unsubscribeRealtime = initRealtimeMessagesListener();
+    }
+  } else {
+    // User is logged out: Show auth-section, hide app-section, stop listener
+    if (authSection) authSection.style.display = "flex";
+    if (appSection) appSection.style.display = "none";
+
+    if (window.WMS_DB) {
+      window.WMS_DB.setStored("wms_auth_user_v6", null);
+    }
+
+    if (unsubscribeRealtime) {
+      unsubscribeRealtime();
+      unsubscribeRealtime = null;
+    }
+  }
+});
+
+// Attach Event Listeners on DOM Ready
+document.addEventListener("DOMContentLoaded", () => {
+  const btnSignUp = document.getElementById("btn-signup");
+  const btnLogIn = document.getElementById("btn-login");
+  const btnLogOut = document.getElementById("btn-logout");
+  const btnSendMsg = document.getElementById("btn-send-msg");
+
+  if (btnSignUp) btnSignUp.addEventListener("click", handleSignUp);
+  if (btnLogIn) btnLogIn.addEventListener("click", handleLogIn);
+  if (btnLogOut) btnLogOut.addEventListener("click", handleLogOut);
+  if (btnSendMsg) btnSendMsg.addEventListener("click", handleSendMessage);
+});

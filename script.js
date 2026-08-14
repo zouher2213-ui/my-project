@@ -787,9 +787,9 @@
   // AUTH & ROUTER
   // ==========================================================================
   function checkAuth() {
-    const user = WMS_DB.getAuthUser();
-    const loginSection = document.getElementById('view-login');
-    const appShell = document.getElementById('app-shell');
+    const user = WMS_DB ? WMS_DB.getAuthUser() : null;
+    const loginSection = document.getElementById('auth-section') || document.getElementById('view-login');
+    const appShell = document.getElementById('app-section') || document.getElementById('app-shell');
 
     if (!user) {
       if (loginSection) loginSection.style.display = 'flex';
