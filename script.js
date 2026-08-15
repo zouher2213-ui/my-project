@@ -1730,18 +1730,31 @@
             <div style="font-size:0.8rem; color:var(--info); font-weight:700;">${dayName} - ${escapeHtml(item.timeSlotTextAr || item.timeSlot)}</div>
           </td>
           <td>
-            <div style="font-size:0.88rem; font-weight:600; color:var(--text-primary); max-width:260px;">${escapeHtml(item.workType || item.notes || '-')}</div>
+            <div style="font-size:0.88rem; font-weight:700; color:var(--text-primary); max-width:260px;">
+              ${escapeHtml(item.workType || item.notes || 'تركيب وتسليم')}
+            </div>
             <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem;">📍 ${escapeHtml(item.address || '-')}</div>
-            ${(() => {
-              const mapsLink = item.mapsUrl || (item.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}` : '');
-              return mapsLink ? `
-                <div style="margin-top:0.35rem;">
-                  <a href="${escapeHtml(mapsLink)}" target="_blank" class="fs-maps-direct-btn" style="display:inline-flex; align-items:center; gap:0.3rem; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.35); color:#10b981; font-size:0.76rem; font-weight:700; padding:0.25rem 0.55rem; border-radius:6px; text-decoration:none; transition:all 0.2s ease;">
-                    🗺️ <span>فتح الموقع بالخريطة</span>
+            
+            <!-- أزرار الخرائط ورابط البيت وصورة المبنى -->
+            <div style="display:flex; gap:0.35rem; align-items:center; flex-wrap:wrap; margin-top:0.35rem;">
+              ${(() => {
+                const mapsLink = item.mapsUrl || (item.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}` : '');
+                return mapsLink ? `
+                  <a href="${escapeHtml(mapsLink)}" target="_blank" class="fs-maps-direct-btn" style="display:inline-flex; align-items:center; gap:0.25rem; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.35); color:#10b981; font-size:0.75rem; font-weight:700; padding:0.2rem 0.45rem; border-radius:5px; text-decoration:none;">
+                    🗺️ <span>الخريطة</span>
                   </a>
-                </div>
-              ` : '';
-            })()}
+                ` : '';
+              })()}
+              ${item.houseUrl ? `
+                <a href="${escapeHtml(item.houseUrl)}" target="_blank" style="display:inline-flex; align-items:center; gap:0.25rem; background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35); color:#60a5fa; font-size:0.75rem; font-weight:700; padding:0.2rem 0.45rem; border-radius:5px; text-decoration:none;" title="رابط بيت العميل المحدد">
+                  🏠 <span>بيت العميل</span>
+                </a>
+              ` : ''}
+              ${item.buildingPhoto ? `
+                <img src="${item.buildingPhoto}" class="building-photo-thumb" title="🔍 اضغط لمعاينة صورة المبنى" alt="واجهة المبنى" onclick="WMS_APP.openImageLightbox('${item.buildingPhoto}', '${escapeHtml(item.buyerName || item.clientName)} - واجهة المبنى', '${escapeHtml(item.permitNo)}')">
+              ` : ''}
+            </div>
+
             ${returnReasonBadge}
           </td>
           <td>
@@ -2027,6 +2040,71 @@
     });
   }
 
+  // --------------------------------------------------------------------------
+  // Building Exterior Photo Upload Handlers
+  // --------------------------------------------------------------------------
+  function handleBuildingPhotoUpload(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('يرجى اختيار ملف صورة صالح (JPG, PNG, WEBP).', 'warning');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        // Compress & resize image to max 900px wide for optimal speed and storage
+        const canvas = document.createElement('canvas');
+        const maxDim = 900;
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+        const hiddenInput = document.getElementById('fs-building-photo');
+        const previewImg = document.getElementById('fs-building-photo-preview-img');
+        const container = document.getElementById('fs-building-photo-preview-container');
+
+        if (hiddenInput) hiddenInput.value = dataUrl;
+        if (previewImg) previewImg.src = dataUrl;
+        if (container) container.style.display = 'flex';
+
+        showToast('تم رفع ومعالجة صورة واجهة المبنى بنجاح! 🏢📸', 'success');
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeBuildingPhoto() {
+    const hiddenInput = document.getElementById('fs-building-photo');
+    const fileInput = document.getElementById('fs-building-photo-input');
+    const previewImg = document.getElementById('fs-building-photo-preview-img');
+    const container = document.getElementById('fs-building-photo-preview-container');
+
+    if (hiddenInput) hiddenInput.value = '';
+    if (fileInput) fileInput.value = '';
+    if (previewImg) previewImg.src = '';
+    if (container) container.style.display = 'none';
+
+    showToast('تمت إزالة صورة المبنى.', 'info');
+  }
+
   function openNewFieldServiceModal(prefill = null) {
     const editId = document.getElementById('fs-edit-id');
     if (editId) editId.value = '';
@@ -2056,6 +2134,9 @@
     if (document.getElementById('fs-maps-url')) document.getElementById('fs-maps-url').value = '';
     const previewBtn = document.getElementById('fs-maps-preview-btn');
     if (previewBtn) previewBtn.style.display = 'none';
+
+    if (document.getElementById('fs-house-url')) document.getElementById('fs-house-url').value = '';
+    removeBuildingPhoto();
 
     if (document.getElementById('fs-work-type')) document.getElementById('fs-work-type').value = '';
     if (document.getElementById('fs-notes')) document.getElementById('fs-notes').value = '';
@@ -2110,6 +2191,19 @@
       }
     }
 
+    // Restore house url and building photo
+    if (document.getElementById('fs-house-url')) document.getElementById('fs-house-url').value = item.houseUrl || '';
+    if (item.buildingPhoto) {
+      const hiddenInput = document.getElementById('fs-building-photo');
+      const previewImg = document.getElementById('fs-building-photo-preview-img');
+      const container = document.getElementById('fs-building-photo-preview-container');
+      if (hiddenInput) hiddenInput.value = item.buildingPhoto;
+      if (previewImg) previewImg.src = item.buildingPhoto;
+      if (container) container.style.display = 'flex';
+    } else {
+      removeBuildingPhoto();
+    }
+
     document.getElementById('fs-work-type').value = item.workType || '';
     document.getElementById('fs-notes').value = item.notes || '';
 
@@ -2149,6 +2243,9 @@
       mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
     }
 
+    const houseUrl = document.getElementById('fs-house-url') ? document.getElementById('fs-house-url').value.trim() : '';
+    const buildingPhoto = document.getElementById('fs-building-photo') ? document.getElementById('fs-building-photo').value.trim() : '';
+
     const payload = {
       permitNo: document.getElementById('fs-permit-no').value.trim(),
       orderType: document.getElementById('fs-order-type').value,
@@ -2164,6 +2261,8 @@
       timeSlotTextAr: timeSlotAr,
       address: address,
       mapsUrl: mapsUrl,
+      houseUrl: houseUrl,
+      buildingPhoto: buildingPhoto,
       workType: document.getElementById('fs-work-type').value.trim(),
       notes: document.getElementById('fs-notes').value.trim()
     };
@@ -2171,7 +2270,7 @@
     try {
       if (editId) {
         WMS_DB.updateFieldService(editId, payload);
-        showToast('تم تحديث موعد التركيب وبيانات الخريطة بنجاح! 💾', 'success');
+        showToast('تم تحديث موعد التركيب وبيانات الخريطة والموقع بنجاح! 💾', 'success');
       } else {
         WMS_DB.addFieldService(payload);
         showToast('تم حجز موعد التركيب وإسناد الفني ورابط الخريطة بنجاح! 📅📍', 'success');
@@ -2189,6 +2288,371 @@
       renderFieldServiceView();
       showToast('تم حذف الموعد بنجاح.', 'info');
     }
+  }
+
+  // --------------------------------------------------------------------------
+  // TODAY'S INSTALLATIONS PREVIEW & PRINT CONTROLLER
+  // --------------------------------------------------------------------------
+  function openTodayInstallationsPreview(targetDate = null) {
+    const todayStr = targetDate || new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('fs-preview-date-input');
+    if (dateInput) dateInput.value = todayStr;
+
+    renderTodayInstallationsSheet(todayStr);
+    openModal('modal-today-installations-preview');
+  }
+
+  function setTodayPreviewDate(type) {
+    const dateInput = document.getElementById('fs-preview-date-input');
+    if (type === 'today') {
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (dateInput) dateInput.value = todayStr;
+      renderTodayInstallationsSheet(todayStr);
+    } else {
+      if (dateInput) dateInput.value = '';
+      renderTodayInstallationsSheet('');
+    }
+  }
+
+  function renderTodayInstallationsSheet(filterDate = '') {
+    const container = document.getElementById('today-installations-printable-area');
+    if (!container) return;
+
+    const allAppointments = WMS_DB.getFieldServices();
+    let filtered = allAppointments;
+
+    if (filterDate) {
+      filtered = allAppointments.filter(a => a.scheduledDate === filterDate);
+    } else {
+      // All active appointments
+      filtered = allAppointments.filter(a => a.status !== 'Completed');
+    }
+
+    const todayAr = filterDate 
+      ? new Date(filterDate).toLocaleDateString(APP.lang === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+      : 'كافة المواعيد النشطة';
+
+    let tableRows = '';
+    if (filtered.length === 0) {
+      tableRows = `
+        <tr>
+          <td colspan="8" style="text-align: center; padding: 2.5rem; color: #64748b; font-size: 1rem;">
+            لا توجد أوردرات مجدولة للتركيب في هذا التاريخ (${filterDate || 'المحدد'}).
+          </td>
+        </tr>
+      `;
+    } else {
+      tableRows = filtered.map((item, idx) => {
+        const isReturned = item.status === 'Returned';
+        const isCompleted = item.status === 'Completed';
+
+        let statusText = '📅 مجدول للتنفيذ';
+        let statusColor = '#2563eb';
+        if (isCompleted) { statusText = '✓ تم الإنجاز'; statusColor = '#16a34a'; }
+        else if (isReturned) { statusText = '⚠️ متعثر / مرتجع'; statusColor = '#dc2626'; }
+        else if (item.status === 'In Progress') { statusText = '⏳ بالموقع / قيد العمل'; statusColor = '#d97706'; }
+
+        const mapsLink = item.mapsUrl || (item.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}` : '');
+
+        return `
+          <tr>
+            <td style="text-align: center; font-weight: bold; width: 35px;">${idx + 1}</td>
+            <td style="font-family: monospace; font-weight: 800; font-size: 0.95rem; color: #1e1b4b; white-space: nowrap;">
+              ${escapeHtml(item.permitNo)}
+              <div style="font-size: 0.75rem; color: #64748b; font-family: sans-serif;">${escapeHtml(item.orderTypeAr || 'فسح ميداني')}</div>
+            </td>
+            <td>
+              <strong style="font-size: 0.98rem; color: #0f172a; display: block;">${escapeHtml(item.buyerName || item.clientName)}</strong>
+              <span style="font-size: 0.8rem; color: #64748b;">${escapeHtml(item.showroom || '-')} | 📞 ${escapeHtml(item.phone || '-')}</span>
+            </td>
+            <td>
+              <span style="font-weight: 700; color: #4338ca; background: #e0e7ff; padding: 0.2rem 0.5rem; border-radius: 4px; display: inline-block; font-size: 0.85rem;">
+                ${escapeHtml(item.workType || 'تركيب مطبخ / رخام')}
+              </span>
+            </td>
+            <td style="white-space: nowrap;">
+              <strong style="color: #0f172a; font-size: 0.92rem; display: block;">${escapeHtml(item.scheduledDate || '-')}</strong>
+              <span style="font-size: 0.8rem; color: #2563eb; font-weight: 600;">${escapeHtml(item.timeSlotTextAr || item.timeSlot || 'صباحي')}</span>
+            </td>
+            <td>
+              <strong style="font-size: 0.9rem; color: #0f172a;">👷‍♂️ ${escapeHtml(item.technicianName || 'غير مسند')}</strong>
+            </td>
+            <td>
+              <div style="font-size: 0.85rem; line-height: 1.35; color: #1e293b;">
+                📍 ${escapeHtml(item.address || 'العنوان غير مسجل')}
+              </div>
+              <div class="no-print" style="margin-top: 0.35rem; display: flex; gap: 0.3rem; align-items: center; flex-wrap: wrap;">
+                ${mapsLink ? `
+                  <a href="${escapeHtml(mapsLink)}" target="_blank" style="font-size: 0.74rem; background: #dcfce7; color: #15803d; padding: 0.2rem 0.45rem; border-radius: 4px; text-decoration: none; font-weight: 700;">
+                    🗺️ الخريطة
+                  </a>
+                ` : ''}
+                ${item.houseUrl ? `
+                  <a href="${escapeHtml(item.houseUrl)}" target="_blank" style="font-size: 0.74rem; background: #dbeafe; color: #1d4ed8; padding: 0.2rem 0.45rem; border-radius: 4px; text-decoration: none; font-weight: 700;">
+                    🏠 بيت العميل
+                  </a>
+                ` : ''}
+                ${item.buildingPhoto ? `
+                  <img src="${item.buildingPhoto}" class="building-photo-thumb" style="width: 38px; height: 28px;" title="معاينة صورة واجهة المبنى" onclick="WMS_APP.openImageLightbox('${item.buildingPhoto}', '${escapeHtml(item.buyerName || item.clientName)} - واجهة المبنى', '${escapeHtml(item.permitNo)}')">
+                ` : ''}
+              </div>
+            </td>
+            <!-- عمود الإجراءات (يظهر في المعاينة ويختفي تلقائياً عند الطباعة) -->
+            <td class="no-print" style="text-align: center; white-space: nowrap;">
+              <div style="display: flex; gap: 0.3rem; justify-content: center; align-items: center;">
+                ${!isCompleted && !isReturned ? `
+                  <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.closeModal('modal-today-installations-preview'); WMS_APP.openOrderReturnModal('${item.id}')" title="توثيق ترجيع وتعثر" style="color: #ef4444; border-color: rgba(239,68,68,0.4); font-size: 0.78rem; padding: 0.25rem 0.5rem;">
+                    🔄 ترجيع
+                  </button>
+                  <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.closeModal('modal-today-installations-preview'); WMS_APP.openRateTechnicianModal('${item.id}')" title="تقييم وإنجاز" style="color: #f59e0b; border-color: rgba(245,158,11,0.4); font-size: 0.78rem; padding: 0.25rem 0.5rem;">
+                    ⭐ تقييم
+                  </button>
+                ` : ''}
+                <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.closeModal('modal-today-installations-preview'); WMS_APP.openEditFieldServiceModal('${item.id}')" title="تعديل الموعد" style="font-size: 0.78rem; padding: 0.25rem 0.45rem;">
+                  ✏️
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    container.innerHTML = `
+      <div class="printable-report-header">
+        <div>
+          <h2 style="margin: 0; font-size: 1.4rem; color: #0f172a; font-weight: 900;">
+            🏢 مستودع الإنتاج — كشف طلبيات ومواعيد التركيب الميدانية
+          </h2>
+          <div style="font-size: 0.88rem; color: #475569; margin-top: 0.35rem;">
+            AL-ENTEJ WMS — DAILY FIELD INSTALLATION MANIFEST & DISPATCH SCHEDULE
+          </div>
+        </div>
+        <div style="text-align: left; font-size: 0.88rem; color: #334155;">
+          <div><strong>📅 التاريخ:</strong> ${todayAr}</div>
+          <div><strong>📦 إجمالي الطلبيات:</strong> ${filtered.length} موعد / أوردر</div>
+        </div>
+      </div>
+
+      <table class="printable-table">
+        <thead>
+          <tr>
+            <th style="width: 35px; text-align: center;">#</th>
+            <th>رقم الفسح</th>
+            <th>اسم الزبون / المعرض</th>
+            <th>نوع العمل</th>
+            <th>تاريخ وموعد التركيب</th>
+            <th>فني التركيب</th>
+            <th>العنوان وتفاصيل الموقع</th>
+            <th class="no-print" style="text-align: center;">إجراءات فورية</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+
+      <div class="printable-report-footer">
+        <div>مشرف المستودع والميدان: _____________________</div>
+        <div>مسؤول التسليمات والتركيبات: _____________________</div>
+        <div>اعتماد مهندس الإنتاج: _____________________</div>
+      </div>
+    `;
+  }
+
+  function printTodayInstallations() {
+    const printArea = document.getElementById('today-installations-printable-area');
+    if (!printArea) return;
+
+    // Open dedicated high-definition print popup with no-print stripped
+    const isRtl = APP.lang === 'ar';
+    const printWin = window.open('', '_blank', 'width=1000,height=800');
+    if (!printWin) {
+      window.print();
+      return;
+    }
+
+    const htmlContent = printArea.innerHTML;
+
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html lang="${APP.lang}" dir="${isRtl ? 'rtl' : 'ltr'}">
+      <head>
+        <meta charset="UTF-8">
+        <title>كشف طلبيات ومواعيد التركيب اليومية — مستودع الإنتاج</title>
+        <style>
+          @page { size: A4 landscape; margin: 10mm; }
+          body { font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif; background: #ffffff; color: #000000; margin: 0; padding: 10px; direction: ${isRtl ? 'rtl' : 'ltr'}; }
+          .printable-report-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
+          .printable-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 9pt; }
+          .printable-table th { background-color: #000000 !important; color: #ffffff !important; padding: 7px 6px; font-weight: bold; border: 1px solid #000; text-align: right; }
+          .printable-table td { padding: 6px; border: 1px solid #333; color: #000; vertical-align: middle; }
+          .printable-table tr:nth-child(even) { background-color: #f5f5f5; }
+          .printable-report-footer { display: flex; justify-content: space-between; margin-top: 30px; padding-top: 15px; border-top: 1px dashed #444; font-size: 9.5pt; font-weight: bold; }
+          .no-print { display: none !important; }
+        </style>
+      </head>
+      <body>
+        ${htmlContent}
+      </body>
+      </html>
+    `);
+
+    printWin.document.close();
+    printWin.focus();
+    setTimeout(() => {
+      printWin.print();
+    }, 400);
+  }
+
+  // --------------------------------------------------------------------------
+  // RETURNS REPORT PREVIEW & PRINT CONTROLLER
+  // --------------------------------------------------------------------------
+  function openReturnsReportPreview() {
+    const container = document.getElementById('returns-report-printable-area');
+    if (!container) return;
+
+    const list = WMS_DB.getFieldServices().filter(item => item.status === 'Returned');
+    const dateStr = new Date().toLocaleDateString(APP.lang === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    let rowsHtml = '';
+    if (list.length === 0) {
+      rowsHtml = `
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 2.5rem; color: #16a34a; font-size: 1rem; font-weight: bold;">
+            🎉 ممتاز! لا توجد أي أوردرات مرتجعة أو متعثرة حالياً في سجل المستودع.
+          </td>
+        </tr>
+      `;
+    } else {
+      rowsHtml = list.map((item, idx) => {
+        const returnTime = item.returnTimestamp 
+          ? new Date(item.returnTimestamp).toLocaleDateString(APP.lang === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+          : item.scheduledDate;
+
+        return `
+          <tr>
+            <td style="text-align: center; font-weight: bold; width: 35px;">${idx + 1}</td>
+            <td style="font-family: monospace; font-weight: 800; font-size: 0.95rem; color: #dc2626; white-space: nowrap;">
+              ${escapeHtml(item.permitNo)}
+              <div style="font-size: 0.75rem; color: #64748b; font-family: sans-serif;">${escapeHtml(item.orderTypeAr || 'فسح')}</div>
+            </td>
+            <td>
+              <strong style="font-size: 0.96rem; color: #0f172a; display: block;">${escapeHtml(item.buyerName || item.clientName)}</strong>
+              <span style="font-size: 0.8rem; color: #64748b;">${escapeHtml(item.showroom || '')} | 📞 ${escapeHtml(item.phone || '-')}</span>
+            </td>
+            <td>
+              <strong style="color: #0f172a; font-size: 0.9rem;">👷‍♂️ ${escapeHtml(item.technicianName || '-')}</strong>
+            </td>
+            <td style="white-space: nowrap; color: #dc2626; font-weight: 700; font-size: 0.88rem;">
+              ${returnTime}
+            </td>
+            <td>
+              <span style="display: inline-block; background: #fee2e2; color: #dc2626; font-weight: 700; font-size: 0.82rem; padding: 0.25rem 0.55rem; border-radius: 4px;">
+                ⚠️ ${escapeHtml(item.returnReasonTextAr || item.returnReason || 'تعثر التسليم')}
+              </span>
+            </td>
+            <td>
+              <div style="font-size: 0.85rem; color: #1e293b; max-width: 320px; line-height: 1.4;">
+                ${escapeHtml(item.returnNotes || 'لا توجد ملاحظات إضافية')}
+              </div>
+            </td>
+            <td class="no-print" style="text-align: center; white-space: nowrap;">
+              <button type="button" class="btn-primary btn-sm" onclick="WMS_APP.closeModal('modal-returns-report-preview'); WMS_APP.openEditFieldServiceModal('${item.id}')" style="background: #10b981; font-size: 0.8rem; padding: 0.3rem 0.6rem;">
+                🗓️ إعادة جدولة
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    container.innerHTML = `
+      <div class="printable-report-header" style="border-bottom-color: #dc2626;">
+        <div>
+          <h2 style="margin: 0; font-size: 1.4rem; color: #b91c1c; font-weight: 900;">
+            ⚠️ مستودع الإنتاج — تقرير وسجل حالات الترجيع والتعثر الميداني
+          </h2>
+          <div style="font-size: 0.88rem; color: #475569; margin-top: 0.35rem;">
+            AL-ENTEJ WMS — OFFICIAL FIELD RETURNS & NON-DELIVERY AUDIT REPORT
+          </div>
+        </div>
+        <div style="text-align: left; font-size: 0.88rem; color: #334155;">
+          <div><strong>📅 تاريخ استخراج التقرير:</strong> ${dateStr}</div>
+          <div><strong>⚠️ إجمالي الحالات المتعثرة:</strong> ${list.length} أوردر</div>
+        </div>
+      </div>
+
+      <table class="printable-table">
+        <thead>
+          <tr style="background: #991b1b !important;">
+            <th style="width: 35px; text-align: center;">#</th>
+            <th>رقم الفسح</th>
+            <th>العميل والمعرض</th>
+            <th>الفني الميداني</th>
+            <th>تاريخ ووقت الترجيع</th>
+            <th>سبب الترجيع والتعثر</th>
+            <th>تقرير وتفاصيل الفني</th>
+            <th class="no-print" style="text-align: center;">إجراء</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+
+      <div class="printable-report-footer">
+        <div>المسؤول الميداني: _____________________</div>
+        <div>مشرف خدمة العملاء: _____________________</div>
+        <div>اعتماد مهندس الإنتاج: _____________________</div>
+      </div>
+    `;
+
+    openModal('modal-returns-report-preview');
+  }
+
+  function printReturnsReport() {
+    const printArea = document.getElementById('returns-report-printable-area');
+    if (!printArea) return;
+
+    const isRtl = APP.lang === 'ar';
+    const printWin = window.open('', '_blank', 'width=1000,height=800');
+    if (!printWin) {
+      window.print();
+      return;
+    }
+
+    const htmlContent = printArea.innerHTML;
+
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html lang="${APP.lang}" dir="${isRtl ? 'rtl' : 'ltr'}">
+      <head>
+        <meta charset="UTF-8">
+        <title>تقرير وسجل المرتجعات وحالات التعثر — مستودع الإنتاج</title>
+        <style>
+          @page { size: A4 landscape; margin: 10mm; }
+          body { font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif; background: #ffffff; color: #000000; margin: 0; padding: 10px; direction: ${isRtl ? 'rtl' : 'ltr'}; }
+          .printable-report-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #b91c1c; padding-bottom: 10px; margin-bottom: 15px; }
+          .printable-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 9pt; }
+          .printable-table th { background-color: #000000 !important; color: #ffffff !important; padding: 7px 6px; font-weight: bold; border: 1px solid #000; text-align: right; }
+          .printable-table td { padding: 6px; border: 1px solid #333; color: #000; vertical-align: middle; }
+          .printable-table tr:nth-child(even) { background-color: #fdf2f2; }
+          .printable-report-footer { display: flex; justify-content: space-between; margin-top: 30px; padding-top: 15px; border-top: 1px dashed #444; font-size: 9.5pt; font-weight: bold; }
+          .no-print { display: none !important; }
+        </style>
+      </head>
+      <body>
+        ${htmlContent}
+      </body>
+      </html>
+    `);
+
+    printWin.document.close();
+    printWin.focus();
+    setTimeout(() => {
+      printWin.print();
+    }, 400);
   }
 
   // Return Management Modal
@@ -3534,7 +3998,15 @@
     updateCustomTimeSlotText,
     getCurrentGpsLocation,
     openGoogleMapsSearch,
-    handleAddressInput
+    handleAddressInput,
+    handleBuildingPhotoUpload,
+    removeBuildingPhoto,
+    openTodayInstallationsPreview,
+    setTodayPreviewDate,
+    renderTodayInstallationsSheet,
+    printTodayInstallations,
+    openReturnsReportPreview,
+    printReturnsReport
   };
 
   function renderWoodPermitChips() {

@@ -2095,3 +2095,124 @@ button {
   padding: 0.25rem 0.6rem;
   border-radius: 6px;
 }
+
+/* Building Exterior Photo & Thumbnail Styles */
+.building-photo-thumb {
+  width: 48px;
+  height: 38px;
+  object-fit: cover;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.building-photo-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Printable Report Sheet Design (On-Screen & Print) */
+.printable-report-sheet {
+  background: #ffffff;
+  color: #0f172a;
+  padding: 2rem;
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+}
+
+.printable-report-sheet h2,
+.printable-report-sheet h3,
+.printable-report-sheet h4 {
+  color: #0f172a;
+}
+
+.printable-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 0.88rem;
+}
+
+.printable-table th {
+  background-color: #1e293b;
+  color: #ffffff;
+  padding: 0.65rem 0.6rem;
+  font-weight: 800;
+  border: 1px solid #334155;
+  text-align: right;
+}
+
+.printable-table td {
+  padding: 0.65rem 0.6rem;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.printable-table tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+.printable-report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #0f172a;
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.printable-report-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed #94a3b8;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+/* Print Media Rules */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .no-print,
+  .no-print * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  #today-installations-printable-area,
+  #today-installations-printable-area *,
+  #returns-report-printable-area,
+  #returns-report-printable-area * {
+    visibility: visible;
+  }
+  #today-installations-printable-area,
+  #returns-report-printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    color: #000000 !important;
+  }
+  .printable-table th {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .printable-table td {
+    border-color: #666666 !important;
+  }
+}
+
