@@ -162,10 +162,16 @@
             <span data-i18n="ownerLogin">دخول المالك السريع (Owner: s@gmail.com)</span>
           </button>
 
-          <!-- زر الدخول التجريبي السريع (وضع الدخول) -->
+          <!-- زر الدخول التجريبي السريع (وضع الدخول - Admin) -->
           <button type="button" id="btn-demo-login" onclick="handleQuickDemoLogin(event)" class="btn-secondary auth-demo-btn">
-            <span>⚡</span>
-            <span data-i18n="demoLogin">دخول تجريبي سريع (Admin)</span>
+            <span>🛡️</span>
+            <span data-i18n="demoLogin">دخول تجريبي سريع (Admin: كامل الصلاحيات)</span>
+          </button>
+
+          <!-- زر الدخول التجريبي السريع (وضع الدخول - Viewer) -->
+          <button type="button" id="btn-viewer-login" onclick="handleQuickViewerLogin(event)" class="btn-secondary" style="border-color: rgba(59, 130, 246, 0.4); color: #60a5fa; font-weight: 700; font-size: 0.86rem; padding: 0.65rem; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 0.45rem;">
+            <span>👁️</span>
+            <span data-i18n="viewerLogin">دخول تجريبي سريع (Viewer: قراءة فقط)</span>
           </button>
 
           <!-- زر إنشاء الحساب (وضع التسجيل) -->
@@ -329,6 +335,47 @@
             </div>
           </div>
         </div>
+
+        <!-- ================================================================ -->
+        <!-- لوحة الرسائل والتعميمات الإدارية مع التحكم بالصلاحيات (Messages & RBAC Panel) -->
+        <!-- ================================================================ -->
+        <div class="hud-messages-card" style="margin-top: 2rem; background: var(--bg-card); border: var(--border-glass); border-radius: var(--radius-lg); padding: 1.5rem; backdrop-filter: blur(16px);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+              <span style="font-size: 1.5rem;">📢</span>
+              <div>
+                <h3 style="margin: 0; font-size: 1.15rem;" data-i18n="hudMessagesTitle">لوحة التعميمات والرسائل الإدارية</h3>
+                <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);" data-i18n="hudMessagesDesc">رسائل المستودع وإعلانات الإدارة المباشرة</p>
+              </div>
+            </div>
+            <span id="role-badge-indicator" class="status-pill pill-available" style="font-size: 0.82rem;">🛡️ صلاحية: مدير (قراءة وكتابة)</span>
+          </div>
+
+          <!-- قائمة الرسائل (دائماً معروضة للمشاهد وللمدير: Show messages list) -->
+          <div id="messages-list" class="messages-list-box" style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 240px; overflow-y: auto; margin-bottom: 1.25rem; padding-right: 0.25rem;">
+            <div class="msg-item" style="background: var(--bg-input); padding: 0.85rem 1rem; border-radius: var(--radius-md); border-left: 3px solid var(--primary);">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                <strong style="color: var(--primary-light); font-size: 0.88rem;">👑 الإدارة العامة (Admin)</strong>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">اليوم 09:30 ص</span>
+              </div>
+              <p style="margin: 0; font-size: 0.88rem; color: var(--text-primary);">مرحباً بجميع مستخدمي المنظومة! يرجى مراجعة فسوحات الخشب والرخام المجدولة اليوم وتوثيق أي حالات تعثر في قسم الخدمات الميدانية.</p>
+            </div>
+          </div>
+
+          <!-- تنبيه خاص للمشاهد (Viewer Notice) -->
+          <div id="viewer-notice-box" class="viewer-read-only-notice" style="display: none; align-items: center; gap: 0.5rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: var(--radius-md); padding: 0.75rem 1rem; color: #93c5fd; font-size: 0.86rem;">
+            <span>ℹ️</span> <span>أنت مسجل بصلاحية <strong>مشاهد (Viewer)</strong>: يمكنك قراءة الرسائل والبيانات، بينما كتابة وإرسال الرسائل والتعديلات مخصصة للمدير (Admin / Owner).</span>
+          </div>
+
+          <!-- نموذج إرسال الرسائل (يظهر للمدير فقط، ويختفي للمشاهد: HIDE text input and 'Send' button for viewer) -->
+          <form id="message-form-group" class="message-form-container" onsubmit="handleSendBroadcastMessage(event)" style="display: flex; gap: 0.75rem; align-items: center;">
+            <input type="text" id="message-input" class="form-input" style="flex: 1; padding: 0.75rem 1rem;" placeholder="اكتب رسالة أو تعميم إداري جديد للمستودع..." required>
+            <button type="submit" id="btn-send" class="btn-primary" style="padding: 0.75rem 1.5rem; white-space: nowrap;">
+              <span>إرسال</span> <span>✈️</span>
+            </button>
+          </form>
+        </div>
+
       </div>
     </main>
 

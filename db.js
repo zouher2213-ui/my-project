@@ -1494,22 +1494,135 @@ const firestoreDb = getFirestore(app);
 let isSigningUp = false;
 let currentAuthMode = 'login'; // 'login' or 'signup'
 
-// Helper: Standardized User Object Creator (Detects Owner role for s@gmail.com)
-function createAuthUser(email, displayName) {
+// Helper: Standardized User Object Creator with Role-Based Permissions
+function createAuthUser(email, displayName, customRole = null) {
   const isOwner = email && (email.toLowerCase().trim() === 's@gmail.com');
+  const isHardAdmin = email && (email.toLowerCase().trim() === 'admin');
+  
+  let role = 'viewer';
+  if (isOwner) {
+    role = 'owner';
+  } else if (isHardAdmin) {
+    role = 'admin';
+  } else if (customRole) {
+    role = customRole.toLowerCase();
+  }
+
+  const isViewer = role === 'viewer';
+  const isAdmin = role === 'admin' || role === 'owner';
+
   return { 
     username: email, 
     email: email,
     name: displayName || (isOwner ? 'المالك / Owner (s@gmail.com)' : (email ? email.split('@')[0] : 'admin')),
-    role: isOwner ? 'Owner' : 'Super Admin',
-    roleTitleAr: isOwner ? 'المالك / صاحب المنشأة (كامل الصلاحيات)' : 'المدير العام للمستودع (كامل الصلاحيات)',
-    roleTitleEn: isOwner ? 'Owner & Primary Administrator (Full Access)' : 'Super Admin (Full Access)',
-    roleTitleBn: isOwner ? 'মালিক / Owner (পূর্ণ প্রবেশাধিকার)' : 'সুপার অ্যাডমিন (পূর্ণ প্রবেশাধিকার)',
-    fullAccess: true,
-    permissions: ['*'],
+    role: role, // 'viewer' | 'admin' | 'owner'
+    roleTitleAr: isOwner ? 'المالك / صاحب المنشأة (كامل الصلاحيات)' : (role === 'admin' ? 'المدير العام (قراءة وكتابة)' : 'مشاهد (قراءة فقط)'),
+    roleTitleEn: isOwner ? 'Owner & Primary Administrator (Full Access)' : (role === 'admin' ? 'Administrator (Read & Write)' : 'Viewer (Read Only)'),
+    roleTitleBn: isOwner ? 'মালিক (পূর্ণ প্রবেশাধিকার)' : (role === 'admin' ? 'অ্যাডমিনিস্ট্রেটর (পড়া ও লেখা)' : 'দর্শক (শুধুমাত্র দেখার অনুমতি)'),
+    fullAccess: !isViewer,
+    canWrite: !isViewer,
+    canRead: true,
+    permissions: isViewer ? ['read'] : ['*'],
     isOwner: isOwner
   };
 }
+
+// Role-Based Access Control: Fetch role from Firestore users collection
+async function fetchUserRole(user) {
+  if (!user) return 'viewer';
+  const isOwner = user.email && (user.email.toLowerCase().trim() === 's@gmail.com');
+  if (isOwner) return 'owner';
+  if (user.email && user.email.toLowerCase().trim() === 'admin') return 'admin';
+  if (!user.uid) return 'viewer';
+
+  try {
+    if (firestoreDb) {
+      const userDocRef = doc(firestoreDb, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        const role = userData.role || 'viewer';
+        console.log(`👤 Fetched role from Firestore for [${user.email}]: ${role}`);
+        return role;
+      } else {
+        // Document does not exist yet; create with default 'viewer' role
+        const defaultRole = isOwner ? 'owner' : 'viewer';
+        await setDoc(userDocRef, {
+          uid: user.uid,
+          email: user.email,
+          role: defaultRole,
+          createdAt: new Date().toISOString()
+        }, { merge: true });
+        console.log(`👤 Created default user document for [${user.email}] with role: ${defaultRole}`);
+        return defaultRole;
+      }
+    }
+  } catch (err) {
+    console.warn("Could not fetch user role from Firestore:", err);
+  }
+  return isOwner ? 'owner' : 'viewer';
+}
+
+// UI Permissions Engine: Controls UI elements based on role
+function applyRolePermissions(role) {
+  const normRole = (role || 'viewer').toLowerCase();
+  const isViewer = normRole === 'viewer';
+  const isOwner = normRole === 'owner';
+  const isAdmin = normRole === 'admin' || isOwner;
+
+  // 1. Set root attribute and classes
+  document.documentElement.setAttribute('data-role', normRole);
+  if (isViewer) {
+    document.documentElement.classList.add('is-viewer-role');
+    document.documentElement.classList.remove('is-admin-role', 'is-owner-role');
+  } else {
+    document.documentElement.classList.add('is-admin-role');
+    document.documentElement.classList.remove('is-viewer-role');
+    if (isOwner) document.documentElement.classList.add('is-owner-role');
+  }
+
+  // 2. Control Messages input and send button visibility as requested:
+  // "If the role is 'viewer': Show the messages list, but HIDE the message text input and the 'Send' button. (They can only read).
+  //  If the role is 'admin': Show everything (the messages list, the text input, and the 'Send' button). (They can read and write)."
+  const msgInput = document.getElementById('message-input');
+  const btnSend = document.getElementById('btn-send') || document.getElementById('btn-send-message');
+  const msgForm = document.getElementById('message-form-group') || document.querySelector('.message-form-container');
+  const msgList = document.getElementById('messages-list');
+  const viewerNotice = document.getElementById('viewer-notice-box');
+  const roleIndicator = document.getElementById('role-badge-indicator');
+
+  // Always show the messages list for all roles (they can always read)
+  if (msgList) msgList.style.display = 'flex';
+
+  if (isViewer) {
+    // Viewer: HIDE message text input and Send button
+    if (msgInput) msgInput.style.display = 'none';
+    if (btnSend) btnSend.style.display = 'none';
+    if (msgForm) msgForm.style.display = 'none';
+    if (viewerNotice) viewerNotice.style.display = 'flex';
+    if (roleIndicator) {
+      roleIndicator.className = 'status-pill pill-warning';
+      roleIndicator.innerHTML = '👁️ <strong>صلاحية: مشاهد (قراءة فقط)</strong>';
+    }
+  } else {
+    // Admin / Owner: SHOW everything (messages list, text input, send button)
+    if (msgInput) msgInput.style.display = '';
+    if (btnSend) btnSend.style.display = '';
+    if (msgForm) msgForm.style.display = 'flex';
+    if (viewerNotice) viewerNotice.style.display = 'none';
+    if (roleIndicator) {
+      roleIndicator.className = 'status-pill pill-available';
+      roleIndicator.innerHTML = isOwner 
+        ? '👑 <strong>صلاحية: المالك (كامل الصلاحيات)</strong>' 
+        : '🛡️ <strong>صلاحية: مدير (قراءة وكتابة)</strong>';
+    }
+  }
+
+  console.log(`🔒 Role Permissions Applied: [${normRole}] (Viewer: ${isViewer})`);
+}
+
+window.fetchUserRole = fetchUserRole;
+window.applyRolePermissions = applyRolePermissions;
 
 // Helper: Show custom HUD alert inside the Login Card
 function showAuthHUDMessage(message, type = 'info') {
@@ -1545,6 +1658,8 @@ function switchAuthMode(mode) {
   const loginOptions = document.getElementById('auth-login-options');
   const btnLogin = document.getElementById('btn-login');
   const btnDemoLogin = document.getElementById('btn-demo-login');
+  const btnViewerLogin = document.getElementById('btn-viewer-login');
+  const btnOwnerLogin = document.getElementById('btn-owner-login');
   const btnSignup = document.getElementById('btn-signup');
   const signupNote = document.getElementById('auth-signup-note');
   const alertBox = document.getElementById('auth-hud-alert');
@@ -1558,6 +1673,8 @@ function switchAuthMode(mode) {
     if (loginOptions) loginOptions.style.display = 'none';
     if (btnLogin) btnLogin.style.display = 'none';
     if (btnDemoLogin) btnDemoLogin.style.display = 'none';
+    if (btnViewerLogin) btnViewerLogin.style.display = 'none';
+    if (btnOwnerLogin) btnOwnerLogin.style.display = 'none';
     if (btnSignup) btnSignup.style.display = 'flex';
     if (signupNote) signupNote.style.display = 'block';
   } else {
@@ -1567,6 +1684,8 @@ function switchAuthMode(mode) {
     if (loginOptions) loginOptions.style.display = 'flex';
     if (btnLogin) btnLogin.style.display = 'flex';
     if (btnDemoLogin) btnDemoLogin.style.display = 'flex';
+    if (btnViewerLogin) btnViewerLogin.style.display = 'flex';
+    if (btnOwnerLogin) btnOwnerLogin.style.display = 'flex';
     if (btnSignup) btnSignup.style.display = 'none';
     if (signupNote) signupNote.style.display = 'none';
   }
@@ -1660,6 +1779,26 @@ async function handleSignUp(e) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     const registeredEmail = user ? user.email : email;
+
+    // Determine default role: s@gmail.com is owner, otherwise default to 'viewer'
+    const isOwner = (registeredEmail.toLowerCase().trim() === 's@gmail.com');
+    const defaultRole = isOwner ? 'owner' : 'viewer';
+
+    // Automatically create a document for them in the 'users' collection with user.uid as document ID
+    if (firestoreDb && user && user.uid) {
+      try {
+        await setDoc(doc(firestoreDb, "users", user.uid), {
+          uid: user.uid,
+          email: registeredEmail,
+          role: defaultRole,
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString()
+        }, { merge: true });
+        console.log(`👤 Created user profile in Firestore for [${user.uid}] with default role: ${defaultRole}`);
+      } catch (errDoc) {
+        console.warn("Could not save user document to Firestore:", errDoc);
+      }
+    }
 
     // IMPORTANT: Sign out immediately so user is NOT logged in automatically
     await signOut(auth);
@@ -1855,8 +1994,17 @@ async function handleLogIn(e) {
       }
     }
 
-    // 2. Set authenticated session in WMS engine
-    const authUser = createAuthUser(email, fbUser ? fbUser.displayName : '');
+    // 2. Fetch role and set authenticated session in WMS engine
+    let userRole = 'viewer';
+    if (isOwner) {
+      userRole = 'owner';
+    } else if (isAdmin) {
+      userRole = 'admin';
+    } else if (fbUser) {
+      userRole = await fetchUserRole(fbUser);
+    }
+
+    const authUser = createAuthUser(email, fbUser ? fbUser.displayName : '', userRole);
     if (window.WMS_DB) {
       window.WMS_DB.setAuthUser(authUser);
     }
@@ -1872,6 +2020,9 @@ async function handleLogIn(e) {
 
     if (passwordInput) passwordInput.value = "";
 
+    // Apply role-based UI permissions (hide inputs for viewer, show for admin)
+    applyRolePermissions(userRole);
+
     if (window.WMS_APP) {
       if (typeof window.WMS_APP.updateUserHeader === 'function') {
         window.WMS_APP.updateUserHeader();
@@ -1885,7 +2036,9 @@ async function handleLogIn(e) {
     if (window.showToast) {
       const welcomeMsg = isOwner 
         ? `مرحباً بك يا صاحب المنشأة! تم تسجيل الدخول بصلاحيات المالك الكاملة (${authUser.email}) 👑`
-        : `تم تسجيل الدخول بنجاح! مرحباً ${authUser.email}`;
+        : (userRole === 'admin' 
+          ? `تم تسجيل الدخول بنجاح كمدير عام (${authUser.email}) 🛡️` 
+          : `تم تسجيل الدخول بصلاحية مشاهد (${authUser.email}) 👁️`);
       window.showToast(welcomeMsg, "success");
     }
   } catch (error) {
@@ -1901,7 +2054,7 @@ function handleOwnerQuickLogin(e) {
   if (e && typeof e.preventDefault === 'function') e.preventDefault();
 
   if (window.WMS_DB) {
-    const authUser = createAuthUser('s@gmail.com', 'المالك (Owner)');
+    const authUser = createAuthUser('s@gmail.com', 'المالك (Owner)', 'owner');
     window.WMS_DB.setAuthUser(authUser);
 
     if (document.documentElement) {
@@ -1911,6 +2064,8 @@ function handleOwnerQuickLogin(e) {
     const appSection = document.getElementById("app-section");
     if (authSection) authSection.style.display = "none";
     if (appSection) appSection.style.display = "block";
+
+    applyRolePermissions('owner');
 
     if (window.WMS_APP) {
       if (typeof window.WMS_APP.updateUserHeader === 'function') {
@@ -1939,17 +2094,54 @@ function handleQuickDemoLogin(e) {
     const appSection = document.getElementById("app-section");
     if (authSection) authSection.style.display = "none";
     if (appSection) appSection.style.display = "block";
+    
+    applyRolePermissions('admin');
+
     if (window.WMS_APP) {
       if (typeof window.WMS_APP.updateUserHeader === 'function') {
         window.WMS_APP.updateUserHeader();
       }
       window.WMS_APP.navigate('hud');
-      if (window.showToast) window.showToast('تم تسجيل الدخول التجريبي السريع بنجاح!', 'success');
+      if (window.showToast) window.showToast('تم تسجيل الدخول التجريبي السريع كمدير عام (Admin)!', 'success');
     }
 
     initCloudDatabaseListener();
   }
 }
+
+// Quick Viewer Demo Login (Viewer Demo)
+function handleQuickViewerLogin(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+  if (window.WMS_DB) {
+    const authUser = createAuthUser('viewer@demo.local', 'حساب مشاهد تجريبي (Viewer)', 'viewer');
+    window.WMS_DB.setAuthUser(authUser);
+
+    if (document.documentElement) {
+      document.documentElement.classList.add('is-authenticated');
+    }
+    const authSection = document.getElementById("auth-section");
+    const appSection = document.getElementById("app-section");
+    if (authSection) authSection.style.display = "none";
+    if (appSection) appSection.style.display = "block";
+
+    applyRolePermissions('viewer');
+
+    if (window.WMS_APP) {
+      if (typeof window.WMS_APP.updateUserHeader === 'function') {
+        window.WMS_APP.updateUserHeader();
+      }
+      window.WMS_APP.navigate('hud');
+      if (window.showToast) {
+        window.showToast('تم تسجيل الدخول بصلاحية "مشاهد" (قراءة فقط) 👁️', 'info');
+      }
+    }
+
+    initCloudDatabaseListener();
+  }
+}
+
+window.handleQuickViewerLogin = handleQuickViewerLogin;
 
 // Forgot Password (Send Reset Email)
 async function handleForgotPassword(e) {
@@ -2023,7 +2215,7 @@ async function handleLogOut(e) {
 // Auth State Observer (onAuthStateChanged)
 // Controls visibility of auth-section and app-section & realtime listener
 // ============================================================================
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   // If user is undergoing registration flow, ignore auto login navigation
   if (isSigningUp) {
     return;
@@ -2033,15 +2225,21 @@ onAuthStateChanged(auth, (user) => {
   const appSection = document.getElementById("app-section");
 
   if (user) {
+    // 1. Fetch user's specific role from Firestore 'users' collection
+    const userRole = await fetchUserRole(user);
+
     // User is logged in via Firebase
     if (document.documentElement) document.documentElement.classList.add('is-authenticated');
     if (authSection) authSection.style.display = "none";
     if (appSection) appSection.style.display = "block";
 
     if (window.WMS_DB) {
-      const authUser = createAuthUser(user.email, user.displayName);
+      const authUser = createAuthUser(user.email, user.displayName, userRole);
       window.WMS_DB.setAuthUser(authUser);
     }
+
+    // 2. Apply UI permissions (hide inputs/send button for viewer, show for admin)
+    applyRolePermissions(userRole);
 
     if (window.WMS_APP && typeof window.WMS_APP.updateUserHeader === 'function') {
       window.WMS_APP.updateUserHeader();
@@ -2053,6 +2251,7 @@ onAuthStateChanged(auth, (user) => {
       if (document.documentElement) document.documentElement.classList.add('is-authenticated');
       if (authSection) authSection.style.display = "none";
       if (appSection) appSection.style.display = "block";
+      applyRolePermissions(localUser.role || 'viewer');
       if (window.WMS_APP && typeof window.WMS_APP.updateUserHeader === 'function') {
         window.WMS_APP.updateUserHeader();
       }
@@ -2065,13 +2264,54 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
+// Broadcast & Announcement Message Sender
+function handleSendBroadcastMessage(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+  const user = window.WMS_DB ? window.WMS_DB.getAuthUser() : null;
+  const isViewer = user && (user.role === 'viewer');
+
+  if (isViewer) {
+    if (window.showToast) window.showToast('عذراً! حسابك بصلاحية "مشاهد" (قراءة فقط)، لا يمكنك كتابة أو إرسال الرسائل.', 'warning');
+    return;
+  }
+
+  const input = document.getElementById('message-input');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+
+  const msgList = document.getElementById('messages-list');
+  if (msgList) {
+    const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    const isOwner = user && (user.isOwner || user.role === 'owner');
+    const senderName = isOwner ? '👑 صاحب المنشأة (Owner)' : `🛡️ ${user ? (user.name || user.email) : 'المدير العام (Admin)'}`;
+    
+    const newMsgEl = document.createElement('div');
+    newMsgEl.className = 'msg-item';
+    newMsgEl.style.cssText = 'background: var(--bg-input); padding: 0.85rem 1rem; border-radius: var(--radius-md); border-left: 3px solid #10b981; animation: fadeIn 0.3s ease; margin-bottom: 0.5rem;';
+    newMsgEl.innerHTML = `
+      <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+        <strong style="color: #34d399; font-size: 0.88rem;">${senderName}</strong>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">اليوم ${timeStr}</span>
+      </div>
+      <p style="margin: 0; font-size: 0.88rem; color: var(--text-primary);">${text}</p>
+    `;
+    msgList.prepend(newMsgEl);
+    input.value = '';
+    if (window.showToast) window.showToast('تم إرسال ونشر التعميم الإداري بنجاح! 📢', 'success');
+  }
+}
+
 // Export functions globally so inline onclick handlers and console work 100%
 window.handleSignUp = handleSignUp;
 window.handleLogIn = handleLogIn;
 window.handleLogOut = handleLogOut;
 window.handleOwnerQuickLogin = handleOwnerQuickLogin;
 window.handleQuickDemoLogin = handleQuickDemoLogin;
+window.handleQuickViewerLogin = handleQuickViewerLogin;
 window.handleForgotPassword = handleForgotPassword;
+window.handleSendBroadcastMessage = handleSendBroadcastMessage;
 window.switchAuthMode = switchAuthMode;
 window.togglePasswordVisibility = togglePasswordVisibility;
 window.showAuthHUDMessage = showAuthHUDMessage;
@@ -2083,6 +2323,7 @@ function attachFirebaseEvents() {
   const btnLogIn = document.getElementById("btn-login");
   const btnLogOut = document.getElementById("btn-logout");
   const btnDemoLogin = document.getElementById("btn-demo-login");
+  const btnViewerLogin = document.getElementById("btn-viewer-login");
   const btnOwnerLogin = document.getElementById("btn-owner-login");
   const authFormEl = document.getElementById("auth-form-el");
 
@@ -2101,6 +2342,7 @@ function attachFirebaseEvents() {
   if (btnLogIn) btnLogIn.onclick = (e) => { e.preventDefault(); handleLogIn(e); };
   if (btnLogOut) btnLogOut.onclick = (e) => { e.preventDefault(); handleLogOut(e); };
   if (btnDemoLogin) btnDemoLogin.onclick = (e) => { e.preventDefault(); handleQuickDemoLogin(e); };
+  if (btnViewerLogin) btnViewerLogin.onclick = (e) => { e.preventDefault(); handleQuickViewerLogin(e); };
   if (btnOwnerLogin) btnOwnerLogin.onclick = (e) => { e.preventDefault(); handleOwnerQuickLogin(e); };
 
   // Keyboard shortcut: Press Enter to submit active form action

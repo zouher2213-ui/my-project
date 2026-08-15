@@ -2680,7 +2680,10 @@
       
       if (user) {
         const email = user.email || user.username || 'admin@warehouse.local';
-        const isOwner = (user.role === 'Owner' || user.isOwner || (email && email.toLowerCase().trim() === 's@gmail.com'));
+        const role = (user.role || 'viewer').toLowerCase();
+        const isOwner = (role === 'owner' || user.isOwner || (email && email.toLowerCase().trim() === 's@gmail.com'));
+        const isViewer = (role === 'viewer');
+        const isAdmin = (role === 'admin') || isOwner;
         
         if (emailEl) {
           emailEl.textContent = email;
@@ -2689,17 +2692,29 @@
         if (pillEl) {
           const avatarEl = pillEl.querySelector('.user-avatar-sm');
           const accessTagEl = pillEl.querySelector('.user-access-tag');
+          
+          pillEl.classList.remove('is-owner-role', 'is-admin-role', 'is-viewer-role');
+
           if (isOwner) {
             pillEl.classList.add('is-owner-role');
             pillEl.setAttribute('title', 'صاحب المنشأة - كامل الصلاحيات لجميع العمليات والمخازن');
             if (avatarEl) avatarEl.textContent = '👑';
             if (accessTagEl) accessTagEl.innerHTML = `<span style="color:var(--warning); font-weight:800;">👑 ${t('roleOwner')}</span>`;
+          } else if (isViewer) {
+            pillEl.classList.add('is-viewer-role');
+            pillEl.setAttribute('title', 'مشاهد - صلاحية القراءة فقط');
+            if (avatarEl) avatarEl.textContent = '👁️';
+            if (accessTagEl) accessTagEl.innerHTML = `<span style="color:#60a5fa; font-weight:700;">👁️ ${APP.lang === 'ar' ? 'مشاهد (قراءة فقط)' : (APP.lang === 'bn' ? 'দর্শক (শুধুমাত্র দেখার অনুমতি)' : 'Viewer (Read Only)')}</span>`;
           } else {
-            pillEl.classList.remove('is-owner-role');
-            pillEl.setAttribute('title', 'المدير العام - كامل الصلاحيات');
-            if (avatarEl) avatarEl.textContent = '👤';
+            pillEl.classList.add('is-admin-role');
+            pillEl.setAttribute('title', 'المدير العام - صلاحية القراءة والكتابة');
+            if (avatarEl) avatarEl.textContent = '🛡️';
             if (accessTagEl) accessTagEl.innerHTML = `<span>🔓 ${t('fullAccess')}</span>`;
           }
+        }
+
+        if (window.applyRolePermissions) {
+          window.applyRolePermissions(role);
         }
       }
 
