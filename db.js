@@ -337,19 +337,27 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
   window.WMS_DB = {
     // Auth
     login(username, password) {
-      if ((username === 'admin' && password === '123456') || username === 'demo') {
+      const uLower = (username || '').toLowerCase().trim();
+      const isOwner = (uLower === 's@gmail.com');
+      const isAdmin = ((uLower === 'admin' && password === '123456') || uLower === 'demo');
+
+      if (isAdmin || isOwner) {
         const user = { 
-          username: username || 'admin', 
-          email: username === 'admin' ? 'admin@warehouse.local' : `${username}@warehouse.local`,
-          role: 'Super Admin', 
-          name: 'المدير العام للمستودع (كامل الصلاحيات)',
+          username: username || (isOwner ? 's@gmail.com' : 'admin'), 
+          email: isOwner ? 's@gmail.com' : (uLower === 'admin' ? 'admin@warehouse.local' : `${username}@warehouse.local`),
+          role: isOwner ? 'Owner' : 'Super Admin', 
+          name: isOwner ? 'المالك / Owner (s@gmail.com)' : 'المدير العام للمستودع (كامل الصلاحيات)',
+          roleTitleAr: isOwner ? 'المالك / صاحب المنشأة' : 'المدير العام للمستودع',
+          roleTitleEn: isOwner ? 'Owner & Primary Administrator' : 'Super Admin',
+          roleTitleBn: isOwner ? 'মালিক (Owner)' : 'সুপার অ্যাডমিন',
           fullAccess: true,
-          permissions: ['*']
+          permissions: ['*'],
+          isOwner: isOwner
         };
         setStored(DB_KEYS.AUTH_USER, user);
         return user;
       }
-      throw new Error('بيانات الدخول غير صحيحة! يرجى استخدام admin / 123456');
+      throw new Error('بيانات الدخول غير صحيحة! يرجى استخدام admin / 123456 أو حساب المالك s@gmail.com');
     },
 
     logout() {
@@ -358,6 +366,20 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
 
     getAuthUser() {
       return getStored(DB_KEYS.AUTH_USER, null);
+    },
+
+    setAuthUser(user) {
+      setStored(DB_KEYS.AUTH_USER, user);
+      return user;
+    },
+
+    setStored(key, value) {
+      setStored(key, value);
+      return value;
+    },
+
+    getStored(key, fallback) {
+      return getStored(key, fallback);
     },
 
     // Settings
@@ -1012,6 +1034,23 @@ const firestoreDb = getFirestore(app);
 let isSigningUp = false;
 let currentAuthMode = 'login'; // 'login' or 'signup'
 
+// Helper: Standardized User Object Creator (Detects Owner role for s@gmail.com)
+function createAuthUser(email, displayName) {
+  const isOwner = email && (email.toLowerCase().trim() === 's@gmail.com');
+  return { 
+    username: email, 
+    email: email,
+    name: displayName || (isOwner ? 'المالك / Owner (s@gmail.com)' : (email ? email.split('@')[0] : 'admin')),
+    role: isOwner ? 'Owner' : 'Super Admin',
+    roleTitleAr: isOwner ? 'المالك / صاحب المنشأة (كامل الصلاحيات)' : 'المدير العام للمستودع (كامل الصلاحيات)',
+    roleTitleEn: isOwner ? 'Owner & Primary Administrator (Full Access)' : 'Super Admin (Full Access)',
+    roleTitleBn: isOwner ? 'মালিক / Owner (পূর্ণ প্রবেশাধিকার)' : 'সুপার অ্যাডমিন (পূর্ণ প্রবেশাধিকার)',
+    fullAccess: true,
+    permissions: ['*'],
+    isOwner: isOwner
+  };
+}
+
 // Helper: Show custom HUD alert inside the Login Card
 function showAuthHUDMessage(message, type = 'info') {
   const alertBox = document.getElementById("auth-hud-alert");
@@ -1168,7 +1207,7 @@ async function handleSignUp(e) {
 
     // Reset local database storage user state
     if (window.WMS_DB) {
-      window.WMS_DB.setStored("wms_auth_user_v6", null);
+      window.WMS_DB.setAuthUser(null);
     }
     if (document.documentElement) {
       document.documentElement.classList.remove('is-authenticated');
@@ -1235,15 +1274,8 @@ async function handleLogIn(e) {
     const user = userCredential.user;
     
     if (window.WMS_DB) {
-      const authUser = { 
-        username: user.email, 
-        email: user.email,
-        name: user.displayName || user.email.split('@')[0],
-        role: 'Super Admin',
-        fullAccess: true,
-        permissions: ['*']
-      };
-      window.WMS_DB.setStored("wms_auth_user_v6", authUser);
+      const authUser = createAuthUser(user.email, user.displayName);
+      window.WMS_DB.setAuthUser(authUser);
     }
 
     if (document.documentElement) {
@@ -1265,7 +1297,11 @@ async function handleLogIn(e) {
     }
 
     if (window.showToast) {
-      window.showToast(`تم تسجيل الدخول بنجاح! مرحباً ${user.email}`, "success");
+      const isOwner = user.email && (user.email.toLowerCase().trim() === 's@gmail.com');
+      const welcomeMsg = isOwner 
+        ? `مرحباً بك يا صاحب المنشأة! تم تسجيل الدخول بصلاحيات المالك الكاملة (${user.email}) 👑`
+        : `تم تسجيل الدخول بنجاح! مرحباً ${user.email}`;
+      window.showToast(welcomeMsg, "success");
     }
   } catch (error) {
     console.error("Log In Error:", error);
@@ -1455,15 +1491,8 @@ onAuthStateChanged(auth, (user) => {
     if (appSection) appSection.style.display = "block";
 
     if (window.WMS_DB) {
-      const authUser = { 
-        username: user.email, 
-        email: user.email,
-        name: user.displayName || user.email.split('@')[0],
-        role: 'Super Admin',
-        fullAccess: true,
-        permissions: ['*']
-      };
-      window.WMS_DB.setStored("wms_auth_user_v6", authUser);
+      const authUser = createAuthUser(user.email, user.displayName);
+      window.WMS_DB.setAuthUser(authUser);
     }
 
     if (window.WMS_APP && typeof window.WMS_APP.updateUserHeader === 'function') {

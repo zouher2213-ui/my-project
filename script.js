@@ -42,6 +42,9 @@
       featureSecure: 'مصادقة آمنة ومشفرة',
       featureMaterials: 'رخام • بورسلان • خشب',
       fullAccess: 'كامل الصلاحيات (كل الأقسام)',
+      fullAccessOwner: 'كامل الصلاحيات (المالك)',
+      roleOwner: 'المالك (Owner)',
+      roleAdmin: 'المدير العام (Super Admin)',
       unrestrictedAccess: 'جميع الأقسام والعمليات المخزنية مفتوحة ومتاحة لك بالكامل',
       username: 'اسم المستخدم',
       password: 'كلمة المرور',
@@ -49,6 +52,11 @@
       backToHud: '← العودة للوحة الرئيسية',
       backToPorcelain: '← العودة لحركة البورسلان',
       backToMarble: '← العودة لحركة الرخام',
+      navHud: 'الرئيسية',
+      navPorcelain: 'بورسلان',
+      navMarble: 'رخام',
+      navWood: 'خشب',
+      navMarbleDel: 'فسح رخام',
 
       // HUD Hub
       hudTitle: 'لوحة التحكم والعمليات الرئيسية',
@@ -283,6 +291,9 @@
       featureSecure: 'Encrypted Secure Auth',
       featureMaterials: 'Marble • Porcelain • Wood',
       fullAccess: 'Full Access (All Modules)',
+      fullAccessOwner: 'Full Access (Owner)',
+      roleOwner: 'Owner (Full Access)',
+      roleAdmin: 'Super Admin',
       unrestrictedAccess: 'All warehouse sections & operations are fully unlocked for you',
       username: 'Username',
       password: 'Password',
@@ -290,6 +301,11 @@
       backToHud: '← Back to Main Hub',
       backToPorcelain: '← Back to Porcelain Movement',
       backToMarble: '← Back to Marble Movement',
+      navHud: 'Hub',
+      navPorcelain: 'Porcelain',
+      navMarble: 'Marble',
+      navWood: 'Wood',
+      navMarbleDel: 'Marble Del.',
 
       // HUD Hub
       hudTitle: 'Operational Management Hub',
@@ -523,12 +539,22 @@
       featureSync: 'রিয়েলটাইম সিঙ্ক',
       featureSecure: 'সুরক্ষিত লগইন',
       featureMaterials: 'মার্বেল • চীনামাটি • কাঠ',
+      fullAccess: 'পূর্ণ প্রবেশাধিকার (সকল মডিউল)',
+      fullAccessOwner: 'পূর্ণ প্রবেশাধিকার (মালিক)',
+      roleOwner: 'মালিক (Owner)',
+      roleAdmin: 'সুপার অ্যাডমিন (Super Admin)',
+      unrestrictedAccess: 'সকল ওয়্যারহাউস বিভাগ ও কার্যক্রম আপনার জন্য উন্মুক্ত',
       username: 'ব্যবহারকারীর নাম',
       password: 'পাসওয়ার্ড',
       logoutBtn: 'লগআউট',
       backToHud: '← মূল মেনুতে ফিরে যান',
       backToPorcelain: '← চীনামাটির বিভাগে ফিরে যান',
       backToMarble: '← মার্বেল বিভাগে ফিরে যান',
+      navHud: 'হোম',
+      navPorcelain: 'চীনামাটি',
+      navMarble: 'মার্বেল',
+      navWood: 'কাঠ',
+      navMarbleDel: 'মার্বেল ডেলি.',
 
       // HUD Hub
       hudTitle: 'ওয়্যারহাউস অপারেশন হাব',
@@ -833,15 +859,25 @@
   // AUTH & ROUTER
   // ==========================================================================
   function checkAuth() {
-    const user = WMS_DB ? WMS_DB.getAuthUser() : null;
+    let user = WMS_DB ? WMS_DB.getAuthUser() : null;
+    if (!user) {
+      try {
+        const stored = localStorage.getItem('wms_auth_user_v6');
+        if (stored && stored !== 'null') {
+          user = JSON.parse(stored);
+        }
+      } catch (e) {}
+    }
     const loginSection = document.getElementById('auth-section') || document.getElementById('view-login');
     const appShell = document.getElementById('app-section') || document.getElementById('app-shell');
 
     if (!user) {
+      if (document.documentElement) document.documentElement.classList.remove('is-authenticated');
       if (loginSection) loginSection.style.display = 'flex';
       if (appShell) appShell.style.display = 'none';
       return false;
     } else {
+      if (document.documentElement) document.documentElement.classList.add('is-authenticated');
       if (loginSection) loginSection.style.display = 'none';
       if (appShell) appShell.style.display = 'block';
       return true;
@@ -869,6 +905,11 @@
     });
 
     renderCurrentView();
+
+    // Notify mobile controller if loaded
+    if (window.WMS_MOBILE && typeof window.WMS_MOBILE.onRouteChanged === 'function') {
+      window.WMS_MOBILE.onRouteChanged(targetRoute);
+    }
   }
 
   function renderCurrentView() {
@@ -894,6 +935,10 @@
       case 'marble-preview':
         renderMarblePreviewView();
         break;
+    }
+
+    if (window.WMS_MOBILE && typeof window.WMS_MOBILE.onViewRendered === 'function') {
+      window.WMS_MOBILE.onViewRendered();
     }
   }
 
@@ -1845,10 +1890,43 @@
     },
 
     updateUserHeader() {
-      const user = WMS_DB ? WMS_DB.getAuthUser() : null;
+      let user = WMS_DB ? WMS_DB.getAuthUser() : null;
+      if (!user) {
+        try {
+          const stored = localStorage.getItem('wms_auth_user_v6');
+          if (stored && stored !== 'null') user = JSON.parse(stored);
+        } catch (e) {}
+      }
       const emailEl = document.getElementById('header-user-email');
-      if (emailEl && user) {
-        emailEl.textContent = user.email || user.username || 'admin@warehouse.local';
+      const pillEl = document.getElementById('user-header-pill');
+      
+      if (user) {
+        const email = user.email || user.username || 'admin@warehouse.local';
+        const isOwner = (user.role === 'Owner' || user.isOwner || (email && email.toLowerCase().trim() === 's@gmail.com'));
+        
+        if (emailEl) {
+          emailEl.textContent = email;
+        }
+        
+        if (pillEl) {
+          const avatarEl = pillEl.querySelector('.user-avatar-sm');
+          const accessTagEl = pillEl.querySelector('.user-access-tag');
+          if (isOwner) {
+            pillEl.classList.add('is-owner-role');
+            pillEl.setAttribute('title', 'صاحب المنشأة - كامل الصلاحيات لجميع العمليات والمخازن');
+            if (avatarEl) avatarEl.textContent = '👑';
+            if (accessTagEl) accessTagEl.innerHTML = `<span style="color:var(--warning); font-weight:800;">👑 ${t('roleOwner')}</span>`;
+          } else {
+            pillEl.classList.remove('is-owner-role');
+            pillEl.setAttribute('title', 'المدير العام - كامل الصلاحيات');
+            if (avatarEl) avatarEl.textContent = '👤';
+            if (accessTagEl) accessTagEl.innerHTML = `<span>🔓 ${t('fullAccess')}</span>`;
+          }
+        }
+      }
+
+      if (window.WMS_MOBILE && typeof window.WMS_MOBILE.updateMobileHeader === 'function') {
+        window.WMS_MOBILE.updateMobileHeader(user);
       }
     },
 

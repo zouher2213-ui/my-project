@@ -802,6 +802,22 @@ button {
   gap: 0.2rem;
 }
 
+.user-profile-header-pill.is-owner-role {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(217, 119, 6, 0.28));
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+}
+
+.user-profile-header-pill.is-owner-role .user-avatar-sm {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+}
+
+[data-theme="light"] .user-profile-header-pill.is-owner-role {
+  background: #fffbeb;
+  border-color: #f59e0b;
+}
+
 .lang-selector {
   display: flex;
   background: var(--bg-card);
