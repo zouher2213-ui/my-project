@@ -1310,11 +1310,14 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
         technicianName: data.technicianName || '',
         scheduledDate: data.scheduledDate || new Date().toISOString().split('T')[0],
         dayOfWeek: data.dayOfWeek || '',
-        timeSlot: data.timeSlot || 'morning',
-        timeSlotTextAr: data.timeSlot === 'morning' ? 'صباحي (08:00 ص - 01:00 م)' : 'مسائي (02:00 م - 07:00 م)',
+        timeSlot: data.timeSlot || 'مرن / غير محدد',
+        timeSlotTextAr: data.timeSlotTextAr || data.timeSlot || 'مرن / بحسب التنسيق',
         status: data.status || 'Scheduled',
-        workType: data.workType || '',
+        workType: data.workType || 'تركيب وتسليم ميداني',
         address: data.address || '',
+        mapsUrl: data.mapsUrl || (data.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.address)}` : ''),
+        houseUrl: data.houseUrl || '',
+        buildingPhoto: data.buildingPhoto || '',
         notes: data.notes || '',
         returnReason: null,
         returnNotes: null,
@@ -1464,6 +1467,55 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
       }
 
       return ratingObj;
+    },
+
+    // ========================================================================
+    // USER ROLES & PERMISSIONS MANAGEMENT (OWNER CONTROL)
+    // ========================================================================
+    getUserRolesList() {
+      const defaultRoles = [
+        { email: 's@gmail.com', name: 'مهندس الإنتاج / المالك', role: 'production_engineer', isOwner: true, updatedAt: new Date().toISOString() },
+        { email: 'admin@warehouse.local', name: 'المدير العام للمستودع', role: 'production_engineer', isOwner: false, updatedAt: new Date().toISOString() },
+        { email: 'porcelain.sup@warehouse.local', name: 'مشرف مستودع البورسلان', role: 'supervisor_porcelain', isOwner: false, updatedAt: new Date().toISOString() },
+        { email: 'marble.sup@warehouse.local', name: 'مشرف مستودع الرخام', role: 'supervisor_marble', isOwner: false, updatedAt: new Date().toISOString() },
+        { email: 'field.sup@warehouse.local', name: 'مشرف الخدمات الميدانية', role: 'supervisor_field', isOwner: false, updatedAt: new Date().toISOString() },
+        { email: 'tech.omran@warehouse.local', name: 'عمران الفاروق (فني تركيب)', role: 'technician', isOwner: false, updatedAt: new Date().toISOString() }
+      ];
+      return getStored('wms_user_roles_v6', defaultRoles);
+    },
+
+    setUserRole(email, role) {
+      if (!email || !email.trim()) return;
+      const cleanEmail = email.trim().toLowerCase();
+      const list = this.getUserRolesList();
+      const isOwner = (cleanEmail === 's@gmail.com');
+      const finalRole = isOwner ? 'production_engineer' : role;
+      
+      const idx = list.findIndex(u => u.email.toLowerCase() === cleanEmail);
+      if (idx !== -1) {
+        list[idx].role = finalRole;
+        list[idx].updatedAt = new Date().toISOString();
+      } else {
+        list.push({
+          email: cleanEmail,
+          name: cleanEmail.split('@')[0],
+          role: finalRole,
+          isOwner: isOwner,
+          updatedAt: new Date().toISOString()
+        });
+      }
+      setStored('wms_user_roles_v6', list);
+      return list;
+    },
+
+    deleteUserRole(email) {
+      if (!email) return;
+      const cleanEmail = email.trim().toLowerCase();
+      if (cleanEmail === 's@gmail.com') return;
+      let list = this.getUserRolesList();
+      list = list.filter(u => u.email.toLowerCase() !== cleanEmail);
+      setStored('wms_user_roles_v6', list);
+      return list;
     }
   };
 
@@ -1593,14 +1645,26 @@ function createAuthUser(email, displayName, customRole = null) {
   };
 }
 
-// Role-Based Access Control: Fetch role from Firestore users collection
+// Role-Based Access Control: Fetch role from Owner assignments and Firestore users collection
 async function fetchUserRole(user) {
   if (!user) return WMS_ROLES.VIEWER;
   const isOwner = user.email && (user.email.toLowerCase().trim() === 's@gmail.com');
   if (isOwner) return WMS_ROLES.PRODUCTION_ENGINEER;
   if (user.email && user.email.toLowerCase().trim() === 'admin') return WMS_ROLES.PRODUCTION_ENGINEER;
+
+  // 1. Check Owner Assigned User Roles in WMS_DB
+  if (window.WMS_DB && user.email) {
+    const rolesList = window.WMS_DB.getUserRolesList();
+    const matched = rolesList.find(u => u.email.toLowerCase() === user.email.toLowerCase().trim());
+    if (matched && matched.role) {
+      console.log(`👑 Found Owner Assigned Role for [${user.email}]: ${matched.role}`);
+      return matched.role;
+    }
+  }
+
   if (!user.uid) return WMS_ROLES.VIEWER;
 
+  // 2. Check Firestore 'users' collection
   try {
     if (firestoreDb) {
       const userDocRef = doc(firestoreDb, "users", user.uid);

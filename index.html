@@ -159,36 +159,8 @@
           <!-- زر دخول مهندس الإنتاج / المالك (Owner: s@gmail.com) -->
           <button type="button" id="btn-owner-login" onclick="handleOwnerQuickLogin(event)" class="btn-secondary auth-owner-btn">
             <span>👑</span>
-            <span data-i18n="ownerLogin">مهندس الإنتاج / المالك (s@gmail.com - كامل الصلاحيات)</span>
+            <span data-i18n="ownerLogin">دخول سريع كمالك ومهندس الإنتاج (s@gmail.com)</span>
           </button>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-top: 0.2rem;">
-            <!-- زر مشرف مستودع البورسلان (حركات البورسلان فقط) -->
-            <button type="button" id="btn-role-porcelain" onclick="handlePorcelainSupervisorLogin(event)" class="btn-secondary" style="border-color: rgba(99, 102, 241, 0.4); color: #a5b4fc; font-weight: 700; font-size: 0.82rem; padding: 0.6rem 0.4rem; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
-              <span>🏛️</span>
-              <span>مشرف البورسلان</span>
-            </button>
-
-            <!-- زر مشرف مستودع الرخام (حركات الرخام فقط) -->
-            <button type="button" id="btn-role-marble" onclick="handleMarbleSupervisorLogin(event)" class="btn-secondary" style="border-color: rgba(14, 165, 233, 0.4); color: #7dd3fc; font-weight: 700; font-size: 0.82rem; padding: 0.6rem 0.4rem; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
-              <span>💎</span>
-              <span>مشرف الرخام</span>
-            </button>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
-            <!-- زر مشرف الفسوحات والميدان -->
-            <button type="button" id="btn-role-field" onclick="handleFieldSupervisorLogin(event)" class="btn-secondary" style="border-color: rgba(16, 185, 129, 0.4); color: #6ee7b7; font-weight: 700; font-size: 0.82rem; padding: 0.6rem 0.4rem; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
-              <span>🛠️</span>
-              <span>مشرف الميدان</span>
-            </button>
-
-            <!-- زر فني التركيب الميداني (خرائط ومواقع) -->
-            <button type="button" id="btn-role-tech" onclick="handleTechnicianLogin(event)" class="btn-secondary" style="border-color: rgba(245, 158, 11, 0.4); color: #fcd34d; font-weight: 700; font-size: 0.82rem; padding: 0.6rem 0.4rem; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
-              <span>👷‍♂️</span>
-              <span>فني التركيب (خرائط)</span>
-            </button>
-          </div>
 
           <!-- زر إنشاء الحساب (وضع التسجيل) -->
           <button type="button" id="btn-signup" onclick="handleSignUp(event)" class="btn-primary auth-submit-btn"
@@ -233,6 +205,12 @@
             <span class="user-access-tag">🔓 <span data-i18n="fullAccess">كامل الصلاحيات (كل الأقسام)</span></span>
           </div>
         </div>
+
+        <!-- زر إدارة صلاحيات ورولات المستخدمين للمالك (Owner) -->
+        <button type="button" id="btn-owner-roles-panel" class="btn-secondary btn-sm" onclick="WMS_APP.openUserRolesManagerModal()" style="display: inline-flex; align-items: center; gap: 0.35rem; border-color: rgba(245,158,11,0.5); color: #fbbf24; font-weight: 800; padding: 0.45rem 0.85rem; border-radius: 8px;">
+          <span>👑</span>
+          <span>إدارة الصلاحيات والرولات</span>
+        </button>
 
         <!-- محول اللغات الثلاثي -->
         <div class="lang-selector">
@@ -903,9 +881,6 @@
           <button class="btn-secondary" onclick="WMS_APP.openTodayInstallationsPreview()" style="border-color: rgba(99, 102, 241, 0.4); color: #818cf8; font-weight: 700;" data-i18n="fsPreviewTodayBtn">
             📋 معاينة أوردرات اليوم (طباعة)
           </button>
-          <button class="btn-secondary" onclick="WMS_APP.openOrderReturnModal()" style="border-color: rgba(239, 68, 68, 0.4); color: #f87171;" data-i18n="fsRecordReturnBtn">
-            🔄 تسجيل حالة ترجيع
-          </button>
           <button class="btn-secondary" onclick="WMS_APP.openNewTechnicianModal()" data-i18n="fsAddTechBtn">
             👷‍♂️ إضافة فني جديد
           </button>
@@ -1252,14 +1227,13 @@
 
             <div class="form-group form-full">
               <label data-i18n="lblPhone">رقم هاتف المشتري</label>
-              <input type="text" id="wood-phone" placeholder="مثال: 0501234567" data-i18n-placeholder="plhPhoneEx"
-                required>
+              <input type="text" id="wood-phone" placeholder="مثال: 0501234567" data-i18n-placeholder="plhPhoneEx">
             </div>
 
             <div class="form-group form-full">
               <label data-i18n="lblExpectedDate">تاريخ التركيب أو التوصيل المتوقع</label>
               <div class="date-picker-row">
-                <input type="date" id="wood-date" required
+                <input type="date" id="wood-date"
                   onchange="WMS_APP.updateDateDayBadge('wood-date', 'wood-day-badge')">
                 <div class="date-day-badge" id="wood-day-badge">📅 اليوم</div>
               </div>
@@ -1288,32 +1262,32 @@
           <div class="form-grid">
             <div class="form-group form-full">
               <label data-i18n="lblPermitNo">رقم الفسح</label>
-              <input type="text" id="edit-wood-permit-no" required>
+              <input type="text" id="edit-wood-permit-no">
             </div>
             <div class="form-group form-full">
               <label data-i18n="lblRepName">اسم المندوب</label>
-              <input type="text" id="edit-wood-rep" required>
+              <input type="text" id="edit-wood-rep">
             </div>
             <div class="form-group form-full">
               <label data-i18n="lblShowroom">اسم العميل (المعرض)</label>
-              <input type="text" id="edit-wood-showroom" required>
+              <input type="text" id="edit-wood-showroom">
             </div>
             <div class="form-group form-full">
               <label data-i18n="lblWorkType">نوع العمل</label>
-              <input type="text" id="edit-wood-work-type" required>
+              <input type="text" id="edit-wood-work-type">
             </div>
             <div class="form-group form-full">
               <label data-i18n="lblBuyerName">اسم المشتري (عميل المعرض)</label>
-              <input type="text" id="edit-wood-buyer" required>
+              <input type="text" id="edit-wood-buyer">
             </div>
             <div class="form-group form-full">
               <label data-i18n="lblPhone">رقم هاتف المشتري</label>
-              <input type="text" id="edit-wood-phone" required>
+              <input type="text" id="edit-wood-phone">
             </div>
             <div class="form-group form-full">
               <label data-i18n="lblExpectedDate">تاريخ التركيب أو التوصيل المتوقع</label>
               <div class="date-picker-row">
-                <input type="date" id="edit-wood-date" required
+                <input type="date" id="edit-wood-date"
                   onchange="WMS_APP.updateDateDayBadge('edit-wood-date', 'edit-wood-day-badge')">
                 <div class="date-day-badge" id="edit-wood-day-badge">📅 اليوم</div>
               </div>
@@ -1341,14 +1315,14 @@
           <div class="form-grid">
             <div class="form-group form-full">
               <label data-i18n="lblPermitNo">رقم الفسح</label>
-              <input type="text" id="mar-permit-no" required placeholder="مثال: FSH-MAR-2026-01"
+              <input type="text" id="mar-permit-no" placeholder="مثال: FSH-MAR-2026-01"
                 data-i18n-placeholder="plhPermitNoEx">
             </div>
 
             <div class="form-group form-full">
               <label data-i18n="lblRepName">اسم المندوب</label>
               <input type="text" id="mar-rep-name" placeholder="اسم المندوب..."
-                data-i18n-placeholder="addNewRepPlaceholder" required>
+                data-i18n-placeholder="addNewRepPlaceholder">
               <div class="quick-chips-row" id="mar-rep-chips"></div>
               <div class="custom-preset-creator">
                 <input type="text" id="custom-new-rep-mar" placeholder="إضافة اسم مندوب جديد للقائمة..."
@@ -1362,7 +1336,7 @@
             <div class="form-group form-full">
               <label data-i18n="lblShowroom">اسم العميل (المعرض)</label>
               <input type="text" id="mar-client-name" placeholder="اسم المعرض..."
-                data-i18n-placeholder="addNewShowroomPlaceholder" required>
+                data-i18n-placeholder="addNewShowroomPlaceholder">
               <div class="quick-chips-row" id="mar-showroom-chips"></div>
               <div class="custom-preset-creator">
                 <input type="text" id="custom-new-show-mar" placeholder="إضافة اسم معرض جديد للقائمة..."
@@ -1376,19 +1350,18 @@
             <div class="form-group form-full">
               <label data-i18n="lblBuyerName">اسم المشتري (عميل المعرض)</label>
               <input type="text" id="mar-buyer-name" placeholder="مثال: مشروع قصر الشيخ منصور"
-                data-i18n-placeholder="plhMarbleBuyerEx" required>
+                data-i18n-placeholder="plhMarbleBuyerEx">
             </div>
 
             <div class="form-group form-full">
               <label data-i18n="lblPhone">رقم هاتف المشتري</label>
-              <input type="text" id="mar-phone" placeholder="مثال: 0529001122" data-i18n-placeholder="plhPhoneEx"
-                required>
+              <input type="text" id="mar-phone" placeholder="مثال: 0529001122" data-i18n-placeholder="plhPhoneEx">
             </div>
 
             <div class="form-group form-full">
               <label data-i18n="lblExpectedDate">تاريخ التركيب أو التوصيل المتوقع</label>
               <div class="date-picker-row">
-                <input type="date" id="mar-date" required
+                <input type="date" id="mar-date"
                   onchange="WMS_APP.updateDateDayBadge('mar-date', 'mar-day-badge')">
                 <div class="date-day-badge" id="mar-day-badge">📅 اليوم</div>
               </div>
@@ -1417,28 +1390,28 @@
           <div class="form-grid">
             <div class="form-group form-full">
               <label data-i18n="lblPermitNo">رقم الفسح</label>
-              <input type="text" id="edit-mar-permit-no" required>
+              <input type="text" id="edit-mar-permit-no">
             </div>
             <div class="form-group form-full">
               <label data-i18n="lblRepName">اسم المندوب</label>
-              <input type="text" id="edit-mar-rep" required>
+              <input type="text" id="edit-mar-rep">
             </div>
             <div class="form-group form-full">
               <label data-i18n="lblShowroom">اسم العميل (المعرض)</label>
-              <input type="text" id="edit-mar-showroom" required>
+              <input type="text" id="edit-mar-showroom">
             </div>
             <div class="form-group form-full">
               <label data-i18n="lblBuyerName">اسم المشتري (عميل المعرض)</label>
-              <input type="text" id="edit-mar-buyer" required>
+              <input type="text" id="edit-mar-buyer">
             </div>
             <div class="form-group form-full">
               <label data-i18n="lblPhone">رقم هاتف المشتري</label>
-              <input type="text" id="edit-mar-phone" required>
+              <input type="text" id="edit-mar-phone">
             </div>
             <div class="form-group form-full">
               <label data-i18n="lblExpectedDate">تاريخ التركيب أو التوصيل المتوقع</label>
               <div class="date-picker-row">
-                <input type="date" id="edit-mar-date" required
+                <input type="date" id="edit-mar-date"
                   onchange="WMS_APP.updateDateDayBadge('edit-mar-date', 'edit-mar-day-badge')">
                 <div class="date-day-badge" id="edit-mar-day-badge">📅 اليوم</div>
               </div>
@@ -1466,17 +1439,17 @@
         <div class="modal-body">
           <div class="form-grid">
             <div class="form-group">
-              <label data-i18n="lblSku">رمز الصنف / الكود</label>
-              <input type="text" id="new-item-sku" required placeholder="مثال: MAR-101 أو POR-201"
+              <label data-i18n="lblSku">رمز الصنف / الكود (اختياري)</label>
+              <input type="text" id="new-item-sku" placeholder="مثال: MAR-101 أو اتركه فارغاً"
                 data-i18n-placeholder="plhSkuPlaceholder">
             </div>
             <div class="form-group">
               <label data-i18n="lblLocation">موقع التخزين بالمستودع</label>
-              <input type="text" id="new-item-loc" required>
+              <input type="text" id="new-item-loc" placeholder="المستودع الرئيسي">
             </div>
             <div class="form-group form-full">
-              <label data-i18n="lblName">اسم وبيان الصنف والنوع</label>
-              <input type="text" id="new-item-name" required placeholder="مثال: ألواح بورسلان ستاتوريو الملكي"
+              <label data-i18n="lblName">اسم وبيان الصنف والنوع (اختياري)</label>
+              <input type="text" id="new-item-name" placeholder="مثال: ألواح ستاتوريو أو اتركه فارغاً"
                 data-i18n-placeholder="plhMaterialNameEx">
             </div>
 
@@ -1488,23 +1461,23 @@
 
             <div class="form-group">
               <label data-i18n="lblDimensions">الأبعاد (سم)</label>
-              <input type="text" id="new-item-dim" required>
+              <input type="text" id="new-item-dim" placeholder="160x320 cm">
             </div>
             <div class="form-group">
               <label data-i18n="lblThickness">السماكة</label>
-              <input type="text" id="new-item-thick" required>
+              <input type="text" id="new-item-thick" placeholder="12 mm">
             </div>
             <div class="form-group">
               <label data-i18n="lblFinish">نوع السطح</label>
-              <input type="text" id="new-item-finish" value="ملمع" required>
+              <input type="text" id="new-item-finish" value="ملمع">
             </div>
             <div class="form-group">
               <label data-i18n="lblTotalQty">إجمالي عدد الألواح (يقبل كسور 0.5)</label>
-              <input type="number" id="new-item-qty" min="0" step="0.5" required>
+              <input type="number" id="new-item-qty" min="0" step="0.5" value="1">
             </div>
             <div class="form-group form-full">
               <label data-i18n="lblUnitPrice">سعر اللوح ($)</label>
-              <input type="number" id="new-item-price" min="0" step="any" required>
+              <input type="number" id="new-item-price" min="0" step="any" value="0">
             </div>
           </div>
         </div>
@@ -1530,15 +1503,15 @@
           <div class="form-grid">
             <div class="form-group">
               <label data-i18n="lblSku">رمز الصنف / الكود</label>
-              <input type="text" id="edit-item-sku" required>
+              <input type="text" id="edit-item-sku">
             </div>
             <div class="form-group">
               <label data-i18n="lblLocation">موقع التخزين بالمستودع</label>
-              <input type="text" id="edit-item-loc" required>
+              <input type="text" id="edit-item-loc">
             </div>
             <div class="form-group form-full">
               <label data-i18n="lblName">اسم وبيان الصنف والنوع</label>
-              <input type="text" id="edit-item-name" required>
+              <input type="text" id="edit-item-name">
             </div>
 
             <div class="form-group form-full">
@@ -1549,23 +1522,23 @@
 
             <div class="form-group">
               <label data-i18n="lblDimensions">الأبعاد (سم)</label>
-              <input type="text" id="edit-item-dim" required>
+              <input type="text" id="edit-item-dim">
             </div>
             <div class="form-group">
               <label data-i18n="lblThickness">السماكة</label>
-              <input type="text" id="edit-item-thick" required>
+              <input type="text" id="edit-item-thick">
             </div>
             <div class="form-group">
               <label data-i18n="lblFinish">نوع السطح</label>
-              <input type="text" id="edit-item-finish" required>
+              <input type="text" id="edit-item-finish">
             </div>
             <div class="form-group">
               <label data-i18n="lblTotalQty">إجمالي عدد الألواح (يقبل 0.5)</label>
-              <input type="number" id="edit-item-qty" min="0" step="0.5" required>
+              <input type="number" id="edit-item-qty" min="0" step="0.5">
             </div>
             <div class="form-group form-full">
               <label data-i18n="lblUnitPrice">سعر اللوح ($)</label>
-              <input type="number" id="edit-item-price" min="0" step="any" required>
+              <input type="number" id="edit-item-price" min="0" step="any">
             </div>
           </div>
         </div>
@@ -1769,40 +1742,19 @@
 
             <div class="form-group">
               <label data-i18n="lblScheduledDate">تاريخ التركيب المجدول</label>
-              <input type="date" id="fs-scheduled-date" required>
+              <input type="date" id="fs-scheduled-date">
             </div>
 
-            <!-- فترة وموعد العمل المرنة (Flexible Time Slot) -->
+            <!-- فترة وموعد التركيب الحرة المخصصة -->
             <div class="form-group form-full">
-              <label data-i18n="lblTimeSlot">فترة وموعد العمل (مرنة / مخصصة)</label>
-              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <select id="fs-time-slot-preset" class="form-select" style="flex: 1; min-width: 200px;" onchange="WMS_APP.handleTimeSlotPresetChange(this.value)">
-                  <option value="morning">🌅 صباحي (08:00 ص - 01:00 م)</option>
-                  <option value="afternoon">🌇 مسائي (02:00 م - 07:00 م)</option>
-                  <option value="full_day">☀️ يوم كامل (08:00 ص - 06:00 م)</option>
-                  <option value="custom">⏱️ فترة مخصصة بالساعة / وقت مرن</option>
-                </select>
-              </div>
-              <!-- حقول الوقت المخصص المرن -->
-              <div id="fs-custom-time-box" style="display: none; margin-top: 0.5rem; background: rgba(255,255,255,0.03); padding: 0.6rem; border-radius: var(--radius-sm); border: 1px dashed rgba(255,255,255,0.15);">
-                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                  <div style="display: flex; align-items: center; gap: 0.3rem;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted);">من:</span>
-                    <input type="time" id="fs-time-from" class="form-input" style="padding: 0.4rem;" onchange="WMS_APP.updateCustomTimeSlotText()">
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 0.3rem;">
-                    <span style="font-size: 0.8rem; color: var(--text-muted);">إلى:</span>
-                    <input type="time" id="fs-time-to" class="form-input" style="padding: 0.4rem;" onchange="WMS_APP.updateCustomTimeSlotText()">
-                  </div>
-                  <input type="text" id="fs-time-custom-text" class="form-input" style="flex: 1; min-width: 180px; font-size: 0.85rem;" placeholder="أو اكتب الموعد بحرية (مثال: من 09:30 ص إلى 12:00 م)">
-                </div>
-              </div>
+              <label style="font-weight: 700;">⏱️ وقت وموعد التركيب (حدد الوقت بحرية)</label>
+              <input type="text" id="fs-time-custom-text" class="form-input" placeholder="اكتب الموعد بحرية: مثال 09:30 صباحاً، أو من 02:00 م إلى 06:00 م، أو طوال اليوم...">
             </div>
 
-            <!-- موقع وعنوان العميل / المشروع ورابط خرائط Google Maps -->
+            <!-- موقع وعنوان العميل / المشروع ورابط بيت العميل المباشر -->
             <div class="form-group form-full" style="background: rgba(255, 255, 255, 0.02); padding: 0.85rem; border-radius: var(--radius-md); border: 1px solid rgba(255, 255, 255, 0.08);">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-                <label data-i18n="lblAddress" style="margin: 0; font-weight: 700;">📍 موقع وعنوان العميل / المشروع (رابط الخرائط)</label>
+                <label data-i18n="lblAddress" style="margin: 0; font-weight: 700;">📍 موقع وعنوان العميل / المشروع</label>
                 <div style="display: flex; gap: 0.35rem;">
                   <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.getCurrentGpsLocation()" title="جلب الموقع الجغرافي الحالي بالـ GPS" style="font-size: 0.78rem; padding: 0.3rem 0.6rem; color: #60a5fa; border-color: rgba(59,130,246,0.3);">
                     📡 موقعي GPS
@@ -1812,24 +1764,16 @@
                   </button>
                 </div>
               </div>
-              <input type="text" id="fs-address" class="form-input" placeholder="اسم المشروع، الحي، رقم الفيلا أو الشارع..." style="margin-bottom: 0.5rem;" oninput="WMS_APP.handleAddressInput(this.value)">
+              <input type="text" id="fs-address" class="form-input" placeholder="اسم المشروع، الحي، رقم الفيلا أو الشارع..." style="margin-bottom: 0.6rem;" oninput="WMS_APP.handleAddressInput(this.value)">
               
-              <div style="display: flex; gap: 0.45rem; align-items: center; margin-bottom: 0.5rem;">
-                <span style="font-size: 0.82rem; color: var(--text-muted); white-space: nowrap;">🗺️ رابط Google Maps:</span>
-                <input type="url" id="fs-maps-url" class="form-input" style="flex: 1; font-size: 0.85rem;" placeholder="https://maps.app.goo.gl/... أو رابط الموقع في Google Maps">
-                <a id="fs-maps-preview-btn" href="#" target="_blank" class="btn-secondary btn-sm" style="display: none; white-space: nowrap; font-size: 0.8rem; color: #10b981;" title="فتح في الخرائط">
-                  🚀 معاينة
-                </a>
-              </div>
-
               <!-- رابط بيت العميل المباشر -->
               <div style="display: flex; gap: 0.45rem; align-items: center;">
                 <span style="font-size: 0.82rem; color: var(--text-muted); white-space: nowrap;">🏠 رابط بيت العميل:</span>
-                <input type="url" id="fs-house-url" class="form-input" style="flex: 1; font-size: 0.85rem;" placeholder="https://... (رابط إضافي مباشر لبيت العميل أو مدخل الفيلا أو Street View)">
+                <input type="url" id="fs-house-url" class="form-input" style="flex: 1; font-size: 0.85rem;" placeholder="https://... (رابط بيت العميل أو مدخل الفيلا أو Street View)">
               </div>
 
               <small style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem; display: block;">
-                📲 يظهر رابط الخرائط والمنزل مباشرة في جوال الفني المكلف لتوجيهه للموقع بضغطة زر واحدة.
+                📲 يظهر العنوان ورابط بيت العميل مباشرة في جوال الفني المكلف للوصول السريع للموقع.
               </small>
             </div>
 
@@ -2093,6 +2037,74 @@
         <button type="button" class="btn-primary" onclick="WMS_APP.printReturnsReport()" style="background: linear-gradient(135deg, #ef4444, #dc2626); font-weight: 700;">
           🖨️ طباعة تقرير المرتجعات A4
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة 19: إدارة صلاحيات وأدوار المستخدمين (المالك s@gmail.com) -->
+  <div class="modal-overlay" id="modal-user-roles-manager">
+    <div class="modal-content" style="max-width: 860px; width: 95vw; border-top: 3px solid #f59e0b;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.5rem;">👑</span>
+          <div>
+            <h3 style="margin: 0; font-size: 1.15rem; color: #fbbf24;">إدارة أدوار وصلاحيات المستخدمين</h3>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">لوحة تحكم المالك (s@gmail.com) لتوزيع وتخصيص صلاحيات الأقسام</span>
+          </div>
+        </div>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-user-roles-manager')">✕</button>
+      </div>
+
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 1.25rem;">
+        <!-- نموذج تعيين أو تحديث رول مستخدم -->
+        <div style="background: var(--bg-input); padding: 1rem 1.25rem; border-radius: var(--radius-md); border: var(--border-glass); margin-bottom: 1.5rem;">
+          <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; color: var(--text-primary);">➕ تعيين أو تعديل دور مستخدم</h4>
+          <form onsubmit="WMS_APP.submitUserRoleAssignment(event)" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.75rem; align-items: flex-end;">
+            <div class="form-group">
+              <label style="font-size: 0.82rem; font-weight: 700;">البريد الإلكتروني للمستخدم</label>
+              <input type="email" id="role-mgr-email" required placeholder="user@warehouse.com" class="form-input">
+            </div>
+            <div class="form-group">
+              <label style="font-size: 0.82rem; font-weight: 700;">الصلاحية / الدور المخصص</label>
+              <select id="role-mgr-role" class="form-select" required>
+                <option value="supervisor_porcelain">🏛️ مشرف مستودع البورسلان (حركات البورسلان فقط)</option>
+                <option value="supervisor_marble">💎 مشرف مستودع الرخام (حركات الرخام فقط)</option>
+                <option value="supervisor_field">🛠️ مشرف الخدمات الميدانية والفسوحات</option>
+                <option value="technician">👷‍♂️ فني تركيب ميداني (خرائط ومهام فقط)</option>
+                <option value="production_engineer">👑 مهندس إنتاج / مدير (كامل الصلاحيات)</option>
+                <option value="viewer">👁️ مشاهد فقط (قراءة دون تعديل)</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #f59e0b, #d97706); height: 42px; font-weight: 700; white-space: nowrap;">
+              💾 تعيين الصلاحية
+            </button>
+          </form>
+        </div>
+
+        <!-- جدول المستخدمين المسجلين وصلاحياتهم -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-secondary);">📋 قائمة المستخدمين والصلاحيات المفعلة</h4>
+            <span style="font-size: 0.8rem; color: var(--text-muted);" id="role-mgr-count">0 مستخدم</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>المستخدم / البريد الإلكتروني</th>
+                  <th>الدور الحالي</th>
+                  <th>الأقسام المتاحة</th>
+                  <th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="role-mgr-users-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-user-roles-manager')">إغلاق</button>
       </div>
     </div>
   </div>

@@ -2121,20 +2121,10 @@
     if (document.getElementById('fs-rep-name')) document.getElementById('fs-rep-name').value = prefill ? (prefill.repName || '') : '';
     if (document.getElementById('fs-scheduled-date')) document.getElementById('fs-scheduled-date').value = new Date().toISOString().split('T')[0];
     
-    // Reset flexible time slot
-    const presetSelect = document.getElementById('fs-time-slot-preset');
-    if (presetSelect) presetSelect.value = 'morning';
-    const customBox = document.getElementById('fs-custom-time-box');
-    if (customBox) customBox.style.display = 'none';
+    // Direct custom time slot
     if (document.getElementById('fs-time-custom-text')) document.getElementById('fs-time-custom-text').value = '';
-    if (document.getElementById('fs-time-from')) document.getElementById('fs-time-from').value = '';
-    if (document.getElementById('fs-time-to')) document.getElementById('fs-time-to').value = '';
 
     if (document.getElementById('fs-address')) document.getElementById('fs-address').value = '';
-    if (document.getElementById('fs-maps-url')) document.getElementById('fs-maps-url').value = '';
-    const previewBtn = document.getElementById('fs-maps-preview-btn');
-    if (previewBtn) previewBtn.style.display = 'none';
-
     if (document.getElementById('fs-house-url')) document.getElementById('fs-house-url').value = '';
     removeBuildingPhoto();
 
@@ -2165,31 +2155,11 @@
     document.getElementById('fs-rep-name').value = item.repName || '';
     document.getElementById('fs-scheduled-date').value = item.scheduledDate || '';
     
-    // Restore flexible time slot
-    const presetSelect = document.getElementById('fs-time-slot-preset');
-    const customBox = document.getElementById('fs-custom-time-box');
+    // Direct custom time slot
     const customText = document.getElementById('fs-time-custom-text');
-    if (['morning', 'afternoon', 'full_day'].includes(item.timeSlot)) {
-      if (presetSelect) presetSelect.value = item.timeSlot;
-      if (customBox) customBox.style.display = 'none';
-    } else {
-      if (presetSelect) presetSelect.value = 'custom';
-      if (customBox) customBox.style.display = 'block';
-      if (customText) customText.value = item.timeSlotTextAr || item.timeSlot || '';
-    }
+    if (customText) customText.value = item.timeSlotTextAr || item.timeSlot || '';
 
     document.getElementById('fs-address').value = item.address || '';
-    const mapsUrlInput = document.getElementById('fs-maps-url');
-    if (mapsUrlInput) mapsUrlInput.value = item.mapsUrl || '';
-    const previewBtn = document.getElementById('fs-maps-preview-btn');
-    if (previewBtn) {
-      if (item.mapsUrl) {
-        previewBtn.href = item.mapsUrl;
-        previewBtn.style.display = 'inline-block';
-      } else {
-        previewBtn.style.display = 'none';
-      }
-    }
 
     // Restore house url and building photo
     if (document.getElementById('fs-house-url')) document.getElementById('fs-house-url').value = item.houseUrl || '';
@@ -2216,64 +2186,53 @@
   function submitFieldService(e) {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
 
-    const editId = document.getElementById('fs-edit-id').value;
+    const editId = document.getElementById('fs-edit-id') ? document.getElementById('fs-edit-id').value : '';
     const techSelect = document.getElementById('fs-technician-select');
     const selectedTech = techSelect ? techSelect.options[techSelect.selectedIndex] : null;
     const techName = selectedTech && selectedTech.value ? selectedTech.text.split('(')[0].replace('👷‍♂️', '').trim() : '';
 
-    // Calculate flexible time slot value
-    const presetSelect = document.getElementById('fs-time-slot-preset');
-    const presetVal = presetSelect ? presetSelect.value : 'morning';
-    let finalTimeSlot = presetVal;
-    let timeSlotAr = 'صباحي (08:00 ص - 01:00 م)';
-
-    if (presetVal === 'afternoon') {
-      timeSlotAr = 'مسائي (02:00 م - 07:00 م)';
-    } else if (presetVal === 'full_day') {
-      timeSlotAr = 'يوم كامل (08:00 ص - 06:00 م)';
-    } else if (presetVal === 'custom') {
-      const customInput = document.getElementById('fs-time-custom-text');
-      finalTimeSlot = (customInput && customInput.value.trim()) ? customInput.value.trim() : 'فترة مخصصة';
-      timeSlotAr = finalTimeSlot;
-    }
+    // Direct flexible time slot from user input
+    const customInput = document.getElementById('fs-time-custom-text');
+    const userTimeSlot = (customInput && customInput.value.trim()) ? customInput.value.trim() : 'مرن / غير محدد';
 
     const address = document.getElementById('fs-address') ? document.getElementById('fs-address').value.trim() : '';
-    let mapsUrl = document.getElementById('fs-maps-url') ? document.getElementById('fs-maps-url').value.trim() : '';
-    if (!mapsUrl && address) {
-      mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-    }
-
     const houseUrl = document.getElementById('fs-house-url') ? document.getElementById('fs-house-url').value.trim() : '';
+    const mapsUrl = houseUrl || (address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : '');
     const buildingPhoto = document.getElementById('fs-building-photo') ? document.getElementById('fs-building-photo').value.trim() : '';
 
+    const permitInput = document.getElementById('fs-permit-no') ? document.getElementById('fs-permit-no').value.trim() : '';
+    const showroomInput = document.getElementById('fs-showroom') ? document.getElementById('fs-showroom').value.trim() : '';
+    const buyerInput = document.getElementById('fs-buyer-name') ? document.getElementById('fs-buyer-name').value.trim() : '';
+    const scheduledDateInput = document.getElementById('fs-scheduled-date') ? document.getElementById('fs-scheduled-date').value : '';
+
     const payload = {
-      permitNo: document.getElementById('fs-permit-no').value.trim(),
-      orderType: document.getElementById('fs-order-type').value,
-      showroom: document.getElementById('fs-showroom').value.trim(),
-      clientName: document.getElementById('fs-showroom').value.trim(),
-      buyerName: document.getElementById('fs-buyer-name').value.trim(),
-      phone: document.getElementById('fs-phone').value.trim(),
-      repName: document.getElementById('fs-rep-name').value.trim(),
+      permitNo: permitInput || `FSH-${Date.now().toString().slice(-4)}`,
+      orderType: document.getElementById('fs-order-type') ? document.getElementById('fs-order-type').value : 'wood',
+      showroom: showroomInput || 'معرض رئيسي',
+      clientName: showroomInput || 'عميل المعرض',
+      buyerName: buyerInput || showroomInput || 'عميل جديد',
+      phone: document.getElementById('fs-phone') ? document.getElementById('fs-phone').value.trim() : '',
+      repName: document.getElementById('fs-rep-name') ? document.getElementById('fs-rep-name').value.trim() : '',
       technicianId: techSelect ? techSelect.value : '',
       technicianName: techName,
-      scheduledDate: document.getElementById('fs-scheduled-date').value,
-      timeSlot: finalTimeSlot,
-      timeSlotTextAr: timeSlotAr,
+      scheduledDate: scheduledDateInput || new Date().toISOString().split('T')[0],
+      timeSlot: userTimeSlot,
+      timeSlotTextAr: userTimeSlot,
       address: address,
       mapsUrl: mapsUrl,
       houseUrl: houseUrl,
       buildingPhoto: buildingPhoto,
-      workType: document.getElementById('fs-work-type').value.trim(),
-      notes: document.getElementById('fs-notes').value.trim()
+      workType: document.getElementById('fs-work-type') ? document.getElementById('fs-work-type').value.trim() : 'أعمال تركيب وتسليم',
+      notes: document.getElementById('fs-notes') ? document.getElementById('fs-notes').value.trim() : ''
     };
 
     try {
       if (editId) {
         WMS_DB.updateFieldService(editId, payload);
-        showToast('تم تحديث موعد التركيب وبيانات الخريطة والموقع بنجاح! 💾', 'success');
+        showToast('تم تحديث موعد التركيب وبيانات الموقع بنجاح! 💾', 'success');
       } else {
         WMS_DB.addFieldService(payload);
-        showToast('تم حجز موعد التركيب وإسناد الفني ورابط الخريطة بنجاح! 📅📍', 'success');
+        showToast('تم حجز وتأكيد موعد التركيب الميداني بنجاح! 📅', 'success');
       }
       closeModal('modal-field-service');
       renderFieldServiceView();
@@ -2294,11 +2253,19 @@
   // TODAY'S INSTALLATIONS PREVIEW & PRINT CONTROLLER
   // --------------------------------------------------------------------------
   function openTodayInstallationsPreview(targetDate = null) {
+    const allAppointments = WMS_DB.getFieldServices();
     const todayStr = targetDate || new Date().toISOString().split('T')[0];
     const dateInput = document.getElementById('fs-preview-date-input');
-    if (dateInput) dateInput.value = todayStr;
-
-    renderTodayInstallationsSheet(todayStr);
+    
+    // Check if there are appointments for today. If not, default to showing all active appointments
+    const todayAppointments = allAppointments.filter(a => a.scheduledDate === todayStr);
+    if (todayAppointments.length > 0 || targetDate) {
+      if (dateInput) dateInput.value = todayStr;
+      renderTodayInstallationsSheet(todayStr);
+    } else {
+      if (dateInput) dateInput.value = '';
+      renderTodayInstallationsSheet('');
+    }
     openModal('modal-today-installations-preview');
   }
 
@@ -2323,6 +2290,9 @@
 
     if (filterDate) {
       filtered = allAppointments.filter(a => a.scheduledDate === filterDate);
+      if (filtered.length === 0 && !document.getElementById('fs-preview-date-input')?.value) {
+        filtered = allAppointments.filter(a => a.status !== 'Completed');
+      }
     } else {
       // All active appointments
       filtered = allAppointments.filter(a => a.status !== 'Completed');
@@ -3368,6 +3338,12 @@
           }
         }
 
+        // Control Owner User Roles Manager button visibility
+        const ownerBtn = document.getElementById('btn-owner-roles-panel');
+        if (ownerBtn) {
+          ownerBtn.style.display = isProductionEngineer ? 'inline-flex' : 'none';
+        }
+
         if (window.applyRolePermissions) {
           window.applyRolePermissions(role);
         }
@@ -3919,19 +3895,28 @@
     },
 
     submitAddMaterial(e) {
-      e.preventDefault();
+      if (e && typeof e.preventDefault === 'function') e.preventDefault();
       try {
-        const cat = document.getElementById('new-item-category').value;
+        const cat = document.getElementById('new-item-category') ? document.getElementById('new-item-category').value : 'porcelain';
+        const skuInput = document.getElementById('new-item-sku') ? document.getElementById('new-item-sku').value.trim() : '';
+        const nameInput = document.getElementById('new-item-name') ? document.getElementById('new-item-name').value.trim() : '';
+        const locInput = document.getElementById('new-item-loc') ? document.getElementById('new-item-loc').value.trim() : '';
+        const dimInput = document.getElementById('new-item-dim') ? document.getElementById('new-item-dim').value.trim() : '';
+        const thickInput = document.getElementById('new-item-thick') ? document.getElementById('new-item-thick').value.trim() : '';
+        const finishInput = document.getElementById('new-item-finish') ? document.getElementById('new-item-finish').value.trim() : '';
+        const qtyVal = document.getElementById('new-item-qty') ? parseFloat(document.getElementById('new-item-qty').value) : 1;
+        const priceVal = document.getElementById('new-item-price') ? parseFloat(document.getElementById('new-item-price').value) : 0;
+
         const item = {
-          sku: document.getElementById('new-item-sku').value,
-          name: document.getElementById('new-item-name').value,
+          sku: skuInput || ((cat === 'porcelain' ? 'POR-' : 'MAR-') + Math.floor(100 + Math.random() * 900)),
+          name: nameInput || (cat === 'porcelain' ? 'لوح بورسلان جديد' : 'لوح رخام جديد'),
           category: cat,
-          dimensions: document.getElementById('new-item-dim').value,
-          thickness: document.getElementById('new-item-thick').value,
-          finish: document.getElementById('new-item-finish').value,
-          location: document.getElementById('new-item-loc').value,
-          quantity: parseFloat(document.getElementById('new-item-qty').value) || 0,
-          unitPrice: parseFloat(document.getElementById('new-item-price').value) || 0,
+          dimensions: dimInput || (cat === 'porcelain' ? '160x320 cm' : '320x75 cm'),
+          thickness: thickInput || (cat === 'porcelain' ? '12 mm' : '20 mm'),
+          finish: finishInput || 'ملمع',
+          location: locInput || (cat === 'porcelain' ? 'المستودع أ-01' : 'الساحة الشرقية 01'),
+          quantity: isNaN(qtyVal) ? 1 : qtyVal,
+          unitPrice: isNaN(priceVal) ? 0 : priceVal,
           image: APP.currentUploadedImage || ''
         };
 
@@ -3941,6 +3926,153 @@
         showToast(APP.lang === 'ar' ? 'تمت إضافة لوح المادة بنجاح.' : 'Material slab added.', 'success');
       } catch (err) {
         showToast(err.message, 'danger');
+      }
+    },
+
+    openEditMaterialModal(itemId) {
+      const item = WMS_DB.getItemById ? WMS_DB.getItemById(itemId) : WMS_DB.getItems().find(i => i.id === itemId);
+      if (!item) return;
+
+      document.getElementById('edit-item-id').value = item.id;
+      document.getElementById('edit-item-sku').value = item.sku || '';
+      document.getElementById('edit-item-name').value = item.nameAr || item.name || '';
+      document.getElementById('edit-item-loc').value = item.locationAr || item.location || '';
+      document.getElementById('edit-item-dim').value = item.dimensions || '';
+      document.getElementById('edit-item-thick').value = item.thickness || '';
+      document.getElementById('edit-item-finish').value = item.finishAr || item.finish || '';
+      document.getElementById('edit-item-qty').value = item.totalQty !== undefined ? item.totalQty : (item.quantity || 0);
+      document.getElementById('edit-item-price').value = item.unitPrice || 0;
+
+      openModal('modal-edit-material');
+    },
+
+    submitEditMaterial(e) {
+      if (e && typeof e.preventDefault === 'function') e.preventDefault();
+      try {
+        const id = document.getElementById('edit-item-id').value;
+        const updates = {
+          sku: document.getElementById('edit-item-sku').value.trim(),
+          name: document.getElementById('edit-item-name').value.trim(),
+          nameAr: document.getElementById('edit-item-name').value.trim(),
+          location: document.getElementById('edit-item-loc').value.trim(),
+          locationAr: document.getElementById('edit-item-loc').value.trim(),
+          dimensions: document.getElementById('edit-item-dim').value.trim(),
+          thickness: document.getElementById('edit-item-thick').value.trim(),
+          finish: document.getElementById('edit-item-finish').value.trim(),
+          finishAr: document.getElementById('edit-item-finish').value.trim(),
+          quantity: parseFloat(document.getElementById('edit-item-qty').value) || 0,
+          unitPrice: parseFloat(document.getElementById('edit-item-price').value) || 0
+        };
+        WMS_DB.updateItem(id, updates);
+        closeModal('modal-edit-material');
+        renderCurrentView();
+        showToast('تم حفظ تعديلات لوح المادة بنجاح.', 'success');
+      } catch (err) {
+        showToast(err.message, 'danger');
+      }
+    },
+
+    // User Roles & Permissions Manager (Owner Control for s@gmail.com)
+    openUserRolesManagerModal() {
+      this.renderUserRolesTable();
+      openModal('modal-user-roles-manager');
+    },
+
+    renderUserRolesTable() {
+      const tbody = document.getElementById('role-mgr-users-tbody');
+      const countEl = document.getElementById('role-mgr-count');
+      if (!tbody) return;
+
+      const list = WMS_DB.getUserRolesList ? WMS_DB.getUserRolesList() : [];
+      if (countEl) countEl.textContent = `${list.length} مستخدم`;
+
+      if (list.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">لا يوجد مستخدمين مسجلين بعد.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      const roleBadges = {
+        production_engineer: '<span style="color:#f59e0b; font-weight:800;">👑 مهندس الإنتاج / المالك</span>',
+        supervisor_porcelain: '<span style="color:#818cf8; font-weight:700;">🏛️ مشرف البورسلان</span>',
+        supervisor_marble: '<span style="color:#38bdf8; font-weight:700;">💎 مشرف الرخام</span>',
+        supervisor_field: '<span style="color:#34d399; font-weight:700;">🛠️ مشرف الميدان والفسوحات</span>',
+        technician: '<span style="color:#fbbf24; font-weight:700;">👷‍♂️ فني تركيب (خرائط)</span>',
+        viewer: '<span style="color:#94a3b8; font-weight:600;">👁️ مشاهد فقط</span>'
+      };
+
+      const roleModules = {
+        production_engineer: '🌟 كافة الأقسام والعمليات (كامل الصلاحيات)',
+        supervisor_porcelain: '🏛️ مستودع البورسلان وحركاته فقط',
+        supervisor_marble: '💎 مستودع الرخام وحركاته فقط',
+        supervisor_field: '🛠️ الخدمات الميدانية وفسوحات الخشب والرخام',
+        technician: '📱 المهام الميدانية والمواقع والخرائط',
+        viewer: '👀 استعراض وقراءة فقط بدون كتابة'
+      };
+
+      tbody.innerHTML = list.map(u => {
+        const isOwnerUser = (u.email.toLowerCase().trim() === 's@gmail.com');
+        const badge = roleBadges[u.role] || roleBadges.viewer;
+        const modules = roleModules[u.role] || '-';
+
+        return `
+          <tr>
+            <td>
+              <strong style="color: var(--text-primary); font-size: 0.92rem;">${escapeHtml(u.email)}</strong>
+              ${isOwnerUser ? '<span style="background: rgba(245,158,11,0.15); color: #fbbf24; padding: 0.15rem 0.45rem; border-radius: 4px; font-size: 0.72rem; margin-right: 0.35rem; font-weight: 800;">👑 المالك الرئيسي</span>' : ''}
+            </td>
+            <td>${badge}</td>
+            <td style="font-size: 0.84rem; color: var(--text-secondary);">${modules}</td>
+            <td>
+              ${!isOwnerUser ? `
+                <div style="display: flex; gap: 0.4rem; align-items: center;">
+                  <select class="form-select" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; width: auto;" onchange="WMS_APP.updateUserRoleFromTable('${escapeHtml(u.email)}', this.value)">
+                    <option value="supervisor_porcelain" ${u.role === 'supervisor_porcelain' ? 'selected' : ''}>🏛️ مشرف بورسلان</option>
+                    <option value="supervisor_marble" ${u.role === 'supervisor_marble' ? 'selected' : ''}>💎 مشرف رخام</option>
+                    <option value="supervisor_field" ${u.role === 'supervisor_field' ? 'selected' : ''}>🛠️ مشرف ميدان</option>
+                    <option value="technician" ${u.role === 'technician' ? 'selected' : ''}>👷‍♂️ فني تركيب</option>
+                    <option value="production_engineer" ${u.role === 'production_engineer' ? 'selected' : ''}>👑 مهندس إنتاج</option>
+                    <option value="viewer" ${u.role === 'viewer' ? 'selected' : ''}>👁️ مشاهد</option>
+                  </select>
+                  <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.deleteUserRole('${escapeHtml(u.email)}')" style="color: #f87171; border-color: rgba(239,68,68,0.3); padding: 0.25rem 0.5rem;" title="إزالة">🗑️</button>
+                </div>
+              ` : '<span style="color: var(--text-muted); font-size: 0.8rem;">صلاحية ثابتة (صاحب المنشأة)</span>'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    },
+
+    submitUserRoleAssignment(e) {
+      if (e && typeof e.preventDefault === 'function') e.preventDefault();
+      const emailInput = document.getElementById('role-mgr-email');
+      const roleSelect = document.getElementById('role-mgr-role');
+      if (!emailInput || !roleSelect) return;
+
+      const email = emailInput.value.trim();
+      const role = roleSelect.value;
+      if (!email) return;
+
+      WMS_DB.setUserRole(email, role);
+      this.renderUserRolesTable();
+      emailInput.value = '';
+      showToast(`تم تعيين صلاحية [${email}] بنجاح! 👑`, 'success');
+    },
+
+    updateUserRoleFromTable(email, role) {
+      WMS_DB.setUserRole(email, role);
+      this.renderUserRolesTable();
+      showToast(`تم تحديث صلاحية [${email}] بنجاح! 👑`, 'success');
+    },
+
+    deleteUserRole(email) {
+      if (confirm(`هل أنت متأكد من إزالة صلاحية المستخدم [${email}]؟`)) {
+        WMS_DB.deleteUserRole(email);
+        this.renderUserRolesTable();
+        showToast(`تم حذف صلاحية [${email}].`, 'info');
       }
     },
 
