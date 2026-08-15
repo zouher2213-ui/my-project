@@ -1016,31 +1016,8 @@
   function navigateTo(route) {
     if (!checkAuth()) return;
 
-    let user = WMS_DB ? WMS_DB.getAuthUser() : null;
-    if (!user) {
-      try {
-        const stored = localStorage.getItem('wms_auth_user_v6');
-        if (stored && stored !== 'null') user = JSON.parse(stored);
-      } catch (e) {}
-    }
-
-    const role = user ? (user.role || '').toLowerCase() : 'production_engineer';
-    const isProductionEngineer = (role === 'production_engineer' || role === 'owner' || role === 'admin' || (user && user.isOwner));
-    const allowedModules = (user && Array.isArray(user.allowedModules)) ? user.allowedModules : ['*'];
-
     const validRoutes = ['hud', 'porcelain', 'marble', 'wood-delivery', 'marble-delivery', 'field-service', 'porcelain-preview', 'marble-preview'];
     let targetRoute = validRoutes.includes(route) ? route : 'hud';
-
-    // Role-based Access Enforcement:
-    // If not production engineer, restrict user strictly to their designated warehouse section
-    if (!isProductionEngineer && !allowedModules.includes('*') && targetRoute !== 'hud') {
-      const isAllowed = allowedModules.some(m => targetRoute === m || targetRoute.startsWith(m));
-      if (!isAllowed) {
-        const fallback = allowedModules[0] || 'hud';
-        showToast(`تنبيه صلاحيات: حسابك مخصص لقسم [${user.roleTitleAr || fallback}] فقط. تم توجيهك لقسمك المعتمد!`, 'warning');
-        targetRoute = fallback;
-      }
-    }
 
     APP.currentRoute = targetRoute;
     if (window.location.hash !== `#${targetRoute}`) {
@@ -3004,13 +2981,8 @@
       
       if (user) {
         const email = user.email || user.username || 'admin@warehouse.local';
-        const role = (user.role || 'viewer').toLowerCase();
-        const isProductionEngineer = (role === 'production_engineer' || role === 'owner' || role === 'admin' || user.isOwner || (email && email.toLowerCase().trim() === 's@gmail.com'));
-        const isPorcelainSupervisor = (role === 'supervisor_porcelain');
-        const isMarbleSupervisor = (role === 'supervisor_marble');
-        const isFieldSupervisor = (role === 'supervisor_field');
-        const isTechnician = (role === 'technician');
-        const isViewer = (role === 'viewer');
+        const role = (user.role || 'owner').toLowerCase();
+        const isOwner = (role === 'owner' || role === 'production_engineer' || (email && email.toLowerCase().trim() === 's@gmail.com'));
         
         if (emailEl) {
           emailEl.textContent = email;
@@ -3021,44 +2993,10 @@
           const accessTagEl = pillEl.querySelector('.user-access-tag');
           
           pillEl.classList.remove('is-owner-role', 'is-admin-role', 'is-viewer-role', 'is-porcelain-role', 'is-marble-role', 'is-field-role', 'is-tech-role');
-
-          if (isProductionEngineer) {
-            pillEl.classList.add('is-owner-role');
-            pillEl.setAttribute('title', 'مهندس الإنتاج / المالك - كامل الصلاحيات لجميع العمليات والمخازن');
-            if (avatarEl) avatarEl.textContent = '👑';
-            if (accessTagEl) accessTagEl.innerHTML = `<span style="color:var(--warning); font-weight:800;">👑 مهندس الإنتاج</span>`;
-          } else if (isPorcelainSupervisor) {
-            pillEl.classList.add('is-porcelain-role');
-            pillEl.setAttribute('title', 'مشرف مستودع البورسلان - حركات وتعديلات البورسلان فقط');
-            if (avatarEl) avatarEl.textContent = '🏛️';
-            if (accessTagEl) accessTagEl.innerHTML = `<span style="color:#10b981; font-weight:800;">🏛️ مشرف البورسلان</span>`;
-          } else if (isMarbleSupervisor) {
-            pillEl.classList.add('is-marble-role');
-            pillEl.setAttribute('title', 'مشرف مستودع الرخام - حركات وتعديلات الرخام فقط');
-            if (avatarEl) avatarEl.textContent = '💎';
-            if (accessTagEl) accessTagEl.innerHTML = `<span style="color:#0ea5e9; font-weight:800;">💎 مشرف الرخام</span>`;
-          } else if (isFieldSupervisor) {
-            pillEl.classList.add('is-field-role');
-            pillEl.setAttribute('title', 'مشرف الفسوحات والميدان');
-            if (avatarEl) avatarEl.textContent = '🛠️';
-            if (accessTagEl) accessTagEl.innerHTML = `<span style="color:#8b5cf6; font-weight:800;">🛠️ مشرف الميدان</span>`;
-          } else if (isTechnician) {
-            pillEl.classList.add('is-tech-role');
-            pillEl.setAttribute('title', 'فني تركيب ميداني - استعراض المهام والخرائط');
-            if (avatarEl) avatarEl.textContent = '👷‍♂️';
-            if (accessTagEl) accessTagEl.innerHTML = `<span style="color:#f59e0b; font-weight:800;">👷‍♂️ فني تركيب</span>`;
-          } else {
-            pillEl.classList.add('is-viewer-role');
-            pillEl.setAttribute('title', 'مشاهد - صلاحية القراءة فقط');
-            if (avatarEl) avatarEl.textContent = '👁️';
-            if (accessTagEl) accessTagEl.innerHTML = `<span style="color:#60a5fa; font-weight:700;">👁️ مشاهد (قراءة فقط)</span>`;
-          }
-        }
-
-        // Control Owner User Roles Manager button visibility
-        const ownerBtn = document.getElementById('btn-owner-roles-panel');
-        if (ownerBtn) {
-          ownerBtn.style.display = isProductionEngineer ? 'inline-flex' : 'none';
+          pillEl.classList.add(isOwner ? 'is-owner-role' : 'is-admin-role');
+          
+          if (avatarEl) avatarEl.textContent = isOwner ? '👑' : '👤';
+          if (accessTagEl) accessTagEl.innerHTML = `<span style="color:#34d399; font-weight:700;">🔓 كامل الصلاحيات (كل الأقسام)</span>`;
         }
 
         if (window.applyRolePermissions) {
