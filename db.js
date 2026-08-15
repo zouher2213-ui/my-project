@@ -1494,46 +1494,106 @@ const firestoreDb = getFirestore(app);
 let isSigningUp = false;
 let currentAuthMode = 'login'; // 'login' or 'signup'
 
-// Helper: Standardized User Object Creator with Role-Based Permissions
+// Warehouse Business Roles Definition
+const WMS_ROLES = {
+  PRODUCTION_ENGINEER: 'production_engineer', // مهندس الإنتاج / المالك (كامل الصلاحيات)
+  SUPERVISOR_PORCELAIN: 'supervisor_porcelain', // مشرف مستودع البورسلان (حركات البورسلان فقط)
+  SUPERVISOR_MARBLE: 'supervisor_marble', // مشرف مستودع الرخام (حركات الرخام فقط)
+  SUPERVISOR_FIELD: 'supervisor_field', // مشرف الفسوحات والميدان
+  TECHNICIAN: 'technician', // فني التركيب الميداني (خرائط ومواقع)
+  VIEWER: 'viewer' // مشاهد (قراءة فقط)
+};
+
+// Helper: Standardized User Object Creator with Warehouse Role-Based Permissions
 function createAuthUser(email, displayName, customRole = null) {
   const isOwner = email && (email.toLowerCase().trim() === 's@gmail.com');
   const isHardAdmin = email && (email.toLowerCase().trim() === 'admin');
   
-  let role = 'viewer';
+  let role = WMS_ROLES.VIEWER;
   if (isOwner) {
-    role = 'owner';
+    role = WMS_ROLES.PRODUCTION_ENGINEER;
   } else if (isHardAdmin) {
-    role = 'admin';
+    role = WMS_ROLES.PRODUCTION_ENGINEER;
   } else if (customRole) {
     role = customRole.toLowerCase();
   }
 
-  const isViewer = role === 'viewer';
-  const isAdmin = role === 'admin' || role === 'owner';
+  const isProductionEngineer = (role === WMS_ROLES.PRODUCTION_ENGINEER || role === 'owner' || role === 'admin' || isOwner);
+  const isPorcelainSupervisor = (role === WMS_ROLES.SUPERVISOR_PORCELAIN);
+  const isMarbleSupervisor = (role === WMS_ROLES.SUPERVISOR_MARBLE);
+  const isFieldSupervisor = (role === WMS_ROLES.SUPERVISOR_FIELD);
+  const isTechnician = (role === WMS_ROLES.TECHNICIAN);
+  const isViewer = (role === WMS_ROLES.VIEWER);
+
+  let roleTitleAr = 'مشاهد (قراءة فقط)';
+  let roleTitleEn = 'Viewer (Read Only)';
+  let roleTitleBn = 'দর্শক (শুধুমাত্র দেখার অনুমতি)';
+  let allowedModules = ['*'];
+  let canAdjustStock = false;
+  let canEditAll = false;
+
+  if (isProductionEngineer) {
+    roleTitleAr = 'مهندس الإنتاج / المالك (كامل الصلاحيات لجميع الأقسام)';
+    roleTitleEn = 'Production Engineer / Owner (Full Unrestricted Access)';
+    roleTitleBn = 'উৎপাদন প্রকৌশলী / মালিক (পূর্ণ প্রবেশাধিকার)';
+    allowedModules = ['*'];
+    canAdjustStock = true;
+    canEditAll = true;
+  } else if (isPorcelainSupervisor) {
+    roleTitleAr = 'مشرف مستودع البورسلان (حركات البورسلان فقط)';
+    roleTitleEn = 'Porcelain Warehouse Supervisor (Porcelain Only)';
+    roleTitleBn = 'চীনামাটির বাসন গুদাম সুপারভাইজার';
+    allowedModules = ['porcelain'];
+    canAdjustStock = true;
+    canEditAll = false;
+  } else if (isMarbleSupervisor) {
+    roleTitleAr = 'مشرف مستودع الرخام (حركات الرخام فقط)';
+    roleTitleEn = 'Marble Warehouse Supervisor (Marble Only)';
+    roleTitleBn = 'মার্বেল গুদাম সুপারভাইজার';
+    allowedModules = ['marble'];
+    canAdjustStock = true;
+    canEditAll = false;
+  } else if (isFieldSupervisor) {
+    roleTitleAr = 'مشرف الفسوحات والخدمات الميدانية';
+    roleTitleEn = 'Field & Delivery Supervisor';
+    roleTitleBn = 'ফিল্ড এবং ডেলিভারি সুপারভাইজার';
+    allowedModules = ['field-service', 'wood-delivery', 'marble-delivery'];
+    canAdjustStock = false;
+    canEditAll = false;
+  } else if (isTechnician) {
+    roleTitleAr = 'فني تركيب ميداني (المهام ومواقع الخرائط)';
+    roleTitleEn = 'Installation Technician (Tasks & Maps)';
+    roleTitleBn = 'ইনস্টলেশন টেকনিশিয়ান (মানচিত্র)';
+    allowedModules = ['field-service'];
+    canAdjustStock = false;
+    canEditAll = false;
+  }
 
   return { 
     username: email, 
     email: email,
-    name: displayName || (isOwner ? 'المالك / Owner (s@gmail.com)' : (email ? email.split('@')[0] : 'admin')),
-    role: role, // 'viewer' | 'admin' | 'owner'
-    roleTitleAr: isOwner ? 'المالك / صاحب المنشأة (كامل الصلاحيات)' : (role === 'admin' ? 'المدير العام (قراءة وكتابة)' : 'مشاهد (قراءة فقط)'),
-    roleTitleEn: isOwner ? 'Owner & Primary Administrator (Full Access)' : (role === 'admin' ? 'Administrator (Read & Write)' : 'Viewer (Read Only)'),
-    roleTitleBn: isOwner ? 'মালিক (পূর্ণ প্রবেশাধিকার)' : (role === 'admin' ? 'অ্যাডমিনিস্ট্রেটর (পড়া ও লেখা)' : 'দর্শক (শুধুমাত্র দেখার অনুমতি)'),
-    fullAccess: !isViewer,
+    name: displayName || (isProductionEngineer ? 'مهندس الإنتاج (Production Engineer)' : (email ? email.split('@')[0] : 'admin')),
+    role: role,
+    roleTitleAr: roleTitleAr,
+    roleTitleEn: roleTitleEn,
+    roleTitleBn: roleTitleBn,
+    allowedModules: allowedModules,
+    fullAccess: isProductionEngineer,
+    canAdjustStock: canAdjustStock,
+    canEditAll: canEditAll,
     canWrite: !isViewer,
     canRead: true,
-    permissions: isViewer ? ['read'] : ['*'],
-    isOwner: isOwner
+    isOwner: isProductionEngineer
   };
 }
 
 // Role-Based Access Control: Fetch role from Firestore users collection
 async function fetchUserRole(user) {
-  if (!user) return 'viewer';
+  if (!user) return WMS_ROLES.VIEWER;
   const isOwner = user.email && (user.email.toLowerCase().trim() === 's@gmail.com');
-  if (isOwner) return 'owner';
-  if (user.email && user.email.toLowerCase().trim() === 'admin') return 'admin';
-  if (!user.uid) return 'viewer';
+  if (isOwner) return WMS_ROLES.PRODUCTION_ENGINEER;
+  if (user.email && user.email.toLowerCase().trim() === 'admin') return WMS_ROLES.PRODUCTION_ENGINEER;
+  if (!user.uid) return WMS_ROLES.VIEWER;
 
   try {
     if (firestoreDb) {
@@ -1541,12 +1601,12 @@ async function fetchUserRole(user) {
       const userDocSnap = await getDoc(userDocRef);
       if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
-        const role = userData.role || 'viewer';
+        const role = userData.role || WMS_ROLES.VIEWER;
         console.log(`👤 Fetched role from Firestore for [${user.email}]: ${role}`);
         return role;
       } else {
-        // Document does not exist yet; create with default 'viewer' role
-        const defaultRole = isOwner ? 'owner' : 'viewer';
+        // Document does not exist yet; create with default role
+        const defaultRole = isOwner ? WMS_ROLES.PRODUCTION_ENGINEER : WMS_ROLES.VIEWER;
         await setDoc(userDocRef, {
           uid: user.uid,
           email: user.email,
@@ -1560,67 +1620,59 @@ async function fetchUserRole(user) {
   } catch (err) {
     console.warn("Could not fetch user role from Firestore:", err);
   }
-  return isOwner ? 'owner' : 'viewer';
+  return isOwner ? WMS_ROLES.PRODUCTION_ENGINEER : WMS_ROLES.VIEWER;
 }
 
-// UI Permissions Engine: Controls UI elements based on role
+// UI Permissions Engine: Controls HUD cards and navigation based on warehouse role
 function applyRolePermissions(role) {
   const normRole = (role || 'viewer').toLowerCase();
-  const isViewer = normRole === 'viewer';
-  const isOwner = normRole === 'owner';
-  const isAdmin = normRole === 'admin' || isOwner;
+  const isProductionEngineer = (normRole === 'production_engineer' || normRole === 'owner' || normRole === 'admin');
+  const isPorcelainSupervisor = (normRole === 'supervisor_porcelain');
+  const isMarbleSupervisor = (normRole === 'supervisor_marble');
+  const isFieldSupervisor = (normRole === 'supervisor_field');
+  const isTechnician = (normRole === 'technician');
+  const isViewer = (normRole === 'viewer');
 
   // 1. Set root attribute and classes
   document.documentElement.setAttribute('data-role', normRole);
-  if (isViewer) {
+  document.documentElement.classList.remove('is-admin-role', 'is-owner-role', 'is-viewer-role', 'is-porcelain-role', 'is-marble-role', 'is-field-role', 'is-tech-role');
+
+  if (isProductionEngineer) {
+    document.documentElement.classList.add('is-owner-role', 'is-admin-role');
+  } else if (isPorcelainSupervisor) {
+    document.documentElement.classList.add('is-porcelain-role');
+  } else if (isMarbleSupervisor) {
+    document.documentElement.classList.add('is-marble-role');
+  } else if (isFieldSupervisor) {
+    document.documentElement.classList.add('is-field-role');
+  } else if (isTechnician) {
+    document.documentElement.classList.add('is-tech-role');
+  } else if (isViewer) {
     document.documentElement.classList.add('is-viewer-role');
-    document.documentElement.classList.remove('is-admin-role', 'is-owner-role');
-  } else {
-    document.documentElement.classList.add('is-admin-role');
-    document.documentElement.classList.remove('is-viewer-role');
-    if (isOwner) document.documentElement.classList.add('is-owner-role');
   }
 
-  // 2. Control Messages input and send button visibility as requested:
-  // "If the role is 'viewer': Show the messages list, but HIDE the message text input and the 'Send' button. (They can only read).
-  //  If the role is 'admin': Show everything (the messages list, the text input, and the 'Send' button). (They can read and write)."
-  const msgInput = document.getElementById('message-input');
-  const btnSend = document.getElementById('btn-send') || document.getElementById('btn-send-message');
-  const msgForm = document.getElementById('message-form-group') || document.querySelector('.message-form-container');
-  const msgList = document.getElementById('messages-list');
-  const viewerNotice = document.getElementById('viewer-notice-box');
-  const roleIndicator = document.getElementById('role-badge-indicator');
+  // 2. Control HUD Cards visibility based on assigned role
+  const cardPorcelain = document.querySelector('.card-porcelain');
+  const cardMarble = document.querySelector('.card-marble');
+  const cardWoodDel = document.querySelector('.card-wood-del');
+  const cardMarbleDel = document.querySelector('.card-marble-del');
+  const cardFieldService = document.querySelector('.card-field-service');
 
-  // Always show the messages list for all roles (they can always read)
-  if (msgList) msgList.style.display = 'flex';
+  if (cardPorcelain) cardPorcelain.style.display = (isProductionEngineer || isPorcelainSupervisor || isViewer) ? '' : 'none';
+  if (cardMarble) cardMarble.style.display = (isProductionEngineer || isMarbleSupervisor || isViewer) ? '' : 'none';
+  if (cardWoodDel) cardWoodDel.style.display = (isProductionEngineer || isFieldSupervisor || isViewer) ? '' : 'none';
+  if (cardMarbleDel) cardMarbleDel.style.display = (isProductionEngineer || isFieldSupervisor || isViewer) ? '' : 'none';
+  if (cardFieldService) cardFieldService.style.display = (isProductionEngineer || isFieldSupervisor || isTechnician || isViewer) ? '' : 'none';
 
-  if (isViewer) {
-    // Viewer: HIDE message text input and Send button
-    if (msgInput) msgInput.style.display = 'none';
-    if (btnSend) btnSend.style.display = 'none';
-    if (msgForm) msgForm.style.display = 'none';
-    if (viewerNotice) viewerNotice.style.display = 'flex';
-    if (roleIndicator) {
-      roleIndicator.className = 'status-pill pill-warning';
-      roleIndicator.innerHTML = '👁️ <strong>صلاحية: مشاهد (قراءة فقط)</strong>';
-    }
-  } else {
-    // Admin / Owner: SHOW everything (messages list, text input, send button)
-    if (msgInput) msgInput.style.display = '';
-    if (btnSend) btnSend.style.display = '';
-    if (msgForm) msgForm.style.display = 'flex';
-    if (viewerNotice) viewerNotice.style.display = 'none';
-    if (roleIndicator) {
-      roleIndicator.className = 'status-pill pill-available';
-      roleIndicator.innerHTML = isOwner 
-        ? '👑 <strong>صلاحية: المالك (كامل الصلاحيات)</strong>' 
-        : '🛡️ <strong>صلاحية: مدير (قراءة وكتابة)</strong>';
-    }
+  // 3. Update Mobile Dock tabs if mobile controller exists
+  if (window.WMS_MOBILE && typeof window.WMS_MOBILE.updateRoleDock === 'function') {
+    window.WMS_MOBILE.updateRoleDock(normRole);
   }
 
-  console.log(`🔒 Role Permissions Applied: [${normRole}] (Viewer: ${isViewer})`);
+  console.log(`🔒 Role Permissions Applied: [${normRole}] (Porcelain Only: ${isPorcelainSupervisor}, Marble Only: ${isMarbleSupervisor})`);
 }
 
+window.WMS_ROLES = WMS_ROLES;
 window.fetchUserRole = fetchUserRole;
 window.applyRolePermissions = applyRolePermissions;
 
@@ -1657,14 +1709,18 @@ function switchAuthMode(mode) {
   const confirmPwdGroup = document.getElementById('auth-confirm-password-group');
   const loginOptions = document.getElementById('auth-login-options');
   const btnLogin = document.getElementById('btn-login');
-  const btnDemoLogin = document.getElementById('btn-demo-login');
-  const btnViewerLogin = document.getElementById('btn-viewer-login');
   const btnOwnerLogin = document.getElementById('btn-owner-login');
+  const btnRolePorcelain = document.getElementById('btn-role-porcelain');
+  const btnRoleMarble = document.getElementById('btn-role-marble');
+  const btnRoleField = document.getElementById('btn-role-field');
+  const btnRoleTech = document.getElementById('btn-role-tech');
   const btnSignup = document.getElementById('btn-signup');
   const signupNote = document.getElementById('auth-signup-note');
   const alertBox = document.getElementById('auth-hud-alert');
 
   if (alertBox) alertBox.style.display = 'none';
+
+  const roleBtns = [btnOwnerLogin, btnRolePorcelain, btnRoleMarble, btnRoleField, btnRoleTech];
 
   if (currentAuthMode === 'signup') {
     if (loginTab) loginTab.classList.remove('active');
@@ -1672,9 +1728,7 @@ function switchAuthMode(mode) {
     if (confirmPwdGroup) confirmPwdGroup.style.display = 'block';
     if (loginOptions) loginOptions.style.display = 'none';
     if (btnLogin) btnLogin.style.display = 'none';
-    if (btnDemoLogin) btnDemoLogin.style.display = 'none';
-    if (btnViewerLogin) btnViewerLogin.style.display = 'none';
-    if (btnOwnerLogin) btnOwnerLogin.style.display = 'none';
+    roleBtns.forEach(btn => { if (btn) btn.style.display = 'none'; });
     if (btnSignup) btnSignup.style.display = 'flex';
     if (signupNote) signupNote.style.display = 'block';
   } else {
@@ -1683,9 +1737,7 @@ function switchAuthMode(mode) {
     if (confirmPwdGroup) confirmPwdGroup.style.display = 'none';
     if (loginOptions) loginOptions.style.display = 'flex';
     if (btnLogin) btnLogin.style.display = 'flex';
-    if (btnDemoLogin) btnDemoLogin.style.display = 'flex';
-    if (btnViewerLogin) btnViewerLogin.style.display = 'flex';
-    if (btnOwnerLogin) btnOwnerLogin.style.display = 'flex';
+    roleBtns.forEach(btn => { if (btn) btn.style.display = 'flex'; });
     if (btnSignup) btnSignup.style.display = 'none';
     if (signupNote) signupNote.style.display = 'none';
   }
@@ -2049,12 +2101,12 @@ async function handleLogIn(e) {
   }
 }
 
-// Quick Owner Login (s@gmail.com - Full Access)
+// Quick Login: مهندس الإنتاج / صاحب المنشأة (Full Access)
 function handleOwnerQuickLogin(e) {
   if (e && typeof e.preventDefault === 'function') e.preventDefault();
 
   if (window.WMS_DB) {
-    const authUser = createAuthUser('s@gmail.com', 'المالك (Owner)', 'owner');
+    const authUser = createAuthUser('s@gmail.com', 'مهندس الإنتاج (s@gmail.com)', WMS_ROLES.PRODUCTION_ENGINEER);
     window.WMS_DB.setAuthUser(authUser);
 
     if (document.documentElement) {
@@ -2065,7 +2117,7 @@ function handleOwnerQuickLogin(e) {
     if (authSection) authSection.style.display = "none";
     if (appSection) appSection.style.display = "block";
 
-    applyRolePermissions('owner');
+    applyRolePermissions(WMS_ROLES.PRODUCTION_ENGINEER);
 
     if (window.WMS_APP) {
       if (typeof window.WMS_APP.updateUserHeader === 'function') {
@@ -2073,7 +2125,7 @@ function handleOwnerQuickLogin(e) {
       }
       window.WMS_APP.navigate('hud');
       if (window.showToast) {
-        window.showToast('مرحباً بك يا صاحب المنشأة! تم تسجيل الدخول بحساب المالك s@gmail.com 👑', 'success');
+        window.showToast('مرحباً بك يا مهندس الإنتاج! تم تسجيل الدخول بصلاحيات المالك الكاملة لجميع الأقسام 👑', 'success');
       }
     }
 
@@ -2081,40 +2133,12 @@ function handleOwnerQuickLogin(e) {
   }
 }
 
-// Quick Demo Login (Admin Demo)
-function handleQuickDemoLogin(e) {
+// Quick Login: مشرف مستودع البورسلان (Porcelain Only)
+function handlePorcelainSupervisorLogin(e) {
   if (e && typeof e.preventDefault === 'function') e.preventDefault();
 
   if (window.WMS_DB) {
-    window.WMS_DB.login('admin', '123456');
-    if (document.documentElement) {
-      document.documentElement.classList.add('is-authenticated');
-    }
-    const authSection = document.getElementById("auth-section");
-    const appSection = document.getElementById("app-section");
-    if (authSection) authSection.style.display = "none";
-    if (appSection) appSection.style.display = "block";
-    
-    applyRolePermissions('admin');
-
-    if (window.WMS_APP) {
-      if (typeof window.WMS_APP.updateUserHeader === 'function') {
-        window.WMS_APP.updateUserHeader();
-      }
-      window.WMS_APP.navigate('hud');
-      if (window.showToast) window.showToast('تم تسجيل الدخول التجريبي السريع كمدير عام (Admin)!', 'success');
-    }
-
-    initCloudDatabaseListener();
-  }
-}
-
-// Quick Viewer Demo Login (Viewer Demo)
-function handleQuickViewerLogin(e) {
-  if (e && typeof e.preventDefault === 'function') e.preventDefault();
-
-  if (window.WMS_DB) {
-    const authUser = createAuthUser('viewer@demo.local', 'حساب مشاهد تجريبي (Viewer)', 'viewer');
+    const authUser = createAuthUser('porcelain.sup@warehouse.local', 'مشرف مستودع البورسلان', WMS_ROLES.SUPERVISOR_PORCELAIN);
     window.WMS_DB.setAuthUser(authUser);
 
     if (document.documentElement) {
@@ -2125,15 +2149,16 @@ function handleQuickViewerLogin(e) {
     if (authSection) authSection.style.display = "none";
     if (appSection) appSection.style.display = "block";
 
-    applyRolePermissions('viewer');
+    applyRolePermissions(WMS_ROLES.SUPERVISOR_PORCELAIN);
 
     if (window.WMS_APP) {
       if (typeof window.WMS_APP.updateUserHeader === 'function') {
         window.WMS_APP.updateUserHeader();
       }
-      window.WMS_APP.navigate('hud');
+      // Navigate directly to Porcelain module
+      window.WMS_APP.navigate('porcelain');
       if (window.showToast) {
-        window.showToast('تم تسجيل الدخول بصلاحية "مشاهد" (قراءة فقط) 👁️', 'info');
+        window.showToast('مرحباً! تم تسجيل الدخول كمشرف مستودع البورسلان (حركات البورسلان فقط) 🏛️', 'info');
       }
     }
 
@@ -2141,7 +2166,108 @@ function handleQuickViewerLogin(e) {
   }
 }
 
-window.handleQuickViewerLogin = handleQuickViewerLogin;
+// Quick Login: مشرف مستودع الرخام (Marble Only)
+function handleMarbleSupervisorLogin(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+  if (window.WMS_DB) {
+    const authUser = createAuthUser('marble.sup@warehouse.local', 'مشرف مستودع الرخام', WMS_ROLES.SUPERVISOR_MARBLE);
+    window.WMS_DB.setAuthUser(authUser);
+
+    if (document.documentElement) {
+      document.documentElement.classList.add('is-authenticated');
+    }
+    const authSection = document.getElementById("auth-section");
+    const appSection = document.getElementById("app-section");
+    if (authSection) authSection.style.display = "none";
+    if (appSection) appSection.style.display = "block";
+
+    applyRolePermissions(WMS_ROLES.SUPERVISOR_MARBLE);
+
+    if (window.WMS_APP) {
+      if (typeof window.WMS_APP.updateUserHeader === 'function') {
+        window.WMS_APP.updateUserHeader();
+      }
+      // Navigate directly to Marble module
+      window.WMS_APP.navigate('marble');
+      if (window.showToast) {
+        window.showToast('مرحباً! تم تسجيل الدخول كمشرف مستودع الرخام (حركات الرخام فقط) 💎', 'info');
+      }
+    }
+
+    initCloudDatabaseListener();
+  }
+}
+
+// Quick Login: مشرف الفسوحات والخدمات الميدانية (Field Service Supervisor)
+function handleFieldSupervisorLogin(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+  if (window.WMS_DB) {
+    const authUser = createAuthUser('field.sup@warehouse.local', 'مشرف الفسوحات والميدان', WMS_ROLES.SUPERVISOR_FIELD);
+    window.WMS_DB.setAuthUser(authUser);
+
+    if (document.documentElement) {
+      document.documentElement.classList.add('is-authenticated');
+    }
+    const authSection = document.getElementById("auth-section");
+    const appSection = document.getElementById("app-section");
+    if (authSection) authSection.style.display = "none";
+    if (appSection) appSection.style.display = "block";
+
+    applyRolePermissions(WMS_ROLES.SUPERVISOR_FIELD);
+
+    if (window.WMS_APP) {
+      if (typeof window.WMS_APP.updateUserHeader === 'function') {
+        window.WMS_APP.updateUserHeader();
+      }
+      window.WMS_APP.navigate('field-service');
+      if (window.showToast) {
+        window.showToast('تم تسجيل الدخول كمشرف الفسوحات والخدمات الميدانية 🛠️', 'info');
+      }
+    }
+
+    initCloudDatabaseListener();
+  }
+}
+
+// Quick Login: فني التركيب الميداني (Technician)
+function handleTechnicianLogin(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+  if (window.WMS_DB) {
+    const authUser = createAuthUser('tech.omran@warehouse.local', 'عمران الفاروق (فني تركيب)', WMS_ROLES.TECHNICIAN);
+    window.WMS_DB.setAuthUser(authUser);
+
+    if (document.documentElement) {
+      document.documentElement.classList.add('is-authenticated');
+    }
+    const authSection = document.getElementById("auth-section");
+    const appSection = document.getElementById("app-section");
+    if (authSection) authSection.style.display = "none";
+    if (appSection) appSection.style.display = "block";
+
+    applyRolePermissions(WMS_ROLES.TECHNICIAN);
+
+    if (window.WMS_APP) {
+      if (typeof window.WMS_APP.updateUserHeader === 'function') {
+        window.WMS_APP.updateUserHeader();
+      }
+      window.WMS_APP.navigate('field-service');
+      if (window.showToast) {
+        window.showToast('مرحباً بك يا فني التركيب! يمكنك استعراض مهامك وروابط مواقع الخرائط 👷‍♂️📍', 'info');
+      }
+    }
+
+    initCloudDatabaseListener();
+  }
+}
+
+window.handleOwnerQuickLogin = handleOwnerQuickLogin;
+window.handlePorcelainSupervisorLogin = handlePorcelainSupervisorLogin;
+window.handleMarbleSupervisorLogin = handleMarbleSupervisorLogin;
+window.handleFieldSupervisorLogin = handleFieldSupervisorLogin;
+window.handleTechnicianLogin = handleTechnicianLogin;
 
 // Forgot Password (Send Reset Email)
 async function handleForgotPassword(e) {
@@ -2322,9 +2448,11 @@ function attachFirebaseEvents() {
   const btnSignUp = document.getElementById("btn-signup");
   const btnLogIn = document.getElementById("btn-login");
   const btnLogOut = document.getElementById("btn-logout");
-  const btnDemoLogin = document.getElementById("btn-demo-login");
-  const btnViewerLogin = document.getElementById("btn-viewer-login");
   const btnOwnerLogin = document.getElementById("btn-owner-login");
+  const btnRolePorcelain = document.getElementById("btn-role-porcelain");
+  const btnRoleMarble = document.getElementById("btn-role-marble");
+  const btnRoleField = document.getElementById("btn-role-field");
+  const btnRoleTech = document.getElementById("btn-role-tech");
   const authFormEl = document.getElementById("auth-form-el");
 
   if (authFormEl) {
@@ -2341,9 +2469,11 @@ function attachFirebaseEvents() {
   if (btnSignUp) btnSignUp.onclick = (e) => { e.preventDefault(); handleSignUp(e); };
   if (btnLogIn) btnLogIn.onclick = (e) => { e.preventDefault(); handleLogIn(e); };
   if (btnLogOut) btnLogOut.onclick = (e) => { e.preventDefault(); handleLogOut(e); };
-  if (btnDemoLogin) btnDemoLogin.onclick = (e) => { e.preventDefault(); handleQuickDemoLogin(e); };
-  if (btnViewerLogin) btnViewerLogin.onclick = (e) => { e.preventDefault(); handleQuickViewerLogin(e); };
   if (btnOwnerLogin) btnOwnerLogin.onclick = (e) => { e.preventDefault(); handleOwnerQuickLogin(e); };
+  if (btnRolePorcelain) btnRolePorcelain.onclick = (e) => { e.preventDefault(); handlePorcelainSupervisorLogin(e); };
+  if (btnRoleMarble) btnRoleMarble.onclick = (e) => { e.preventDefault(); handleMarbleSupervisorLogin(e); };
+  if (btnRoleField) btnRoleField.onclick = (e) => { e.preventDefault(); handleFieldSupervisorLogin(e); };
+  if (btnRoleTech) btnRoleTech.onclick = (e) => { e.preventDefault(); handleTechnicianLogin(e); };
 
   // Keyboard shortcut: Press Enter to submit active form action
   const authInputs = document.querySelectorAll("#auth-email, #auth-password, #auth-password-confirm");

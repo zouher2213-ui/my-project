@@ -637,6 +637,32 @@
       });
     },
 
+    updateRoleDock(role) {
+      const normRole = (role || 'viewer').toLowerCase();
+      const isProductionEngineer = (normRole === 'production_engineer' || normRole === 'owner' || normRole === 'admin');
+      const isPorcelainSupervisor = (normRole === 'supervisor_porcelain');
+      const isMarbleSupervisor = (normRole === 'supervisor_marble');
+      const isFieldSupervisor = (normRole === 'supervisor_field');
+      const isTechnician = (normRole === 'technician');
+      const isViewer = (normRole === 'viewer');
+
+      const tabs = document.querySelectorAll('.wms-dock-tab');
+      tabs.forEach(tab => {
+        const r = tab.getAttribute('data-route');
+        if (r === 'hud') {
+          tab.style.display = isProductionEngineer ? 'flex' : 'none';
+        } else if (r === 'porcelain') {
+          tab.style.display = (isProductionEngineer || isPorcelainSupervisor || isViewer) ? 'flex' : 'none';
+        } else if (r === 'marble') {
+          tab.style.display = (isProductionEngineer || isMarbleSupervisor || isViewer) ? 'flex' : 'none';
+        } else if (r === 'wood-delivery' || r === 'marble-delivery') {
+          tab.style.display = (isProductionEngineer || isFieldSupervisor || isViewer) ? 'flex' : 'none';
+        } else if (r === 'field-service') {
+          tab.style.display = (isProductionEngineer || isFieldSupervisor || isTechnician || isViewer) ? 'flex' : 'none';
+        }
+      });
+    },
+
     updateDockBadges() {
       if (!window.WMS_DB) return;
 

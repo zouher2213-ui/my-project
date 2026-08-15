@@ -1019,8 +1019,32 @@
   function navigateTo(route) {
     if (!checkAuth()) return;
 
+    let user = WMS_DB ? WMS_DB.getAuthUser() : null;
+    if (!user) {
+      try {
+        const stored = localStorage.getItem('wms_auth_user_v6');
+        if (stored && stored !== 'null') user = JSON.parse(stored);
+      } catch (e) {}
+    }
+
+    const role = user ? (user.role || '').toLowerCase() : 'production_engineer';
+    const isProductionEngineer = (role === 'production_engineer' || role === 'owner' || role === 'admin' || (user && user.isOwner));
+    const allowedModules = (user && Array.isArray(user.allowedModules)) ? user.allowedModules : ['*'];
+
     const validRoutes = ['hud', 'porcelain', 'marble', 'wood-delivery', 'marble-delivery', 'field-service', 'porcelain-preview', 'marble-preview'];
-    const targetRoute = validRoutes.includes(route) ? route : 'hud';
+    let targetRoute = validRoutes.includes(route) ? route : 'hud';
+
+    // Role-based Access Enforcement:
+    // If not production engineer, restrict user strictly to their designated warehouse section
+    if (!isProductionEngineer && !allowedModules.includes('*') && targetRoute !== 'hud') {
+      const isAllowed = allowedModules.some(m => targetRoute === m || targetRoute.startsWith(m));
+      if (!isAllowed) {
+        const fallback = allowedModules[0] || 'hud';
+        showToast(`تنبيه صلاحيات: حسابك مخصص لقسم [${user.roleTitleAr || fallback}] فقط. تم توجيهك لقسمك المعتمد!`, 'warning');
+        targetRoute = fallback;
+      }
+    }
+
     APP.currentRoute = targetRoute;
     if (window.location.hash !== `#${targetRoute}`) {
       window.location.hash = `#${targetRoute}`;
@@ -1708,6 +1732,16 @@
           <td>
             <div style="font-size:0.88rem; font-weight:600; color:var(--text-primary); max-width:260px;">${escapeHtml(item.workType || item.notes || '-')}</div>
             <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem;">📍 ${escapeHtml(item.address || '-')}</div>
+            ${(() => {
+              const mapsLink = item.mapsUrl || (item.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}` : '');
+              return mapsLink ? `
+                <div style="margin-top:0.35rem;">
+                  <a href="${escapeHtml(mapsLink)}" target="_blank" class="fs-maps-direct-btn" style="display:inline-flex; align-items:center; gap:0.3rem; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.35); color:#10b981; font-size:0.76rem; font-weight:700; padding:0.25rem 0.55rem; border-radius:6px; text-decoration:none; transition:all 0.2s ease;">
+                    🗺️ <span>فتح الموقع بالخريطة</span>
+                  </a>
+                </div>
+              ` : '';
+            })()}
             ${returnReasonBadge}
           </td>
           <td>
@@ -1902,6 +1936,83 @@
     }
   }
 
+  // Flexible Time Slot Handlers
+  function handleTimeSlotPresetChange(preset) {
+    const customBox = document.getElementById('fs-custom-time-box');
+    if (customBox) {
+      customBox.style.display = preset === 'custom' ? 'block' : 'none';
+    }
+  }
+
+  function updateCustomTimeSlotText() {
+    const tFrom = document.getElementById('fs-time-from');
+    const tTo = document.getElementById('fs-time-to');
+    const customText = document.getElementById('fs-time-custom-text');
+    if (tFrom && tTo && customText) {
+      if (tFrom.value && tTo.value) {
+        customText.value = `من ${tFrom.value} إلى ${tTo.value}`;
+      } else if (tFrom.value) {
+        customText.value = `الساعة ${tFrom.value}`;
+      }
+    }
+  }
+
+  // Google Maps & Location GPS Handlers
+  function getCurrentGpsLocation() {
+    if (!navigator.geolocation) {
+      showToast('خاصية تحديد الموقع الجغرافي (GPS) غير مدعومة في متصفحك.', 'warning');
+      return;
+    }
+
+    showToast('جاري تحديد الموقع الجغرافي الحالي عبر GPS... 📡', 'info');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
+        
+        const mapsUrlInput = document.getElementById('fs-maps-url');
+        const addressInput = document.getElementById('fs-address');
+        const previewBtn = document.getElementById('fs-maps-preview-btn');
+
+        if (mapsUrlInput) mapsUrlInput.value = mapsUrl;
+        if (addressInput && !addressInput.value) {
+          addressInput.value = `موقع جغرافي GPS: (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+        }
+        if (previewBtn) {
+          previewBtn.href = mapsUrl;
+          previewBtn.style.display = 'inline-block';
+        }
+        showToast('تم تحديد الموقع الجغرافي وتوليد رابط Google Maps بنجاح! 📍', 'success');
+      },
+      (err) => {
+        console.warn('Geolocation error:', err);
+        showToast('تعذر الحصول على إحداثيات GPS تلقائياً. يمكنك كتابة العنوان أو لصق الرابط يدوياً.', 'info');
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  }
+
+  function openGoogleMapsSearch() {
+    const addressInput = document.getElementById('fs-address');
+    const address = addressInput ? addressInput.value.trim() : '';
+    const query = address || 'الإمارات';
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+    window.open(url, '_blank');
+  }
+
+  function handleAddressInput(val) {
+    const mapsUrlInput = document.getElementById('fs-maps-url');
+    const previewBtn = document.getElementById('fs-maps-preview-btn');
+    if (val && mapsUrlInput && !mapsUrlInput.value.startsWith('http')) {
+      const generatedUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(val)}`;
+      if (previewBtn) {
+        previewBtn.href = generatedUrl;
+        previewBtn.style.display = 'inline-block';
+      }
+    }
+  }
+
   function populateTechnicianSelect(selectId, selectedId = '') {
     const sel = document.getElementById(selectId);
     if (!sel) return;
@@ -1931,8 +2042,21 @@
     if (document.getElementById('fs-phone')) document.getElementById('fs-phone').value = prefill ? (prefill.phone || '') : '';
     if (document.getElementById('fs-rep-name')) document.getElementById('fs-rep-name').value = prefill ? (prefill.repName || '') : '';
     if (document.getElementById('fs-scheduled-date')) document.getElementById('fs-scheduled-date').value = new Date().toISOString().split('T')[0];
-    if (document.getElementById('fs-time-slot')) document.getElementById('fs-time-slot').value = 'morning';
+    
+    // Reset flexible time slot
+    const presetSelect = document.getElementById('fs-time-slot-preset');
+    if (presetSelect) presetSelect.value = 'morning';
+    const customBox = document.getElementById('fs-custom-time-box');
+    if (customBox) customBox.style.display = 'none';
+    if (document.getElementById('fs-time-custom-text')) document.getElementById('fs-time-custom-text').value = '';
+    if (document.getElementById('fs-time-from')) document.getElementById('fs-time-from').value = '';
+    if (document.getElementById('fs-time-to')) document.getElementById('fs-time-to').value = '';
+
     if (document.getElementById('fs-address')) document.getElementById('fs-address').value = '';
+    if (document.getElementById('fs-maps-url')) document.getElementById('fs-maps-url').value = '';
+    const previewBtn = document.getElementById('fs-maps-preview-btn');
+    if (previewBtn) previewBtn.style.display = 'none';
+
     if (document.getElementById('fs-work-type')) document.getElementById('fs-work-type').value = '';
     if (document.getElementById('fs-notes')) document.getElementById('fs-notes').value = '';
 
@@ -1959,8 +2083,33 @@
     document.getElementById('fs-phone').value = item.phone || '';
     document.getElementById('fs-rep-name').value = item.repName || '';
     document.getElementById('fs-scheduled-date').value = item.scheduledDate || '';
-    document.getElementById('fs-time-slot').value = item.timeSlot || 'morning';
+    
+    // Restore flexible time slot
+    const presetSelect = document.getElementById('fs-time-slot-preset');
+    const customBox = document.getElementById('fs-custom-time-box');
+    const customText = document.getElementById('fs-time-custom-text');
+    if (['morning', 'afternoon', 'full_day'].includes(item.timeSlot)) {
+      if (presetSelect) presetSelect.value = item.timeSlot;
+      if (customBox) customBox.style.display = 'none';
+    } else {
+      if (presetSelect) presetSelect.value = 'custom';
+      if (customBox) customBox.style.display = 'block';
+      if (customText) customText.value = item.timeSlotTextAr || item.timeSlot || '';
+    }
+
     document.getElementById('fs-address').value = item.address || '';
+    const mapsUrlInput = document.getElementById('fs-maps-url');
+    if (mapsUrlInput) mapsUrlInput.value = item.mapsUrl || '';
+    const previewBtn = document.getElementById('fs-maps-preview-btn');
+    if (previewBtn) {
+      if (item.mapsUrl) {
+        previewBtn.href = item.mapsUrl;
+        previewBtn.style.display = 'inline-block';
+      } else {
+        previewBtn.style.display = 'none';
+      }
+    }
+
     document.getElementById('fs-work-type').value = item.workType || '';
     document.getElementById('fs-notes').value = item.notes || '';
 
@@ -1978,6 +2127,28 @@
     const selectedTech = techSelect ? techSelect.options[techSelect.selectedIndex] : null;
     const techName = selectedTech && selectedTech.value ? selectedTech.text.split('(')[0].replace('👷‍♂️', '').trim() : '';
 
+    // Calculate flexible time slot value
+    const presetSelect = document.getElementById('fs-time-slot-preset');
+    const presetVal = presetSelect ? presetSelect.value : 'morning';
+    let finalTimeSlot = presetVal;
+    let timeSlotAr = 'صباحي (08:00 ص - 01:00 م)';
+
+    if (presetVal === 'afternoon') {
+      timeSlotAr = 'مسائي (02:00 م - 07:00 م)';
+    } else if (presetVal === 'full_day') {
+      timeSlotAr = 'يوم كامل (08:00 ص - 06:00 م)';
+    } else if (presetVal === 'custom') {
+      const customInput = document.getElementById('fs-time-custom-text');
+      finalTimeSlot = (customInput && customInput.value.trim()) ? customInput.value.trim() : 'فترة مخصصة';
+      timeSlotAr = finalTimeSlot;
+    }
+
+    const address = document.getElementById('fs-address') ? document.getElementById('fs-address').value.trim() : '';
+    let mapsUrl = document.getElementById('fs-maps-url') ? document.getElementById('fs-maps-url').value.trim() : '';
+    if (!mapsUrl && address) {
+      mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+    }
+
     const payload = {
       permitNo: document.getElementById('fs-permit-no').value.trim(),
       orderType: document.getElementById('fs-order-type').value,
@@ -1989,8 +2160,10 @@
       technicianId: techSelect ? techSelect.value : '',
       technicianName: techName,
       scheduledDate: document.getElementById('fs-scheduled-date').value,
-      timeSlot: document.getElementById('fs-time-slot').value,
-      address: document.getElementById('fs-address').value.trim(),
+      timeSlot: finalTimeSlot,
+      timeSlotTextAr: timeSlotAr,
+      address: address,
+      mapsUrl: mapsUrl,
       workType: document.getElementById('fs-work-type').value.trim(),
       notes: document.getElementById('fs-notes').value.trim()
     };
@@ -1998,10 +2171,10 @@
     try {
       if (editId) {
         WMS_DB.updateFieldService(editId, payload);
-        showToast('تم تحديث موعد التركيب بنجاح! 💾', 'success');
+        showToast('تم تحديث موعد التركيب وبيانات الخريطة بنجاح! 💾', 'success');
       } else {
         WMS_DB.addFieldService(payload);
-        showToast('تم حجز موعد التركيب وإسناد الفني بنجاح! 📅', 'success');
+        showToast('تم حجز موعد التركيب وإسناد الفني ورابط الخريطة بنجاح! 📅📍', 'success');
       }
       closeModal('modal-field-service');
       renderFieldServiceView();
@@ -2681,9 +2854,12 @@
       if (user) {
         const email = user.email || user.username || 'admin@warehouse.local';
         const role = (user.role || 'viewer').toLowerCase();
-        const isOwner = (role === 'owner' || user.isOwner || (email && email.toLowerCase().trim() === 's@gmail.com'));
+        const isProductionEngineer = (role === 'production_engineer' || role === 'owner' || role === 'admin' || user.isOwner || (email && email.toLowerCase().trim() === 's@gmail.com'));
+        const isPorcelainSupervisor = (role === 'supervisor_porcelain');
+        const isMarbleSupervisor = (role === 'supervisor_marble');
+        const isFieldSupervisor = (role === 'supervisor_field');
+        const isTechnician = (role === 'technician');
         const isViewer = (role === 'viewer');
-        const isAdmin = (role === 'admin') || isOwner;
         
         if (emailEl) {
           emailEl.textContent = email;
@@ -2693,23 +2869,38 @@
           const avatarEl = pillEl.querySelector('.user-avatar-sm');
           const accessTagEl = pillEl.querySelector('.user-access-tag');
           
-          pillEl.classList.remove('is-owner-role', 'is-admin-role', 'is-viewer-role');
+          pillEl.classList.remove('is-owner-role', 'is-admin-role', 'is-viewer-role', 'is-porcelain-role', 'is-marble-role', 'is-field-role', 'is-tech-role');
 
-          if (isOwner) {
+          if (isProductionEngineer) {
             pillEl.classList.add('is-owner-role');
-            pillEl.setAttribute('title', 'صاحب المنشأة - كامل الصلاحيات لجميع العمليات والمخازن');
+            pillEl.setAttribute('title', 'مهندس الإنتاج / المالك - كامل الصلاحيات لجميع العمليات والمخازن');
             if (avatarEl) avatarEl.textContent = '👑';
-            if (accessTagEl) accessTagEl.innerHTML = `<span style="color:var(--warning); font-weight:800;">👑 ${t('roleOwner')}</span>`;
-          } else if (isViewer) {
+            if (accessTagEl) accessTagEl.innerHTML = `<span style="color:var(--warning); font-weight:800;">👑 مهندس الإنتاج</span>`;
+          } else if (isPorcelainSupervisor) {
+            pillEl.classList.add('is-porcelain-role');
+            pillEl.setAttribute('title', 'مشرف مستودع البورسلان - حركات وتعديلات البورسلان فقط');
+            if (avatarEl) avatarEl.textContent = '🏛️';
+            if (accessTagEl) accessTagEl.innerHTML = `<span style="color:#10b981; font-weight:800;">🏛️ مشرف البورسلان</span>`;
+          } else if (isMarbleSupervisor) {
+            pillEl.classList.add('is-marble-role');
+            pillEl.setAttribute('title', 'مشرف مستودع الرخام - حركات وتعديلات الرخام فقط');
+            if (avatarEl) avatarEl.textContent = '💎';
+            if (accessTagEl) accessTagEl.innerHTML = `<span style="color:#0ea5e9; font-weight:800;">💎 مشرف الرخام</span>`;
+          } else if (isFieldSupervisor) {
+            pillEl.classList.add('is-field-role');
+            pillEl.setAttribute('title', 'مشرف الفسوحات والميدان');
+            if (avatarEl) avatarEl.textContent = '🛠️';
+            if (accessTagEl) accessTagEl.innerHTML = `<span style="color:#8b5cf6; font-weight:800;">🛠️ مشرف الميدان</span>`;
+          } else if (isTechnician) {
+            pillEl.classList.add('is-tech-role');
+            pillEl.setAttribute('title', 'فني تركيب ميداني - استعراض المهام والخرائط');
+            if (avatarEl) avatarEl.textContent = '👷‍♂️';
+            if (accessTagEl) accessTagEl.innerHTML = `<span style="color:#f59e0b; font-weight:800;">👷‍♂️ فني تركيب</span>`;
+          } else {
             pillEl.classList.add('is-viewer-role');
             pillEl.setAttribute('title', 'مشاهد - صلاحية القراءة فقط');
             if (avatarEl) avatarEl.textContent = '👁️';
-            if (accessTagEl) accessTagEl.innerHTML = `<span style="color:#60a5fa; font-weight:700;">👁️ ${APP.lang === 'ar' ? 'مشاهد (قراءة فقط)' : (APP.lang === 'bn' ? 'দর্শক (শুধুমাত্র দেখার অনুমতি)' : 'Viewer (Read Only)')}</span>`;
-          } else {
-            pillEl.classList.add('is-admin-role');
-            pillEl.setAttribute('title', 'المدير العام - صلاحية القراءة والكتابة');
-            if (avatarEl) avatarEl.textContent = '🛡️';
-            if (accessTagEl) accessTagEl.innerHTML = `<span>🔓 ${t('fullAccess')}</span>`;
+            if (accessTagEl) accessTagEl.innerHTML = `<span style="color:#60a5fa; font-weight:700;">👁️ مشاهد (قراءة فقط)</span>`;
           }
         }
 
@@ -3338,7 +3529,12 @@
     submitTechnicianRating,
     openNewTechnicianModal,
     openEditTechnicianModal,
-    submitTechnician
+    submitTechnician,
+    handleTimeSlotPresetChange,
+    updateCustomTimeSlotText,
+    getCurrentGpsLocation,
+    openGoogleMapsSearch,
+    handleAddressInput
   };
 
   function renderWoodPermitChips() {
