@@ -48,6 +48,7 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
     MARBLE_ORDERS: 'wms_marble_orders_v6',
     FIELD_SERVICES: 'wms_field_services_v6',
     TECHNICIANS: 'wms_technicians_v6',
+    INSTALLATION_ORDERS: 'wms_installation_orders_v6',
     PRESETS: 'wms_presets_v6',
     SETTINGS: 'wms_settings_v6',
     AUTH_USER: 'wms_auth_user_v6'
@@ -301,9 +302,7 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
       specialtyBn: 'মার্বেল ও লাক্সারি ক্ল্যাডিং',
       phone: '+971 50 111 2233',
       status: 'Available',
-      avgRating: 4.9,
-      ratingsCount: 38,
-      totalJobs: 42,
+      totalJobs: 0,
       avatar: '👷‍♂️',
       createdAt: '2026-07-01T08:00:00Z'
     },
@@ -317,9 +316,7 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
       specialtyBn: 'কাঠের রান্নাঘর ও কাস্টম দরজা',
       phone: '+971 55 222 3344',
       status: 'On Site',
-      avgRating: 4.8,
-      ratingsCount: 50,
-      totalJobs: 56,
+      totalJobs: 0,
       avatar: '🪵',
       createdAt: '2026-07-05T08:00:00Z'
     },
@@ -333,9 +330,7 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
       specialtyBn: 'চীনামাটির স্ল্যাব ও ফ্লোরিং',
       phone: '+971 52 333 4455',
       status: 'En Route',
-      avgRating: 4.95,
-      ratingsCount: 59,
-      totalJobs: 65,
+      totalJobs: 0,
       avatar: '🏺',
       createdAt: '2026-07-10T08:00:00Z'
     },
@@ -349,11 +344,42 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
       specialtyBn: 'প্রাকৃতিক পাথর প্রসেসিং ও ফিটিং',
       phone: '+971 54 444 5566',
       status: 'Available',
-      avgRating: 4.7,
-      ratingsCount: 26,
-      totalJobs: 30,
+      totalJobs: 0,
       avatar: '💎',
       createdAt: '2026-07-15T08:00:00Z'
+    }
+  ];
+
+  const INITIAL_INSTALLATION_ORDERS = [
+    {
+      id: 'inst-001',
+      order_id: 'INST-101',
+      customer_name: 'فيلا الشيخ منصور — دبي',
+      address: 'دبي — ند الشبا 4 — فيلا 12',
+      status: 'In Progress',
+      phone: '+971 50 123 4567',
+      date: '2026-08-16',
+      notes: 'تركيب رخام وبورسلان أرضيات'
+    },
+    {
+      id: 'inst-002',
+      order_id: 'INST-102',
+      customer_name: 'م. خالد الصباح — الشارقة',
+      address: 'الشارقة — مويلح — مجمع 5',
+      status: 'Pending',
+      phone: '+971 55 987 6543',
+      date: '2026-08-18',
+      notes: 'تركيب مطبخ رئيسي وخزائن خشبية'
+    },
+    {
+      id: 'inst-003',
+      order_id: 'INST-103',
+      customer_name: 'معرض الرويال الكبير — أبوظبي',
+      address: 'أبوظبي — جزيرة ياس — مجمع المعارض',
+      status: 'Completed',
+      phone: '+971 52 444 3322',
+      date: '2026-08-14',
+      notes: 'تسليم وتركيب ألواح رخام فاخرة'
     }
   ];
 
@@ -521,8 +547,22 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
     if (!localStorage.getItem(DB_KEYS.FIELD_SERVICES)) {
       setStored(DB_KEYS.FIELD_SERVICES, INITIAL_FIELD_SERVICES);
     }
+    if (!localStorage.getItem(DB_KEYS.INSTALLATION_ORDERS)) {
+      setStored(DB_KEYS.INSTALLATION_ORDERS, INITIAL_INSTALLATION_ORDERS);
+    }
     if (!localStorage.getItem(DB_KEYS.TECHNICIANS)) {
       setStored(DB_KEYS.TECHNICIANS, INITIAL_TECHNICIANS);
+    } else {
+      try {
+        const storedTechs = getStored(DB_KEYS.TECHNICIANS, INITIAL_TECHNICIANS);
+        const cleaned = storedTechs.map(t => {
+          const item = { ...t };
+          delete item.avgRating;
+          delete item.ratingsCount;
+          return item;
+        });
+        setStored(DB_KEYS.TECHNICIANS, cleaned);
+      } catch (e) {}
     }
     if (!localStorage.getItem(DB_KEYS.PRESETS)) {
       setStored(DB_KEYS.PRESETS, INITIAL_PRESETS);
@@ -1429,6 +1469,51 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
       throw new Error('Technician not found');
     },
 
+    resetAllTechniciansTasks() {
+      const list = getStored(DB_KEYS.TECHNICIANS, INITIAL_TECHNICIANS);
+      const updated = list.map(t => ({
+        ...t,
+        totalJobs: 0,
+        avgRating: 0,
+        ratingsCount: 0
+      }));
+      setStored(DB_KEYS.TECHNICIANS, updated);
+      return updated;
+    },
+
+    resetTechnicianTasks(id) {
+      const list = getStored(DB_KEYS.TECHNICIANS, INITIAL_TECHNICIANS);
+      const idx = list.findIndex(t => t.id === id);
+      if (idx !== -1) {
+        list[idx].totalJobs = 0;
+        list[idx].avgRating = 0;
+        list[idx].ratingsCount = 0;
+        setStored(DB_KEYS.TECHNICIANS, list);
+        return list[idx];
+      }
+      throw new Error('Technician not found');
+    },
+
+    clearAllRatings() {
+      const services = getStored(DB_KEYS.FIELD_SERVICES, INITIAL_FIELD_SERVICES);
+      const updatedServices = services.map(s => {
+        const item = { ...s };
+        delete item.rating;
+        return item;
+      });
+      setStored(DB_KEYS.FIELD_SERVICES, updatedServices);
+
+      const list = getStored(DB_KEYS.TECHNICIANS, INITIAL_TECHNICIANS);
+      const updatedTechs = list.map(t => {
+        const item = { ...t };
+        delete item.avgRating;
+        delete item.ratingsCount;
+        return item;
+      });
+      setStored(DB_KEYS.TECHNICIANS, updatedTechs);
+      return { services: updatedServices, technicians: updatedTechs };
+    },
+
     rateTechnician(appointmentId, ratingData) {
       const services = getStored(DB_KEYS.FIELD_SERVICES, INITIAL_FIELD_SERVICES);
       const sIdx = services.findIndex(s => s.id === appointmentId);
@@ -1472,7 +1557,90 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
     },
 
     // ========================================================================
-    // USER ROLES & PERMISSIONS MANAGEMENT (OWNER CONTROL)
+    // INSTALLATION ORDERS API (order_id, customer_name, address, status)
+    // ========================================================================
+    getInstallationOrders() {
+      return getStored(DB_KEYS.INSTALLATION_ORDERS, INITIAL_INSTALLATION_ORDERS);
+    },
+
+    getInstallationOrderById(id) {
+      const list = this.getInstallationOrders();
+      return list.find(o => o.id === id || o.order_id === id) || null;
+    },
+
+    async addInstallationOrder(data) {
+      const list = this.getInstallationOrders();
+      const newOrder = {
+        id: data.id || `inst-${Date.now().toString().slice(-4)}`,
+        order_id: data.order_id || `INST-${Date.now().toString().slice(-4)}`,
+        customer_name: data.customer_name || 'عميل جديد',
+        address: data.address || '',
+        status: data.status || 'Pending',
+        phone: data.phone || '',
+        date: data.date || new Date().toISOString().split('T')[0],
+        notes: data.notes || '',
+        createdAt: new Date().toISOString()
+      };
+
+      list.unshift(newOrder);
+      setStored(DB_KEYS.INSTALLATION_ORDERS, list);
+
+      // Real-time Firestore sync
+      if (firestoreDb) {
+        try {
+          const docRef = await addDoc(collection(firestoreDb, "installation_orders"), newOrder);
+          newOrder.id = docRef.id;
+          setStored(DB_KEYS.INSTALLATION_ORDERS, list);
+        } catch (e) {
+          console.warn("Firestore addDoc installation_orders note:", e);
+        }
+      }
+
+      window._triggerCloudSyncPush();
+      return newOrder;
+    },
+
+    async updateInstallationOrder(id, updates) {
+      const list = this.getInstallationOrders();
+      const idx = list.findIndex(o => o.id === id || o.order_id === id);
+      if (idx !== -1) {
+        list[idx] = { ...list[idx], ...updates, updatedAt: new Date().toISOString() };
+        setStored(DB_KEYS.INSTALLATION_ORDERS, list);
+
+        // Real-time Firestore sync
+        if (firestoreDb && id) {
+          try {
+            const docRef = doc(firestoreDb, "installation_orders", id);
+            await setDoc(docRef, updates, { merge: true });
+          } catch (e) {
+            console.warn("Firestore updateDoc installation_orders note:", e);
+          }
+        }
+
+        window._triggerCloudSyncPush();
+        return list[idx];
+      }
+      throw new Error('Installation order not found');
+    },
+
+    async deleteInstallationOrder(id) {
+      const list = this.getInstallationOrders();
+      const filtered = list.filter(o => o.id !== id && o.order_id !== id);
+      setStored(DB_KEYS.INSTALLATION_ORDERS, filtered);
+
+      // Real-time Firestore sync
+      if (firestoreDb && id) {
+        try {
+          const docRef = doc(firestoreDb, "installation_orders", id);
+          await deleteDoc(docRef);
+        } catch (e) {
+          console.warn("Firestore deleteDoc installation_orders note:", e);
+        }
+      }
+
+      window._triggerCloudSyncPush();
+      return true;
+    },
     // ========================================================================
     getUserRolesList() {
       const defaultRoles = [
@@ -1670,31 +1838,38 @@ async function fetchUserRole(user) {
   return isOwner ? 'owner' : 'viewer';
 }
 
-// UI Permissions Engine: Controls HUD cards, Admin Dashboard and Messages based on warehouse role
+// UI Permissions Engine: Controls HUD cards, Admin Dashboard, Materials, Installation Orders and Actions
 function applyRolePermissions(role) {
-  let normRole = (role || 'viewer').toLowerCase();
-  if (normRole === 'production_engineer') normRole = 'owner';
+  let normRole = (role || 'viewer').toLowerCase().trim();
+  
+  // Role Aliases
+  if (normRole === 'owner' || normRole === 'ceo' || normRole === 'admin') {
+    normRole = 'production_engineer';
+  }
 
-  const isOwner = (normRole === 'owner');
-  const isAdmin = (normRole === 'admin');
+  const isProductionEngineer = (normRole === 'production_engineer');
   const isViewer = (normRole === 'viewer');
+  const isTechnician = (normRole === 'technician');
 
   // 1. Set root attribute and classes
   document.documentElement.setAttribute('data-role', normRole);
-  document.documentElement.classList.remove('is-admin-role', 'is-owner-role', 'is-viewer-role');
+  document.documentElement.classList.remove('is-production-engineer', 'is-viewer', 'is-technician', 'is-admin-role', 'is-owner-role', 'is-viewer-role');
 
-  if (isOwner) {
-    document.documentElement.classList.add('is-owner-role', 'is-admin-role');
-  } else if (isAdmin) {
-    document.documentElement.classList.add('is-admin-role');
-  } else {
-    document.documentElement.classList.add('is-viewer-role');
+  if (isProductionEngineer) {
+    document.documentElement.classList.add('is-production-engineer', 'is-owner-role', 'is-admin-role');
+  } else if (isViewer) {
+    document.documentElement.classList.add('is-viewer', 'is-viewer-role');
+  } else if (isTechnician) {
+    document.documentElement.classList.add('is-technician');
   }
 
-  // 2. Control Admin Dashboard UI (Visible ONLY for 'owner')
+  // 2. Control Admin Dashboard UI (Visible ONLY for owner 's@gmail.com')
   const adminDashboardEl = document.getElementById("admin-dashboard");
+  const currentEmail = (window._currentLoggedInUser?.email || '').toLowerCase().trim();
+  const isOwnerUser = (currentEmail === 's@gmail.com' || (window.WMS_DB && window.WMS_DB.getAuthUser()?.email === 's@gmail.com'));
+  
   if (adminDashboardEl) {
-    if (isOwner) {
+    if (isOwnerUser) {
       adminDashboardEl.style.display = "block";
       loadAdminDashboardUsers();
     } else {
@@ -1712,37 +1887,122 @@ function applyRolePermissions(role) {
     messagesSectionEl.style.display = "block";
   }
 
-  if (isViewer) {
-    // Viewer: Read-only messages list (hide input and send button)
+  if (isViewer || isTechnician) {
     if (messageInputEl) messageInputEl.style.display = "none";
     if (btnSendMessageEl) btnSendMessageEl.style.display = "none";
     if (messageFormEl) messageFormEl.style.display = "none";
   } else {
-    // Admin or Owner: Full access to read and write messages
     if (messageInputEl) messageInputEl.style.display = "";
     if (btnSendMessageEl) btnSendMessageEl.style.display = "";
     if (messageFormEl) messageFormEl.style.display = "flex";
   }
 
-  // 4. Control HUD Cards visibility (Accessible for all authenticated roles)
-  const cardPorcelain = document.querySelector('.card-porcelain');
-  const cardMarble = document.querySelector('.card-marble');
-  const cardWoodDel = document.querySelector('.card-wood-del');
-  const cardMarbleDel = document.querySelector('.card-marble-del');
+  // 4. Control Materials Inventory Sections & HUD Cards:
+  // - Production Engineer: Full access to materials & installation_orders
+  // - Viewer: Read-only access to materials (can browse, but action buttons hidden)
+  // - Technician: Hide ENTIRE materials inventory (Porcelain, Marble, Wood, Delivery). Show ONLY Installation Orders!
+  const materialsHudCards = ['.card-porcelain', '.card-marble', '.card-wood-del', '.card-marble-del'];
+  const materialsViews = ['view-porcelain', 'view-marble', 'view-wood-delivery', 'view-marble-delivery', 'view-porcelain-preview', 'view-marble-preview'];
+  const cardInstOrders = document.querySelector('.card-installation-orders');
   const cardFieldService = document.querySelector('.card-field-service');
 
-  if (cardPorcelain) cardPorcelain.style.display = '';
-  if (cardMarble) cardMarble.style.display = '';
-  if (cardWoodDel) cardWoodDel.style.display = '';
-  if (cardMarbleDel) cardMarbleDel.style.display = '';
-  if (cardFieldService) cardFieldService.style.display = '';
+  if (isTechnician) {
+    // Technician: HIDE warehouse stock & materials
+    materialsHudCards.forEach(sel => {
+      const el = document.querySelector(sel);
+      if (el) el.style.display = 'none';
+    });
+    materialsViews.forEach(vId => {
+      const el = document.getElementById(vId);
+      if (el) el.style.display = 'none';
+    });
 
-  // 5. Update Mobile Dock tabs if mobile controller exists
+    if (cardInstOrders) cardInstOrders.style.display = '';
+    if (cardFieldService) cardFieldService.style.display = '';
+
+    // Auto navigate technician to installation orders if they are on a hidden materials view
+    if (window.WMS_APP && typeof window.WMS_APP.navigate === 'function') {
+      const currentRoute = window.location.hash.replace('#', '');
+      if (materialsViews.includes(`view-${currentRoute}`) || currentRoute === 'hud' || !currentRoute) {
+        window.WMS_APP.navigate('installation-orders');
+      }
+    }
+  } else {
+    // Production Engineer & Viewer: Show materials
+    materialsHudCards.forEach(sel => {
+      const el = document.querySelector(sel);
+      if (el) el.style.display = '';
+    });
+    if (cardInstOrders) cardInstOrders.style.display = '';
+    if (cardFieldService) cardFieldService.style.display = '';
+  }
+
+  // 5. Hide / Show Add button for Installation Orders
+  const btnAddInstOrder = document.getElementById('btn-add-installation-order');
+  if (btnAddInstOrder) {
+    btnAddInstOrder.style.display = isProductionEngineer ? 'inline-flex' : 'none';
+  }
+
+  // 6. Dynamic RBAC CSS rules to guarantee all action buttons ('Add New', 'Edit', 'Delete', 'Reserve') are hidden for Viewer and Technician
+  let rbacStyle = document.getElementById('rbac-enforced-styles');
+  if (!rbacStyle) {
+    rbacStyle = document.createElement('style');
+    rbacStyle.id = 'rbac-enforced-styles';
+    document.head.appendChild(rbacStyle);
+  }
+
+  if (isViewer) {
+    rbacStyle.innerHTML = `
+      /* Viewer: Strictly READ-ONLY in materials and orders. Hide Add, Edit, Delete, Reserve */
+      .is-viewer .btn-add-item,
+      .is-viewer #btn-add-installation-order,
+      .is-viewer .btn-reserve,
+      .is-viewer .btn-danger,
+      .is-viewer .btn-delete,
+      .is-viewer .btn-edit,
+      .is-viewer .inst-orders-actions-col,
+      .is-viewer .inst-orders-action-btn,
+      .is-viewer .data-table td:last-child button:not(.btn-view-sheet):not(.btn-whatsapp-direct),
+      .is-viewer .module-actions-bar button:not(.back-btn):not(.btn-secondary) {
+        display: none !important;
+      }
+    `;
+  } else if (isTechnician) {
+    rbacStyle.innerHTML = `
+      /* Technician: Hide materials inventory & Read-only in Installation Orders */
+      .is-technician #view-porcelain,
+      .is-technician #view-marble,
+      .is-technician #view-wood-delivery,
+      .is-technician #view-marble-delivery,
+      .is-technician .card-porcelain,
+      .is-technician .card-marble,
+      .is-technician .card-wood-del,
+      .is-technician .card-marble-del,
+      .is-technician #btn-add-installation-order,
+      .is-technician .inst-orders-actions-col,
+      .is-technician .inst-orders-action-btn,
+      .is-technician .btn-danger,
+      .is-technician .btn-delete,
+      .is-technician .btn-edit {
+        display: none !important;
+      }
+    `;
+  } else {
+    // Production Engineer: Full Access
+    rbacStyle.innerHTML = ``;
+  }
+
+  // 7. Update Mobile Dock tabs if mobile controller exists
   if (window.WMS_MOBILE && typeof window.WMS_MOBILE.updateRoleDock === 'function') {
     window.WMS_MOBILE.updateRoleDock(normRole);
   }
 
-  console.log(`🔒 Role Permissions Applied: [${normRole}] (Owner: ${isOwner}, Admin: ${isAdmin}, Viewer: ${isViewer})`);
+  // 8. Re-render installation orders if view is active
+  if (window.WMS_APP && typeof window.WMS_APP.renderInstallationOrders === 'function') {
+    window.WMS_APP.renderInstallationOrders();
+  }
+
+  console.log(`🔒 RBAC Permissions Enforced: [${normRole}] (Engineer: ${isProductionEngineer}, Viewer: ${isViewer}, Technician: ${isTechnician})`);
 }
 
 // Admin Dashboard: Fetch all documents from 'users' collection in Firestore
@@ -1790,16 +2050,14 @@ async function loadAdminDashboardUsers() {
       const userUid = user.uid || user.id || user.email;
       const userEmail = user.email || user.username || userUid;
       let currentRole = (user.role || 'viewer').toLowerCase();
-      if (currentRole === 'production_engineer') currentRole = 'owner';
-      if (!['viewer', 'admin', 'owner'].includes(currentRole)) currentRole = 'viewer';
 
       const isOwnerUser = (userEmail.toLowerCase().trim() === 's@gmail.com');
 
-      let roleBadge = '<span style="color:#94a3b8; font-weight:700; background:rgba(148,163,184,0.15); padding:0.25rem 0.6rem; border-radius:4px;">👁️ viewer</span>';
-      if (currentRole === 'owner') {
-        roleBadge = '<span style="color:#fbbf24; font-weight:800; background:rgba(245,158,11,0.15); padding:0.25rem 0.6rem; border-radius:4px;">👑 owner</span>';
-      } else if (currentRole === 'admin') {
-        roleBadge = '<span style="color:#38bdf8; font-weight:800; background:rgba(56,189,248,0.15); padding:0.25rem 0.6rem; border-radius:4px;">🛡️ admin</span>';
+      let roleBadge = '<span style="color:#94a3b8; font-weight:700; background:rgba(148,163,184,0.15); padding:0.25rem 0.6rem; border-radius:4px;">👁️ viewer (مشاهد)</span>';
+      if (currentRole === 'production_engineer' || currentRole === 'owner' || currentRole === 'admin') {
+        roleBadge = '<span style="color:#fbbf24; font-weight:800; background:rgba(245,158,11,0.15); padding:0.25rem 0.6rem; border-radius:4px;">⚙️ production_engineer (مهندس إنتاج)</span>';
+      } else if (currentRole === 'technician') {
+        roleBadge = '<span style="color:#38bdf8; font-weight:800; background:rgba(56,189,248,0.15); padding:0.25rem 0.6rem; border-radius:4px;">🛠️ technician (فني تركيب)</span>';
       }
 
       return `
@@ -1812,9 +2070,9 @@ async function loadAdminDashboardUsers() {
           <td>${roleBadge}</td>
           <td>
             <select class="form-select" style="padding: 0.35rem 0.75rem; font-size: 0.85rem; width: auto; background: var(--bg-input); border-color: rgba(255,255,255,0.15);" onchange="handleAdminChangeUserRole('${escapeHtml(userUid)}', '${escapeHtml(userEmail)}', this.value)">
-              <option value="viewer" ${currentRole === 'viewer' ? 'selected' : ''}>👁️ viewer (مشاهد)</option>
-              <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>🛡️ admin (مدير)</option>
-              <option value="owner" ${currentRole === 'owner' ? 'selected' : ''}>👑 owner (مالك)</option>
+              <option value="production_engineer" ${(currentRole === 'production_engineer' || currentRole === 'owner' || currentRole === 'admin') ? 'selected' : ''}>⚙️ production_engineer (كامل الصلاحيات)</option>
+              <option value="viewer" ${currentRole === 'viewer' ? 'selected' : ''}>👁️ viewer (مشاهد - قراءة فقط)</option>
+              <option value="technician" ${currentRole === 'technician' ? 'selected' : ''}>🛠️ technician (فني تركيب - أوردرات فقط)</option>
             </select>
           </td>
         </tr>
@@ -2105,6 +2363,7 @@ window._triggerCloudSyncPush = function(key, val) {
         marbleOrders: window.WMS_DB.getStored("wms_marble_orders_v6", []),
         fieldServices: window.WMS_DB.getStored("wms_field_services_v6", []),
         technicians: window.WMS_DB.getStored("wms_technicians_v6", []),
+        installationOrders: window.WMS_DB.getStored("wms_installation_orders_v6", []),
         presets: window.WMS_DB.getStored("wms_presets_v6", {}),
         lastSyncTimestamp: Date.now()
       };
@@ -2116,6 +2375,35 @@ window._triggerCloudSyncPush = function(key, val) {
     }
   }, 40);
 };
+
+let unsubscribeInstallationOrders = null;
+
+function initInstallationOrdersListener() {
+  if (unsubscribeInstallationOrders || !firestoreDb) return;
+  try {
+    const colRef = collection(firestoreDb, "installation_orders");
+    unsubscribeInstallationOrders = onSnapshot(colRef, (snapshot) => {
+      const orders = [];
+      snapshot.forEach(docSnap => {
+        orders.push({
+          id: docSnap.id,
+          ...docSnap.data()
+        });
+      });
+      console.log(`📋 Realtime installation_orders snapshot: ${orders.length} docs received.`);
+      if (orders.length > 0 && window.WMS_DB) {
+        window.WMS_DB.setStored("wms_installation_orders_v6", orders);
+      }
+      if (window.WMS_APP && typeof window.WMS_APP.renderInstallationOrders === 'function') {
+        window.WMS_APP.renderInstallationOrders(orders);
+      }
+    }, (err) => {
+      console.warn("Installation orders snapshot notice:", err);
+    });
+  } catch (e) {
+    console.warn("initInstallationOrdersListener note:", e);
+  }
+}
 
 function initCloudDatabaseListener() {
   if (unsubscribeCloudSync || !firestoreDb) return;
@@ -2157,6 +2445,10 @@ function initCloudDatabaseListener() {
           window.WMS_DB.setStored("wms_technicians_v6", data.technicians);
           changed = true;
         }
+        if (Array.isArray(data.installationOrders) && window.WMS_DB) {
+          window.WMS_DB.setStored("wms_installation_orders_v6", data.installationOrders);
+          changed = true;
+        }
         if (data.presets && typeof data.presets === 'object' && window.WMS_DB) {
           window.WMS_DB.setStored("wms_presets_v6", data.presets);
           changed = true;
@@ -2167,6 +2459,9 @@ function initCloudDatabaseListener() {
         if (changed && window.WMS_APP) {
           if (typeof window.WMS_APP.onCloudDataReceived === 'function') {
             window.WMS_APP.onCloudDataReceived();
+          }
+          if (typeof window.WMS_APP.renderInstallationOrders === 'function') {
+            window.WMS_APP.renderInstallationOrders();
           }
         }
       } else {
@@ -2183,6 +2478,7 @@ function initCloudDatabaseListener() {
 
 // Start cloud sync immediately
 initCloudDatabaseListener();
+initInstallationOrdersListener();
 
 // Authentication: Log In
 async function handleLogIn(e) {

@@ -328,6 +328,22 @@
               <span class="hud-enter-arrow">➔</span>
             </div>
           </div>
+
+          <!-- كرت 6: أوردرات التركيب الميداني (Installation Orders) -->
+          <div class="hud-card card-installation-orders" onclick="WMS_APP.navigate('installation-orders')">
+            <div class="hud-card-header">
+              <div class="hud-icon-box">📋</div>
+              <span class="hud-badge-count" id="hud-badge-installation-orders">0 أوردر</span>
+            </div>
+            <div class="hud-card-body">
+              <h3 data-i18n="hudInstallationOrdersTitle">أوردرات التركيب (Installation Orders)</h3>
+              <p data-i18n="hudInstallationOrdersDesc">سجل أوردرات وطلبيات التركيب الميداني (order_id, customer_name, address, status) المخصصة للفنيين ومهندسي الإنتاج.</p>
+            </div>
+            <div class="hud-card-footer">
+              <span style="color:#6366f1;" data-i18n="enterModule">فتح القسم ←</span>
+              <span class="hud-enter-arrow">➔</span>
+            </div>
+          </div>
         </div>
 
         <!-- لوحة تحكم إدارة المستخدمين والأدوار (Admin Dashboard) للمالك فقط (role: 'owner') -->
@@ -1042,8 +1058,21 @@
         </div>
       </div>
 
-      <!-- تبويب 2: فنيين التركيب والتقييمات -->
+      <!-- تبويب 2: فنيين التركيب والميدان -->
       <div class="fs-tab-content" id="fs-tab-content-technicians" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.6rem; background: rgba(255,255,255,0.03); padding: 0.85rem 1.25rem; border-radius: 10px; border: var(--border-glass);">
+          <div style="font-size: 0.92rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem;">
+            <span>👷‍♂️</span> <strong>فريق فنيي التركيب والميدان</strong> — متابعة إجمالي المهام وتوزيع العمليات الميدانية
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <button type="button" class="btn-primary btn-sm" onclick="WMS_APP.openNewTechnicianModal()" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+              <span>➕</span> <span>إضافة فني جديد</span>
+            </button>
+            <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.resetAllTechniciansTasks()" style="color: #f87171; border-color: rgba(239,68,68,0.4); display: inline-flex; align-items: center; gap: 0.35rem;" title="تصفير عداد المهام وحذف التقييمات لكافة الفنيين">
+              <span>🧹</span> <span>تصفير كافة المهمات والتقييمات</span>
+            </button>
+          </div>
+        </div>
         <div class="technicians-grid" id="fs-technicians-grid"></div>
       </div>
 
@@ -1079,12 +1108,119 @@
       </div>
     </section>
 
+    <!-- ====================================================================== -->
+    <!-- VIEW: INSTALLATION ORDERS (أوردرات وطلبيات التركيب الميداني)            -->
+    <!-- ====================================================================== -->
+    <section id="view-installation-orders" class="module-view">
+      <div id="section-installation-orders">
+        <div class="module-header-container">
+          <div class="module-title-box">
+            <button type="button" class="back-btn" onclick="WMS_APP.navigate('hud')">
+              <span data-i18n="backToHud">← العودة للوحة الرئيسية</span>
+            </button>
+            <h2>📋 <span>أوردرات التركيب الميداني (Installation Orders)</span></h2>
+            <p>متابعة وإدارة طلبيات التركيب الميداني (order_id, customer_name, address, status)</p>
+          </div>
+          <div class="module-actions-bar">
+            <button type="button" id="btn-add-installation-order" class="btn-primary" onclick="WMS_APP.openNewInstallationOrderModal()" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+              <span>➕</span> <span>إضافة أوردر تركيب جديد</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- شريط الفلاتر والبحث -->
+        <div class="filter-search-bar" style="margin-bottom: 1.25rem;">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="inst-order-search" placeholder="بحث برقم الأوردر (order_id)، اسم العميل، العنوان، أو الحالة..."
+              oninput="WMS_APP.filterInstallationOrders()">
+          </div>
+          <div class="filter-controls">
+            <select id="inst-order-status-filter" class="form-select" onchange="WMS_APP.filterInstallationOrders()">
+              <option value="all">كل الحالات</option>
+              <option value="Pending">قيد الانتظار (Pending)</option>
+              <option value="In Progress">قيد التنفيذ بالموقع (In Progress)</option>
+              <option value="Completed">مكتمل ومنجز (Completed)</option>
+              <option value="Cancelled">ملغي (Cancelled)</option>
+            </select>
+            <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.resetInstallationOrderFilters()">إعادة ضبط</button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;">#</th>
+                <th>رقم الأوردر (order_id)</th>
+                <th>اسم العميل (customer_name)</th>
+                <th>العنوان والموقع (address)</th>
+                <th>الحالة (status)</th>
+                <th class="inst-orders-actions-col">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="installation-orders-tbody">
+              <!-- Rendered via onSnapshot listener from 'installation_orders' -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
   </div>
 
 
   <!-- ====================================================================== -->
   <!-- النوافذ المنبثقة: 100% مترجمة لجميع اللغات -->
   <!-- ====================================================================== -->
+
+  <!-- نافذة إضافة / تعديل أوردر تركيب (Modal Installation Order) -->
+  <div class="modal-overlay" id="modal-installation-order">
+    <div class="modal-content" style="max-width: 580px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.4rem;">📋</span>
+          <h3 id="modal-inst-order-title" style="margin: 0;">إضافة أوردر تركيب جديد</h3>
+        </div>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-installation-order')">✕</button>
+      </div>
+      <form id="form-installation-order" onsubmit="WMS_APP.submitInstallationOrder(event)">
+        <input type="hidden" id="inst-order-doc-id">
+        
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 1rem; padding: 1.25rem;">
+          <div class="form-group">
+            <label class="form-label" for="inst-order-id-input">رقم الأوردر (order_id) <span style="color:#ef4444;">*</span></label>
+            <input type="text" id="inst-order-id-input" class="form-input" placeholder="مثال: INST-101" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inst-customer-name-input">اسم العميل (customer_name) <span style="color:#ef4444;">*</span></label>
+            <input type="text" id="inst-customer-name-input" class="form-input" placeholder="اسم العميل أو المشروع..." required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inst-address-input">العنوان والموقع (address) <span style="color:#ef4444;">*</span></label>
+            <textarea id="inst-address-input" class="form-textarea" rows="2" placeholder="المدينة، المنطقة، رقم المبنى أو الفيلا..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inst-status-input">الحالة (status) <span style="color:#ef4444;">*</span></label>
+            <select id="inst-status-input" class="form-select" required>
+              <option value="Pending">قيد الانتظار (Pending)</option>
+              <option value="In Progress">قيد التنفيذ بالموقع (In Progress)</option>
+              <option value="Completed">مكتمل ومنجز (Completed)</option>
+              <option value="Cancelled">ملغي (Cancelled)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-installation-order')">إلغاء</button>
+          <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #6366f1, #4f46e5); font-weight: 700;">حفظ الأوردر 💾</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- نافذة تكبير الصورة (Image Zoom Lightbox) -->
   <div class="modal-overlay" id="modal-image-lightbox">

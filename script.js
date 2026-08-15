@@ -1085,6 +1085,9 @@
       case 'field-service':
         renderFieldServiceView();
         break;
+      case 'installation-orders':
+        renderInstallationOrders();
+        break;
       case 'porcelain-preview':
         renderPorcelainPreviewView();
         break;
@@ -1104,21 +1107,25 @@
     const woodOrders = WMS_DB.getWoodOrders();
     const marOrders = WMS_DB.getMarbleOrders();
     const fsAppointments = WMS_DB.getFieldServices();
+    const instOrders = (WMS_DB.getInstallationOrders && typeof WMS_DB.getInstallationOrders === 'function') ? WMS_DB.getInstallationOrders() : [];
 
     const porBadge = document.getElementById('hud-badge-porcelain');
     const marBadge = document.getElementById('hud-badge-marble');
     const woodBadge = document.getElementById('hud-badge-wood-del');
     const marDelBadge = document.getElementById('hud-badge-mar-del');
     const fsBadge = document.getElementById('hud-badge-field-service');
+    const instBadge = document.getElementById('hud-badge-installation-orders');
 
     const slabWord = t('unitSlab');
     const permitWord = t('unitPermit');
     const aptWord = APP.lang === 'en' ? 'Appts' : APP.lang === 'bn' ? 'অ্যাপয়েন্টমেন্ট' : 'موعد';
+    const orderWord = APP.lang === 'en' ? 'Orders' : APP.lang === 'bn' ? 'অর্ডার' : 'أوردر';
 
     if (porBadge) porBadge.textContent = `${porItems.length} ${slabWord}`;
     if (marBadge) marBadge.textContent = `${marItems.length} ${slabWord}`;
     if (woodBadge) woodBadge.textContent = `${woodOrders.length} ${permitWord}`;
     if (marDelBadge) marDelBadge.textContent = `${marOrders.length} ${permitWord}`;
+    if (instBadge) instBadge.textContent = `${instOrders.length} ${orderWord}`;
     if (fsBadge) {
       const activeFs = fsAppointments.filter(a => a.status !== 'Completed' && a.status !== 'Returned').length;
       fsBadge.textContent = `${activeFs} ${aptWord}`;
@@ -1840,6 +1847,29 @@
     }).join('');
   }
 
+  function resetAllTechniciansTasks() {
+    if (!confirm(APP.lang === 'ar' ? 'هل أنت متأكد من رغبتك في تصفير عداد المهام وحذف التقييمات لكافة الفنيين؟' : 'Are you sure you want to reset tasks for all technicians?')) {
+      return;
+    }
+    WMS_DB.resetAllTechniciansTasks();
+    WMS_DB.clearAllRatings();
+    renderFieldServiceTechnicians();
+    renderFieldServiceView();
+    showToast('تم تصفير مهام وتقييمات كافة الفنيين بنجاح! 🧹', 'success');
+  }
+
+  function resetTechnicianTasks(id) {
+    const tech = WMS_DB.getTechnicianById(id);
+    const techName = tech ? tech.name : 'الفني';
+    if (!confirm(APP.lang === 'ar' ? `هل أنت متأكد من تصفير عداد المهام للفني (${techName})؟` : `Reset tasks for ${techName}?`)) {
+      return;
+    }
+    WMS_DB.resetTechnicianTasks(id);
+    renderFieldServiceTechnicians();
+    renderFieldServiceView();
+    showToast(`تم تصفير مهام الفني (${techName}) بنجاح! 🔄`, 'success');
+  }
+
   function renderFieldServiceTechnicians() {
     const techs = WMS_DB.getTechnicians();
     const container = document.getElementById('fs-technicians-grid');
@@ -1878,20 +1908,25 @@
           </div>
 
           <div class="tech-metrics-row">
-            <div class="tech-metric-box">
-              <div class="tech-metric-val" style="color:var(--success);">${t.totalJobs || 0}</div>
+            <div class="tech-metric-box" style="flex: 1;">
+              <div class="tech-metric-val" style="color:var(--success); font-size: 1.45rem; font-weight: 900;">${t.totalJobs || 0}</div>
               <div class="tech-metric-lbl">إجمالي المهام المنجزة</div>
             </div>
-            <div class="tech-metric-box">
-              <div class="tech-metric-val" style="color:var(--primary); font-size:1.05rem;">👷‍♂️ فني معتمد</div>
-              <div class="tech-metric-lbl">حالة الاعتماد</div>
+            <div class="tech-metric-box" style="flex: 1;">
+              <div class="tech-metric-val" style="color:var(--primary); font-size:1.05rem; font-weight: 800;">👷‍♂️ فني معتمد</div>
+              <div class="tech-metric-lbl">حالة الاعتماد الميداني</div>
             </div>
           </div>
 
           <div class="tech-card-footer">
             <div style="font-size:0.85rem; color:var(--text-secondary);">📞 <strong>${escapeHtml(t.phone || '-')}</strong></div>
-            <div style="display:flex; gap:0.35rem;">
-              <button class="btn-secondary btn-sm" onclick="WMS_APP.openEditTechnicianModal('${t.id}')">✏ تعديل</button>
+            <div style="display:flex; gap:0.35rem; align-items: center;">
+              <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.resetTechnicianTasks('${t.id}')" title="تصفير عداد المهام لهذا الفني" style="color: #ef4444; border-color: rgba(239,68,68,0.3); font-size: 0.78rem; padding: 0.25rem 0.5rem;">
+                🔄 تصفير المهام
+              </button>
+              <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.openEditTechnicianModal('${t.id}')">
+                ✏ تعديل
+              </button>
             </div>
           </div>
         </div>
@@ -2307,81 +2342,44 @@
   }
 
   // --------------------------------------------------------------------------
-  // TODAY'S INSTALLATIONS PREVIEW & PRINT CONTROLLER
+  // TODAY'S INSTALLATIONS PREVIEW & PRINT CONTROLLER (STANDALONE PAGE IN NEW TAB)
   // --------------------------------------------------------------------------
   function openTodayInstallationsPreview(targetDate = null) {
     const allAppointments = WMS_DB.getFieldServices();
     const todayStr = targetDate || new Date().toISOString().split('T')[0];
-    const dateInput = document.getElementById('fs-preview-date-input');
     
     // Check if there are appointments for today. If not, default to showing all active appointments
     const todayAppointments = allAppointments.filter(a => a.scheduledDate === todayStr);
-    if (todayAppointments.length > 0 || targetDate) {
-      if (dateInput) dateInput.value = todayStr;
-      renderTodayInstallationsSheet(todayStr);
-    } else {
-      if (dateInput) dateInput.value = '';
-      renderTodayInstallationsSheet('');
-    }
-    openModal('modal-today-installations-preview');
-  }
-
-  function setTodayPreviewDate(type) {
-    const dateInput = document.getElementById('fs-preview-date-input');
-    if (type === 'today') {
-      const todayStr = new Date().toISOString().split('T')[0];
-      if (dateInput) dateInput.value = todayStr;
-      renderTodayInstallationsSheet(todayStr);
-    } else {
-      if (dateInput) dateInput.value = '';
-      renderTodayInstallationsSheet('');
-    }
-  }
-
-  function renderTodayInstallationsSheet(filterDate = '') {
-    const container = document.getElementById('today-installations-printable-area');
-    if (!container) return;
-
-    const allAppointments = WMS_DB.getFieldServices();
-    let filtered = allAppointments;
-
-    if (filterDate) {
-      filtered = allAppointments.filter(a => a.scheduledDate === filterDate);
-      if (filtered.length === 0 && !document.getElementById('fs-preview-date-input')?.value) {
-        filtered = allAppointments.filter(a => a.status !== 'Completed');
-      }
-    } else {
-      // All active appointments
-      filtered = allAppointments.filter(a => a.status !== 'Completed');
-    }
+    let filterDate = (todayAppointments.length > 0 || targetDate) ? todayStr : '';
+    let filtered = filterDate 
+      ? allAppointments.filter(a => a.scheduledDate === filterDate)
+      : allAppointments.filter(a => a.status !== 'Completed');
 
     const todayAr = filterDate 
       ? new Date(filterDate).toLocaleDateString(APP.lang === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
       : 'كافة المواعيد النشطة';
 
-    let tableRows = '';
+    const isRtl = APP.lang === 'ar';
+    const printWin = window.open('', '_blank');
+    if (!printWin) {
+      showToast('يرجى السماح للنوافذ المنبثقة لفتح صفحة المعاينة والطباعة.', 'warning');
+      return;
+    }
+
+    let rowsHtml = '';
     if (filtered.length === 0) {
-      tableRows = `
+      rowsHtml = `
         <tr>
-          <td colspan="8" style="text-align: center; padding: 2.5rem; color: #64748b; font-size: 1rem;">
+          <td colspan="7" style="text-align: center; padding: 2.5rem; color: #64748b; font-size: 1rem;">
             لا توجد أوردرات مجدولة للتركيب في هذا التاريخ (${filterDate || 'المحدد'}).
           </td>
         </tr>
       `;
     } else {
-      tableRows = filtered.map((item, idx) => {
-        const isReturned = item.status === 'Returned';
-        const isCompleted = item.status === 'Completed';
-
-        let statusText = '📅 مجدول للتنفيذ';
-        let statusColor = '#2563eb';
-        if (isCompleted) { statusText = '✓ تم الإنجاز'; statusColor = '#16a34a'; }
-        else if (isReturned) { statusText = '⚠️ متعثر / مرتجع'; statusColor = '#dc2626'; }
-        else if (item.status === 'In Progress') { statusText = '⏳ بالموقع / قيد العمل'; statusColor = '#d97706'; }
-
-        const mapsLink = item.mapsUrl || (item.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}` : '');
+      rowsHtml = filtered.map((item, idx) => {
         const waUrl = buildWhatsAppAppointmentUrl(item);
         const hasPhone = Boolean(item.phone && item.phone.trim());
+        const mapsLink = item.mapsUrl || (item.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}` : '');
 
         return `
           <tr>
@@ -2431,25 +2429,6 @@
                     🏠 بيت العميل
                   </a>
                 ` : ''}
-                ${item.buildingPhoto ? `
-                  <img src="${item.buildingPhoto}" class="building-photo-thumb" style="width: 38px; height: 28px;" title="معاينة صورة واجهة المبنى" onclick="WMS_APP.openImageLightbox('${item.buildingPhoto}', '${escapeHtml(item.buyerName || item.clientName)} - واجهة المبنى', '${escapeHtml(item.permitNo)}')">
-                ` : ''}
-              </div>
-            </td>
-            <!-- عمود الإجراءات (يظهر في المعاينة ويختفي تلقائياً عند الطباعة) -->
-            <td class="no-print" style="text-align: center; white-space: nowrap;">
-              <div style="display: flex; gap: 0.3rem; justify-content: center; align-items: center;">
-                <a href="${escapeHtml(waUrl)}" target="_blank" style="background: #25D366; color: #ffffff; font-size: 0.78rem; font-weight: 800; padding: 0.25rem 0.55rem; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.2rem;" title="إرسال تفاصيل الموعد للعميل عبر WhatsApp">
-                  💬 واتساب
-                </a>
-                ${!isCompleted && !isReturned ? `
-                  <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.closeModal('modal-today-installations-preview'); WMS_APP.openOrderReturnModal('${item.id}')" title="توثيق ترجيع وتعثر" style="color: #ef4444; border-color: rgba(239,68,68,0.4); font-size: 0.78rem; padding: 0.25rem 0.5rem;">
-                    🔄 ترجيع
-                  </button>
-                ` : ''}
-                <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.closeModal('modal-today-installations-preview'); WMS_APP.openEditFieldServiceModal('${item.id}')" title="تعديل الموعد" style="font-size: 0.78rem; padding: 0.25rem 0.45rem;">
-                  ✏️
-                </button>
               </div>
             </td>
           </tr>
@@ -2457,91 +2436,188 @@
       }).join('');
     }
 
-    container.innerHTML = `
-      <div class="printable-report-header">
-        <div>
-          <h2 style="margin: 0; font-size: 1.4rem; color: #0f172a; font-weight: 900;">
-            🏢 مستودع الإنتاج — كشف طلبيات ومواعيد التركيب الميدانية
-          </h2>
-          <div style="font-size: 0.88rem; color: #475569; margin-top: 0.35rem;">
-            AL-ENTEJ WMS — DAILY FIELD INSTALLATION MANIFEST & DISPATCH SCHEDULE
-          </div>
-        </div>
-        <div style="text-align: left; font-size: 0.88rem; color: #334155;">
-          <div><strong>📅 التاريخ:</strong> ${todayAr}</div>
-          <div><strong>📦 إجمالي الطلبيات:</strong> ${filtered.length} موعد / أوردر</div>
-        </div>
-      </div>
-
-      <table class="printable-table">
-        <thead>
-          <tr>
-            <th style="width: 35px; text-align: center;">#</th>
-            <th>رقم الفسح</th>
-            <th>اسم الزبون / المعرض / الهاتف</th>
-            <th>نوع العمل</th>
-            <th>تاريخ وموعد التركيب</th>
-            <th>فني التركيب</th>
-            <th>العنوان وتفاصيل الموقع</th>
-            <th class="no-print" style="text-align: center;">إجراءات فورية</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${tableRows}
-        </tbody>
-      </table>
-
-      <div class="printable-report-footer">
-        <div>مشرف المستودع والميدان: _____________________</div>
-        <div>مسؤول التسليمات والتركيبات: _____________________</div>
-        <div>اعتماد مهندس الإنتاج: _____________________</div>
-      </div>
-    `;
-  }
-
-  function printTodayInstallations() {
-    const printArea = document.getElementById('today-installations-printable-area');
-    if (!printArea) return;
-
-    // Open dedicated high-definition print popup with no-print stripped
-    const isRtl = APP.lang === 'ar';
-    const printWin = window.open('', '_blank', 'width=1000,height=800');
-    if (!printWin) {
-      window.print();
-      return;
-    }
-
-    const htmlContent = printArea.innerHTML;
-
     printWin.document.write(`
       <!DOCTYPE html>
       <html lang="${APP.lang}" dir="${isRtl ? 'rtl' : 'ltr'}">
       <head>
         <meta charset="UTF-8">
-        <title>كشف طلبيات ومواعيد التركيب اليومية — مستودع الإنتاج</title>
+        <title>كشف طلبيات ومواعيد التركيب — شركة الإنتاج</title>
         <style>
-          @page { size: A4 landscape; margin: 10mm; }
-          body { font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif; background: #ffffff; color: #000000; margin: 0; padding: 10px; direction: ${isRtl ? 'rtl' : 'ltr'}; }
-          .printable-report-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
-          .printable-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 9pt; }
-          .printable-table th { background-color: #000000 !important; color: #ffffff !important; padding: 7px 6px; font-weight: bold; border: 1px solid #000; text-align: right; }
-          .printable-table td { padding: 6px; border: 1px solid #333; color: #000; vertical-align: middle; }
-          .printable-table tr:nth-child(even) { background-color: #f5f5f5; }
-          .printable-report-footer { display: flex; justify-content: space-between; margin-top: 30px; padding-top: 15px; border-top: 1px dashed #444; font-size: 9.5pt; font-weight: bold; }
-          .no-print { display: none !important; }
+          @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+          * { box-sizing: border-box; }
+          body {
+            font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            padding: 24px;
+            direction: ${isRtl ? 'rtl' : 'ltr'};
+          }
+          .preview-toolbar {
+            background: #1e293b;
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+          }
+          .preview-toolbar h1 {
+            font-size: 1.1rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+          .toolbar-btns {
+            display: flex;
+            gap: 10px;
+          }
+          .btn-action {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+          }
+          .btn-action.btn-print {
+            background: #10b981;
+          }
+          .btn-action.btn-close {
+            background: #475569;
+          }
+          .manifest-sheet {
+            background: #ffffff;
+            padding: 28px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+          }
+          .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+          }
+          .sheet-title {
+            margin: 0;
+            font-size: 1.45rem;
+            color: #0f172a;
+            font-weight: 900;
+          }
+          .sheet-subtitle {
+            font-size: 0.88rem;
+            color: #64748b;
+            margin-top: 4px;
+            font-weight: 600;
+          }
+          .sheet-meta {
+            text-align: ${isRtl ? 'left' : 'right'};
+            font-size: 0.9rem;
+            color: #334155;
+            line-height: 1.6;
+          }
+          table.manifest-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.92rem;
+          }
+          table.manifest-table th {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 10px 8px;
+            font-weight: 800;
+            border: 1px solid #0f172a;
+            text-align: ${isRtl ? 'right' : 'left'};
+          }
+          table.manifest-table td {
+            padding: 10px 8px;
+            border: 1px solid #cbd5e1;
+            color: #0f172a;
+            vertical-align: middle;
+          }
+          table.manifest-table tr:nth-child(even) {
+            background-color: #f8fafc;
+          }
+          @media print {
+            body {
+              background: #ffffff !important;
+              padding: 0 !important;
+            }
+            .preview-toolbar, .no-print {
+              display: none !important;
+            }
+            .manifest-sheet {
+              box-shadow: none !important;
+              border: none !important;
+              padding: 0 !important;
+            }
+            @page {
+              size: A4 landscape;
+              margin: 10mm;
+            }
+          }
         </style>
       </head>
       <body>
-        ${htmlContent}
+        <div class="preview-toolbar no-print">
+          <h1>📋 كشف طلبيات ومواعيد التركيب الميدانية</h1>
+          <div class="toolbar-btns">
+            <button class="btn-action btn-print" onclick="window.print()">🖨️ طباعة المستند A4</button>
+            <button class="btn-action btn-close" onclick="window.close()">✕ إغلاق الصفحة</button>
+          </div>
+        </div>
+
+        <div class="manifest-sheet">
+          <div class="sheet-header">
+            <div>
+              <h2 class="sheet-title">🏢 مستودع الإنتاج — كشف طلبيات ومواعيد التركيب الميدانية</h2>
+              <div class="sheet-subtitle">AL-ENTEJ WMS — DAILY FIELD INSTALLATION DISPATCH MANIFEST</div>
+            </div>
+            <div class="sheet-meta">
+              <div><strong>📅 التاريخ:</strong> ${todayAr}</div>
+              <div><strong>📦 إجمالي الطلبيات:</strong> ${filtered.length} موعد / أوردر</div>
+            </div>
+          </div>
+
+          <table class="manifest-table">
+            <thead>
+              <tr>
+                <th style="width: 35px; text-align: center;">#</th>
+                <th>رقم الفسح والنوع</th>
+                <th>اسم العميل / المعرض / الهاتف</th>
+                <th>نوع العمل</th>
+                <th>تاريخ وموعد التركيب</th>
+                <th>فني التركيب</th>
+                <th>العنوان وتفاصيل الموقع</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </div>
       </body>
       </html>
     `);
-
     printWin.document.close();
-    printWin.focus();
-    setTimeout(() => {
-      printWin.print();
-    }, 400);
+  }
+
+  function printTodayInstallations() {
+    openTodayInstallationsPreview();
   }
 
   // --------------------------------------------------------------------------
@@ -2639,12 +2715,6 @@
           ${rowsHtml}
         </tbody>
       </table>
-
-      <div class="printable-report-footer">
-        <div>المسؤول الميداني: _____________________</div>
-        <div>مشرف خدمة العملاء: _____________________</div>
-        <div>اعتماد مهندس الإنتاج: _____________________</div>
-      </div>
     `;
 
     openModal('modal-returns-report-preview');
@@ -2692,6 +2762,185 @@
     setTimeout(() => {
       printWin.print();
     }, 400);
+  }
+
+  // ==========================================================================
+  // INSTALLATION ORDERS CONTROLLER (order_id, customer_name, address, status)
+  // ==========================================================================
+  function renderInstallationOrders(customList = null) {
+    const tbody = document.getElementById('installation-orders-tbody');
+    if (!tbody) return;
+
+    const allOrders = customList || (WMS_DB.getInstallationOrders ? WMS_DB.getInstallationOrders() : []);
+    
+    const searchVal = document.getElementById('inst-order-search')?.value.toLowerCase().trim() || '';
+    const statusVal = document.getElementById('inst-order-status-filter')?.value || 'all';
+
+    let filtered = allOrders.filter(o => {
+      const matchesSearch = !searchVal || 
+        (o.order_id && o.order_id.toLowerCase().includes(searchVal)) ||
+        (o.customer_name && o.customer_name.toLowerCase().includes(searchVal)) ||
+        (o.address && o.address.toLowerCase().includes(searchVal)) ||
+        (o.status && o.status.toLowerCase().includes(searchVal));
+
+      const matchesStatus = (statusVal === 'all') || (o.status === statusVal);
+      return matchesSearch && matchesStatus;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center; padding:3rem; color:var(--text-muted);">
+            لا توجد أوردرات تركيب مطابقة حالياً. اضغط "إضافة أوردر تركيب جديد" لإضافة أوردر.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    const currentRole = document.documentElement.getAttribute('data-role') || 'viewer';
+    const isViewer = (currentRole === 'viewer');
+    const isTechnician = (currentRole === 'technician');
+    const canEdit = !isViewer && !isTechnician;
+
+    tbody.innerHTML = filtered.map((item, idx) => {
+      let statusBadge = '';
+      if (item.status === 'Completed') {
+        statusBadge = `<span class="status-pill pill-available" style="font-size:0.8rem;">✓ مكتمل (Completed)</span>`;
+      } else if (item.status === 'In Progress') {
+        statusBadge = `<span class="status-pill pill-warning" style="font-size:0.8rem;">🔨 قيد التنفيذ (In Progress)</span>`;
+      } else if (item.status === 'Cancelled') {
+        statusBadge = `<span class="status-pill" style="font-size:0.8rem; background:rgba(239,68,68,0.15); color:#f87171;">✕ ملغي (Cancelled)</span>`;
+      } else {
+        statusBadge = `<span class="status-pill" style="font-size:0.8rem; background:rgba(99,102,241,0.15); color:#818cf8;">⏳ قيد الانتظار (Pending)</span>`;
+      }
+
+      return `
+        <tr>
+          <td style="text-align:center; font-weight:700;">${idx + 1}</td>
+          <td>
+            <span class="permit-no-badge" style="background:rgba(99,102,241,0.15); color:#818cf8; border-color:rgba(99,102,241,0.3);">
+              ${escapeHtml(item.order_id || item.id)}
+            </span>
+          </td>
+          <td>
+            <strong style="color:var(--text-primary); font-size:0.95rem;">${escapeHtml(item.customer_name)}</strong>
+            ${item.phone ? `<div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.15rem;">📞 ${escapeHtml(item.phone)}</div>` : ''}
+          </td>
+          <td>
+            <div style="font-size:0.88rem; color:var(--text-primary); max-width:300px; line-height:1.4;">
+              📍 ${escapeHtml(item.address || '-')}
+            </div>
+            ${item.notes ? `<div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem;">📝 ${escapeHtml(item.notes)}</div>` : ''}
+          </td>
+          <td>
+            ${statusBadge}
+          </td>
+          <td class="inst-orders-actions-col">
+            ${canEdit ? `
+              <div style="display:flex; gap:0.35rem; align-items:center;">
+                <button type="button" class="btn-secondary btn-sm inst-orders-action-btn" onclick="WMS_APP.openEditInstallationOrderModal('${item.id || item.order_id}')" title="تعديل">
+                  ✏ تعديل
+                </button>
+                <button type="button" class="btn-danger btn-sm inst-orders-action-btn" onclick="WMS_APP.deleteInstallationOrder('${item.id || item.order_id}')" title="حذف">
+                  🗑 حذف
+                </button>
+              </div>
+            ` : '<span style="font-size:0.8rem; color:var(--text-muted);">قراءة فقط 👁️</span>'}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function openNewInstallationOrderModal() {
+    document.getElementById('inst-order-doc-id').value = '';
+    document.getElementById('modal-inst-order-title').textContent = 'إضافة أوردر تركيب جديد';
+    
+    document.getElementById('inst-order-id-input').value = `INST-${Date.now().toString().slice(-4)}`;
+    document.getElementById('inst-customer-name-input').value = '';
+    document.getElementById('inst-address-input').value = '';
+    document.getElementById('inst-status-input').value = 'Pending';
+
+    openModal('modal-installation-order');
+  }
+
+  function openEditInstallationOrderModal(id) {
+    const order = WMS_DB.getInstallationOrderById(id);
+    if (!order) return;
+
+    document.getElementById('inst-order-doc-id').value = order.id || order.order_id;
+    document.getElementById('modal-inst-order-title').textContent = 'تعديل بيانات أوردر التركيب';
+
+    document.getElementById('inst-order-id-input').value = order.order_id || '';
+    document.getElementById('inst-customer-name-input').value = order.customer_name || '';
+    document.getElementById('inst-address-input').value = order.address || '';
+    document.getElementById('inst-status-input').value = order.status || 'Pending';
+
+    openModal('modal-installation-order');
+  }
+
+  async function submitInstallationOrder(e) {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+    const docId = document.getElementById('inst-order-doc-id')?.value;
+    const orderId = document.getElementById('inst-order-id-input')?.value.trim();
+    const customerName = document.getElementById('inst-customer-name-input')?.value.trim();
+    const address = document.getElementById('inst-address-input')?.value.trim();
+    const status = document.getElementById('inst-status-input')?.value;
+
+    if (!orderId || !customerName) {
+      showToast('يرجى كتابة رقم الأوردر واسم العميل للمتابعة!', 'warning');
+      return;
+    }
+
+    const payload = {
+      order_id: orderId,
+      customer_name: customerName,
+      address: address,
+      status: status
+    };
+
+    try {
+      if (docId) {
+        await WMS_DB.updateInstallationOrder(docId, payload);
+        showToast(`تم تحديث أوردر التركيب [${orderId}] بنجاح! 💾`, 'success');
+      } else {
+        await WMS_DB.addInstallationOrder(payload);
+        showToast(`تمت إضافة أوردر التركيب [${orderId}] بنجاح! 📋`, 'success');
+      }
+      closeModal('modal-installation-order');
+      renderInstallationOrders();
+      updateHudBadges();
+    } catch (err) {
+      showToast(err.message, 'danger');
+    }
+  }
+
+  async function deleteInstallationOrder(id) {
+    if (!confirm(APP.lang === 'ar' ? 'هل أنت متأكد من حذف أوردر التركيب هذا؟' : 'Are you sure you want to delete this installation order?')) {
+      return;
+    }
+    try {
+      await WMS_DB.deleteInstallationOrder(id);
+      showToast('تم حذف أوردر التركيب بنجاح.', 'info');
+      renderInstallationOrders();
+      updateHudBadges();
+    } catch (err) {
+      showToast(err.message, 'danger');
+    }
+  }
+
+  function filterInstallationOrders() {
+    renderInstallationOrders();
+  }
+
+  function resetInstallationOrderFilters() {
+    const sInput = document.getElementById('inst-order-search');
+    const stSelect = document.getElementById('inst-order-status-filter');
+    if (sInput) sInput.value = '';
+    if (stSelect) stSelect.value = 'all';
+    renderInstallationOrders();
   }
 
   // Return Management Modal
@@ -4209,7 +4458,18 @@
     openReturnsReportPreview,
     printReturnsReport,
     buildWhatsAppAppointmentUrl,
-    sendWhatsAppAppointment
+    sendWhatsAppAppointment,
+    resetAllTechniciansTasks,
+    resetTechnicianTasks,
+
+    // Installation Orders API
+    renderInstallationOrders,
+    openNewInstallationOrderModal,
+    openEditInstallationOrderModal,
+    submitInstallationOrder,
+    deleteInstallationOrder,
+    filterInstallationOrders,
+    resetInstallationOrderFilters
   };
 
   function renderWoodPermitChips() {
@@ -4229,6 +4489,7 @@
   window.showToast = showToast;
   window.sendWhatsAppAppointment = sendWhatsAppAppointment;
   window.buildWhatsAppAppointmentUrl = buildWhatsAppAppointmentUrl;
+  window.renderInstallationOrders = renderInstallationOrders;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => WMS_APP.init());
