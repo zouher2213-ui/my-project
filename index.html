@@ -305,11 +305,26 @@
             </div>
             <div class="hud-card-body">
               <h3 data-i18n="hudMarbleDeliveryTitle">تسليم طلبيات الرخام</h3>
-              <p data-i18n="hudMarbleDeliveryDesc">فسوحات خروج الرخام، توثيق المعرض والمشتري ومواعيد التوصيل والتركيب.
-              </p>
+              <p data-i18n="hudMarbleDeliveryDesc">فسوحات خروج الرخام، توثيق المعرض والمشتري ومواعيد التوصيل والتركيب.</p>
             </div>
             <div class="hud-card-footer">
               <span style="color:var(--accent-delivery);" data-i18n="enterModule">فتح القسم ←</span>
+              <span class="hud-enter-arrow">➔</span>
+            </div>
+          </div>
+
+          <!-- كرت 5: الخدمات الميدانية والتركيبات (Field Service) -->
+          <div class="hud-card card-field-service" onclick="WMS_APP.navigate('field-service')">
+            <div class="hud-card-header">
+              <div class="hud-icon-box">🛠️</div>
+              <span class="hud-badge-count" id="hud-badge-field-service">0 موعد</span>
+            </div>
+            <div class="hud-card-body">
+              <h3 data-i18n="hudFieldServiceTitle">الخدمات الميدانية والتركيبات</h3>
+              <p data-i18n="hudFieldServiceDesc">حجز ومتابعة مواعيد التركيب، تتبع وإسناد الفنيين، تقييم الأداء والخدمة، وإدارة المرتجعات وحالات التعثر.</p>
+            </div>
+            <div class="hud-card-footer">
+              <span style="color:#10b981;" data-i18n="enterModule">فتح القسم ←</span>
               <span class="hud-enter-arrow">➔</span>
             </div>
           </div>
@@ -839,6 +854,153 @@
               </tr>
             </thead>
             <tbody id="marble-orders-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==================================================================== -->
+    <!-- الشاشة E: الخدمات الميدانية والتركيبات (#view-field-service) -->
+    <!-- ==================================================================== -->
+    <section id="view-field-service" class="module-view">
+      <div class="module-top-bar">
+        <button class="btn-back-hud" onclick="WMS_APP.navigate('hud')">
+          <span data-i18n="backToHud">← العودة للوحة الرئيسية</span>
+        </button>
+
+        <div class="module-title-group">
+          <h2>🛠️ <span data-i18n="fsModuleTitle">الخدمات الميدانية ومواعيد التركيب</span></h2>
+          <p data-i18n="fsModuleSubtitle">حجز وإسناد مواعيد التركيب، تتبع فنيي الميدان، تقييمات الخدمة، وإدارة المرتجعات وحالات التعثر</p>
+        </div>
+
+        <div class="module-actions-bar">
+          <button class="btn-primary" onclick="WMS_APP.openNewFieldServiceModal()" data-i18n="fsBookNewBtn">
+            ➕ حجز موعد تركيب جديد
+          </button>
+          <button class="btn-secondary" onclick="WMS_APP.openOrderReturnModal()" style="border-color: rgba(239, 68, 68, 0.4); color: #f87171;" data-i18n="fsRecordReturnBtn">
+            🔄 تسجيل حالة ترجيع
+          </button>
+          <button class="btn-secondary" onclick="WMS_APP.openNewTechnicianModal()" data-i18n="fsAddTechBtn">
+            👷‍♂️ إضافة فني جديد
+          </button>
+        </div>
+      </div>
+
+      <!-- مؤشرات الأداء الرئيسية (Field Service KPI HUD) -->
+      <div class="fs-kpi-grid">
+        <div class="fs-kpi-card kpi-appointments">
+          <div class="fs-kpi-icon">📅</div>
+          <div class="fs-kpi-info">
+            <span class="fs-kpi-label" data-i18n="fsKpiToday">مواعيد اليوم والنشطة</span>
+            <span class="fs-kpi-val" id="fs-kpi-today-count">0</span>
+          </div>
+        </div>
+        <div class="fs-kpi-card kpi-technicians">
+          <div class="fs-kpi-icon">👷‍♂️</div>
+          <div class="fs-kpi-info">
+            <span class="fs-kpi-label" data-i18n="fsKpiActiveTechs">فنيين متاحين وبالميدان</span>
+            <span class="fs-kpi-val" id="fs-kpi-active-techs">0</span>
+          </div>
+        </div>
+        <div class="fs-kpi-card kpi-rating">
+          <div class="fs-kpi-icon">⭐</div>
+          <div class="fs-kpi-info">
+            <span class="fs-kpi-label" data-i18n="fsKpiAvgRating">متوسط تقييم الفنيين</span>
+            <span class="fs-kpi-val" id="fs-kpi-avg-rating">4.85 ★</span>
+          </div>
+        </div>
+        <div class="fs-kpi-card kpi-returns">
+          <div class="fs-kpi-icon">🔄</div>
+          <div class="fs-kpi-info">
+            <span class="fs-kpi-label" data-i18n="fsKpiReturns">حالات الترجيع والتعثر</span>
+            <span class="fs-kpi-val" id="fs-kpi-returns-count">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- شريط التبويبات الداخلية -->
+      <div class="fs-subtabs-bar">
+        <button class="fs-subtab-btn active" id="fs-tab-btn-appointments" onclick="WMS_APP.switchFieldServiceTab('appointments')">
+          <span>📅</span> <span data-i18n="fsTabAppointments">جدول المواعيد والتركيبات</span>
+        </button>
+        <button class="fs-subtab-btn" id="fs-tab-btn-technicians" onclick="WMS_APP.switchFieldServiceTab('technicians')">
+          <span>👷‍♂️</span> <span data-i18n="fsTabTechnicians">فنيين التركيب والتقييمات</span>
+        </button>
+        <button class="fs-subtab-btn" id="fs-tab-btn-returns" onclick="WMS_APP.switchFieldServiceTab('returns')">
+          <span>🔄</span> <span data-i18n="fsTabReturns">سجل المرتجعات وحالات التعثر</span>
+        </button>
+      </div>
+
+      <!-- تبويب 1: جدول المواعيد والتركيبات -->
+      <div class="fs-tab-content active" id="fs-tab-content-appointments">
+        <!-- شريط الفلاتر والبحث -->
+        <div class="filter-search-bar" style="margin-bottom: 1.25rem;">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="fs-search-input" placeholder="بحث برقم الفسح، العميل، الفني، الهاتف، أو العنوان..."
+              data-i18n-placeholder="fsSearchPlaceholder" oninput="WMS_APP.filterFieldServices()">
+          </div>
+          <div class="filter-controls">
+            <select id="fs-status-filter" class="form-select" onchange="WMS_APP.filterFieldServices()">
+              <option value="all" data-i18n="filterAllStatus">كل الحالات</option>
+              <option value="Scheduled" data-i18n="stScheduled">مجدول</option>
+              <option value="In Progress" data-i18n="stInProgress">قيد التنفيذ / بالموقع</option>
+              <option value="Completed" data-i18n="stCompleted">تم الإنجاز بنجاح</option>
+              <option value="Returned" data-i18n="stReturned">مرتجع / متعثر</option>
+            </select>
+            <select id="fs-tech-filter" class="form-select" onchange="WMS_APP.filterFieldServices()">
+              <option value="all" data-i18n="filterAllTechs">كل الفنيين</option>
+            </select>
+            <input type="date" id="fs-date-filter" class="form-input" style="width: auto;" onchange="WMS_APP.filterFieldServices()">
+            <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.resetFieldServiceFilters()" data-i18n="resetFilters">إعادة ضبط</button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th data-i18n="thPermitNo">رقم الفسح</th>
+                <th data-i18n="thOrderType">نوع الفسح</th>
+                <th data-i18n="thClientShowroom">العميل / المعرض</th>
+                <th data-i18n="thAssignedTech">فني التركيب</th>
+                <th data-i18n="thScheduledDate">تاريخ وموعد التركيب</th>
+                <th data-i18n="thWorkDetails">تفاصيل العمل والعنوان</th>
+                <th data-i18n="thStatus">الحالة</th>
+                <th data-i18n="thActions">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="fs-appointments-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- تبويب 2: فنيين التركيب والتقييمات -->
+      <div class="fs-tab-content" id="fs-tab-content-technicians" style="display: none;">
+        <div class="technicians-grid" id="fs-technicians-grid"></div>
+      </div>
+
+      <!-- تبويب 3: سجل المرتجعات وحالات التعثر -->
+      <div class="fs-tab-content" id="fs-tab-content-returns" style="display: none;">
+        <div class="returns-notice-box">
+          <h4>ℹ️ <span data-i18n="returnsNoticeTitle">نظام إدارة المرتجعات وحالات التعثر الميداني</span></h4>
+          <p data-i18n="returnsNoticeDesc">يوثق هذا السجل جميع الأوردرات التي تعثر تسليمها أو تركيبها (عدم رد الزبون، أخطاء القياسات، الموقع غير جاهز، تلفيات أو رفض استلام) مع إمكانية إعادة الجدولة المباشرة.</p>
+        </div>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th data-i18n="thPermitNo">رقم الفسح</th>
+                <th data-i18n="thClientShowroom">العميل / المعرض</th>
+                <th data-i18n="thAssignedTech">الفني الميداني</th>
+                <th data-i18n="thReturnDate">تاريخ ووقت الترجيع</th>
+                <th data-i18n="thReturnReason">سبب الترجيع والتعثر</th>
+                <th data-i18n="thReturnNotes">تقرير الفني والتفاصيل</th>
+                <th data-i18n="thActions">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="fs-returns-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1506,6 +1668,261 @@
         <button type="button" class="btn-primary" onclick="window.print()" data-i18n="printOfficialDocBtn">🖨 طباعة
           المستند الرسمي</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- نوافذ الخدمات الميدانية (Field Service Modals) -->
+  <!-- ==================================================================== -->
+
+  <!-- نافذة 13: حجز موعد تركيب وتعيين فني -->
+  <div class="modal-overlay" id="modal-field-service">
+    <div class="modal-content" style="max-width: 620px;">
+      <div class="modal-header">
+        <h3 id="modal-fs-title" data-i18n="modalBookFsTitle">حجز موعد تركيب وتسليم ميداني</h3>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-field-service')">✕</button>
+      </div>
+      <form onsubmit="WMS_APP.submitFieldService(event)">
+        <input type="hidden" id="fs-edit-id">
+        <div class="modal-body">
+          <div class="form-grid">
+            <!-- رقم الفسح مع زر الجلب الفوري -->
+            <div class="form-group form-full">
+              <label data-i18n="lblPermitNo">رقم الفسح (Permit No)</label>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="text" id="fs-permit-no" required placeholder="مثال: FSH-WD-2026-01 أو MAR-2026-880" style="flex: 1;"
+                  oninput="WMS_APP.handlePermitInput(this.value)">
+                <button type="button" class="btn-secondary" onclick="WMS_APP.lookupPermitData()" title="جلب بيانات الأوردر من الفسوحات تلقائياً" style="white-space: nowrap; font-size: 0.86rem; padding: 0.5rem 0.85rem; border-color: rgba(16, 185, 129, 0.4); color: #10b981;">
+                  ⚡ <span data-i18n="fetchPermitBtn">جلب تلقائي</span>
+                </button>
+              </div>
+              <small id="fs-permit-fetch-status" style="display: none; font-size: 0.8rem; margin-top: 0.35rem;"></small>
+            </div>
+
+            <div class="form-group">
+              <label data-i18n="lblOrderType">نوع الفسح / المادة</label>
+              <select id="fs-order-type" class="form-select">
+                <option value="wood" data-i18n="optWoodPermit">فسح خشب ومطابخ</option>
+                <option value="marble" data-i18n="optMarblePermit">فسح رخام وتكسيات</option>
+                <option value="porcelain" data-i18n="optPorcelainPermit">فسح بورسلان وأرضيات</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label data-i18n="lblShowroom">اسم المعرض</label>
+              <input type="text" id="fs-showroom" required placeholder="اسم المعرض...">
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblBuyerName">اسم العميل / المشتري</label>
+              <input type="text" id="fs-buyer-name" required placeholder="اسم العميل أو اسم المشروع...">
+            </div>
+
+            <div class="form-group">
+              <label data-i18n="lblPhone">رقم هاتف العميل للتواصل</label>
+              <input type="tel" id="fs-phone" required placeholder="+971 50 000 0000">
+            </div>
+
+            <div class="form-group">
+              <label data-i18n="lblRepName">اسم المندوب</label>
+              <input type="text" id="fs-rep-name" placeholder="اسم المندوب...">
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblAssignedTech">فني التركيب المكلف بالمهمة</label>
+              <select id="fs-technician-select" class="form-select" required>
+                <option value="">-- اختر الفني الميداني --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label data-i18n="lblScheduledDate">تاريخ التركيب المجدول</label>
+              <input type="date" id="fs-scheduled-date" required>
+            </div>
+
+            <div class="form-group">
+              <label data-i18n="lblTimeSlot">فترة وموعد العمل</label>
+              <select id="fs-time-slot" class="form-select">
+                <option value="morning" data-i18n="optMorningSlot">صباحي (08:00 ص - 01:00 م)</option>
+                <option value="afternoon" data-i18n="optAfternoonSlot">مسائي (02:00 م - 07:00 م)</option>
+                <option value="full_day" data-i18n="optFullDaySlot">يوم كامل (08:00 ص - 06:00 م)</option>
+              </select>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblAddress">موقع وعنوان العميل / المشروع</label>
+              <input type="text" id="fs-address" placeholder="المدينة، الحي، رقم الفيلا أو الشقة..." required>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblWorkDetails">تفاصيل بنود العمل والمواد</label>
+              <textarea id="fs-work-type" class="form-textarea" rows="2" placeholder="أبواب، مطابخ، رخام مدخل، تكسيات..."></textarea>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblNotes">ملاحظات وتعليمات خاصة للفني</label>
+              <input type="text" id="fs-notes" placeholder="ملاحظات التركيب، مواعيد العميل، تنبيهات الموقع...">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-field-service')" data-i18n="cancelBtn">إلغاء</button>
+          <button type="submit" class="btn-primary" data-i18n="saveAppointmentBtn">💾 حفظ وتأكيد الموعد</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة 14: تسجيل وتوثيق حالة ترجيع أوردر -->
+  <div class="modal-overlay" id="modal-order-return">
+    <div class="modal-content" style="max-width: 560px; border-top: 3px solid #ef4444;">
+      <div class="modal-header">
+        <h3 style="color: #f87171;" data-i18n="modalReturnTitle">🔄 توثيق ترجيع أوردر / تعثر التسليم والتركيب</h3>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-order-return')">✕</button>
+      </div>
+      <form onsubmit="WMS_APP.submitOrderReturn(event)">
+        <input type="hidden" id="return-fs-id">
+        <div class="modal-body">
+          <div class="returns-notice-box" style="margin-bottom: 1.25rem;">
+            <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.35rem;" data-i18n="lblReturnOrderTarget">الأوردر / الموعد المستهدف:</div>
+            <h4 id="return-order-info" style="margin: 0; font-size: 1.05rem; color: var(--text-primary);">-</h4>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group form-full">
+              <label data-i18n="lblReturnReason">سبب الترجيع والتعثر الأساسي *</label>
+              <select id="return-reason-select" class="form-select" required onchange="WMS_APP.handleReturnReasonChange(this.value)">
+                <option value="customer_no_answer" data-i18n="rsNoAnswer">📞 الزبون لم يرد على الهاتف بعد عدة محاولات</option>
+                <option value="measurement_error" data-i18n="rsMeasurementError">📐 أخطاء في المقاسات / القياسات غير مطابقة للموقع</option>
+                <option value="site_not_ready" data-i18n="rsSiteNotReady">🚧 الموقع غير جاهز للتركيب (أعمال البناء/الدهان غير منتهية)</option>
+                <option value="material_defect" data-i18n="rsMaterialDefect">⚠️ ملاحظة كسر أو تلف في المواد أثناء التنزيل أو النقل</option>
+                <option value="client_rejection" data-i18n="rsClientRejection">❌ رفض الاستلام من العميل / طلب تغيير المواصفات</option>
+                <option value="client_postponed" data-i18n="rsClientPostponed">🗓️ تأجيل الموعد بناءً على طلب العميل المباشر</option>
+                <option value="other" data-i18n="rsOther">📝 أسباب فنية أخرى (يرجى التوضيح)</option>
+              </select>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblReturnNotes">تقرير وتفاصيل الفني الميداني *</label>
+              <textarea id="return-notes-input" class="form-textarea" rows="3" required
+                placeholder="اكتب التقرير الكامل عما حدث في الموقع، عدد محاولات الاتصال، أو تفاصيل اختلاف المقاسات..."></textarea>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblRescheduleDate">إعادة جدولة لموعد لاحق (اختياري)</label>
+              <input type="date" id="return-reschedule-date" class="form-input">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-order-return')" data-i18n="cancelBtn">إلغاء</button>
+          <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #ef4444, #b91c1c);" data-i18n="confirmReturnBtn">⚠️ تأكيد الترجيع وتوثيق السجل</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة 15: تقييم أداء فني التركيب -->
+  <div class="modal-overlay" id="modal-rate-technician">
+    <div class="modal-content" style="max-width: 520px; text-align: center;">
+      <div class="modal-header">
+        <h3 style="color: #fbbf24;" data-i18n="modalRateTechTitle">⭐ تقييم أداء فني التركيب والخدمة</h3>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-rate-technician')">✕</button>
+      </div>
+      <form onsubmit="WMS_APP.submitTechnicianRating(event)">
+        <input type="hidden" id="rate-fs-id">
+        <input type="hidden" id="rate-tech-id">
+        <input type="hidden" id="rate-score-value" value="5">
+        <input type="hidden" id="rate-punctuality-value" value="5">
+
+        <div class="modal-body" style="text-align: right;">
+          <div style="background: var(--bg-input); padding: 1rem; border-radius: var(--radius-md); text-align: center; margin-bottom: 1.25rem; border: var(--border-glass);">
+            <div style="font-size: 2.2rem; margin-bottom: 0.25rem;" id="rate-tech-avatar">👷‍♂️</div>
+            <h4 id="rate-tech-name" style="margin: 0.25rem 0; font-size: 1.2rem;">-</h4>
+            <div id="rate-tech-specialty" style="font-size: 0.85rem; color: var(--text-muted);">-</div>
+          </div>
+
+          <div style="margin-bottom: 1.5rem; text-align: center;">
+            <label style="font-weight: 700; display: block; margin-bottom: 0.5rem;" data-i18n="lblOverallRating">التقييم العام لجودة التركيب والخدمة *</label>
+            <div class="star-rating-widget" id="star-rating-main">
+              <span class="star-item active" data-value="1" onclick="WMS_APP.setStarRating('main', 1)">★</span>
+              <span class="star-item active" data-value="2" onclick="WMS_APP.setStarRating('main', 2)">★</span>
+              <span class="star-item active" data-value="3" onclick="WMS_APP.setStarRating('main', 3)">★</span>
+              <span class="star-item active" data-value="4" onclick="WMS_APP.setStarRating('main', 4)">★</span>
+              <span class="star-item active" data-value="5" onclick="WMS_APP.setStarRating('main', 5)">★</span>
+            </div>
+            <div id="star-score-text" style="font-size: 0.95rem; font-weight: 800; color: #fbbf24; margin-top: 0.35rem;">ممتاز جداً (5/5)</div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group form-full">
+              <label data-i18n="lblPunctuality">الالتزام بالموعد المحدد والوقت</label>
+              <select id="rate-punctuality-select" class="form-select">
+                <option value="5" data-i18n="pctOnTime">⭐⭐⭐⭐⭐ وصل في الموعد تماماً</option>
+                <option value="4" data-i18n="pctSmallDelay">⭐⭐⭐⭐ تأخير بسيط (أقل من 30 دقيقة مع إشعار)</option>
+                <option value="3" data-i18n="pctAcceptable">⭐⭐⭐ تأخير مقبول</option>
+                <option value="2" data-i18n="pctBigDelay">⭐⭐ تأخير كبير دون إشعار مسبق</option>
+                <option value="1" data-i18n="pctNoShow">⭐ عدم الحضور في الموعد</option>
+              </select>
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblClientFeedback">ملاحظات العميل وانطباع الخدمة</label>
+              <textarea id="rate-feedback-input" class="form-textarea" rows="2" placeholder="ملاحظات العميل على نظافة الموقع، دقة الفني، وحرفية التركيب..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-rate-technician')" data-i18n="cancelBtn">إلغاء</button>
+          <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #f59e0b, #d97706);" data-i18n="submitRatingBtn">⭐ اعتماد التقييم</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- نافذة 16: إضافة / تعديل فني تركيب -->
+  <div class="modal-overlay" id="modal-technician">
+    <div class="modal-content" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 id="modal-tech-title" data-i18n="modalAddTechTitle">إضافة فني تركيب جديد</h3>
+        <button class="modal-close" onclick="WMS_APP.closeModal('modal-technician')">✕</button>
+      </div>
+      <form onsubmit="WMS_APP.submitTechnician(event)">
+        <input type="hidden" id="tech-edit-id">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group form-full">
+              <label data-i18n="lblTechName">اسم فني التركيب</label>
+              <input type="text" id="tech-name-input" required placeholder="اسم الفني الكامل...">
+            </div>
+
+            <div class="form-group form-full">
+              <label data-i18n="lblTechSpecialty">التخصص ونطاق الخبرة</label>
+              <input type="text" id="tech-specialty-input" required placeholder="مثال: تركيب رخام وتكسيات، مطابخ خشب، أرضيات بورسلان...">
+            </div>
+
+            <div class="form-group">
+              <label data-i18n="lblPhone">رقم هاتف الفني</label>
+              <input type="tel" id="tech-phone-input" required placeholder="+971 50 000 0000">
+            </div>
+
+            <div class="form-group">
+              <label data-i18n="lblTechStatus">حالة الفني الحالية</label>
+              <select id="tech-status-input" class="form-select">
+                <option value="Available" data-i18n="stAvailable">متاح وجاهز للعمل</option>
+                <option value="On Site" data-i18n="stOnSite">في موقع العميل (جاري العمل)</option>
+                <option value="En Route" data-i18n="stEnRoute">في الطريق للموقع</option>
+                <option value="Busy" data-i18n="stBusy">مشغول</option>
+                <option value="Off Duty" data-i18n="stOffDuty">في إجازة</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="WMS_APP.closeModal('modal-technician')" data-i18n="cancelBtn">إلغاء</button>
+          <button type="submit" class="btn-primary" data-i18n="saveBtn">حفظ بيانات الفني</button>
+        </div>
+      </form>
     </div>
   </div>
 

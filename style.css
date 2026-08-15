@@ -1801,3 +1801,279 @@ button {
   .modal-overlay.open .modal-content { box-shadow: none !important; border: none !important; max-width: 100% !important; }
   .modal-header, .modal-footer { display: none !important; }
 }
+
+/* ==========================================================================
+   FIELD SERVICE & INSTALLATION MODULE STYLES
+   ========================================================================== */
+
+/* 5th HUD Card Accent */
+.card-field-service:hover {
+  border-color: rgba(16, 185, 129, 0.6);
+  box-shadow: 0 12px 36px rgba(16, 185, 129, 0.2);
+}
+
+.card-field-service .hud-icon-box {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+/* Field Service KPI HUD */
+.fs-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.fs-kpi-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: var(--border-glass);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.fs-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.fs-kpi-card.kpi-appointments { border-left: 4px solid #3b82f6; }
+.fs-kpi-card.kpi-technicians { border-left: 4px solid #10b981; }
+.fs-kpi-card.kpi-rating { border-left: 4px solid #f59e0b; }
+.fs-kpi-card.kpi-returns { border-left: 4px solid #ef4444; }
+
+[dir="rtl"] .fs-kpi-card.kpi-appointments { border-left: var(--border-glass); border-right: 4px solid #3b82f6; }
+[dir="rtl"] .fs-kpi-card.kpi-technicians { border-left: var(--border-glass); border-right: 4px solid #10b981; }
+[dir="rtl"] .fs-kpi-card.kpi-rating { border-left: var(--border-glass); border-right: 4px solid #f59e0b; }
+[dir="rtl"] .fs-kpi-card.kpi-returns { border-left: var(--border-glass); border-right: 4px solid #ef4444; }
+
+.fs-kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--bg-input);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.fs-kpi-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.fs-kpi-label {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.fs-kpi-val {
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+/* Field Service Subtabs Bar */
+.fs-subtabs-bar {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--bg-card);
+  padding: 0.4rem;
+  border-radius: var(--radius-lg);
+  border: var(--border-glass);
+  margin-bottom: 1.25rem;
+  overflow-x: auto;
+}
+
+.fs-subtab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.15rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.fs-subtab-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+
+.fs-subtab-btn.active {
+  background: var(--primary-gradient);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+}
+
+/* Technicians Grid */
+.technicians-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+}
+
+.tech-profile-card {
+  background: var(--bg-card);
+  border: var(--border-glass);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.tech-profile-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow-md);
+}
+
+.tech-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.tech-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--bg-input);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.tech-header-info {
+  flex: 1;
+}
+
+.tech-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.tech-specialty {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.tech-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  background: var(--bg-input);
+  padding: 0.65rem;
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.tech-metric-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.tech-metric-val {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.tech-metric-lbl {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.tech-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* 5-Star Rating Widget */
+.star-rating-widget {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 2.2rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.star-item {
+  color: rgba(255, 255, 255, 0.2);
+  transition: all 0.15s ease;
+}
+
+[data-theme="light"] .star-item {
+  color: #cbd5e1;
+}
+
+.star-item.active,
+.star-item:hover,
+.star-item:hover ~ .star-item {
+  color: #fbbf24;
+  transform: scale(1.15);
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
+}
+
+/* Returns Log & Failures */
+.returns-notice-box {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.returns-notice-box h4 {
+  margin: 0 0 0.35rem 0;
+  color: #f87171;
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.returns-notice-box p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.return-reason-tag {
+  display: inline-block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+}

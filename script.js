@@ -58,6 +58,7 @@
       navMarble: 'رخام',
       navWood: 'خشب',
       navMarbleDel: 'فسح رخام',
+      navFieldService: 'خدمة ميدانية',
 
       // HUD Hub
       hudTitle: 'لوحة التحكم والعمليات الرئيسية',
@@ -70,7 +71,49 @@
       hudWoodDeliveryDesc: 'فسوحات خروج الخشب، مندوب المعرض، بيانات العميل ومواعيد التركيب.',
       hudMarbleDeliveryTitle: 'تسليم طلبيات الرخام',
       hudMarbleDeliveryDesc: 'فسوحات خروج الرخام، توثيق المعرض والمشتري ومواعيد التوصيل والتركيب.',
+      hudFieldServiceTitle: 'الخدمات الميدانية والتركيبات',
+      hudFieldServiceDesc: 'حجز ومتابعة مواعيد التركيب، تتبع وإسناد الفنيين، تقييم الأداء والخدمة، وإدارة المرتجعات وحالات التعثر.',
       enterModule: 'فتح القسم ←',
+
+      // Field Service Module
+      fsModuleTitle: 'الخدمات الميدانية ومواعيد التركيب',
+      fsModuleSubtitle: 'حجز وإسناد مواعيد التركيب، تتبع فنيي الميدان، تقييمات الخدمة، وإدارة المرتجعات وحالات التعثر',
+      fsBookNewBtn: '➕ حجز موعد تركيب جديد',
+      fsRecordReturnBtn: '🔄 تسجيل حالة ترجيع',
+      fsAddTechBtn: '👷‍♂️ إضافة فني جديد',
+      fsKpiToday: 'مواعيد اليوم والنشطة',
+      fsKpiActiveTechs: 'فنيين متاحين وبالميدان',
+      fsKpiAvgRating: 'متوسط تقييم الفنيين',
+      fsKpiReturns: 'حالات الترجيع والتعثر',
+      fsTabAppointments: 'جدول المواعيد والتركيبات',
+      fsTabTechnicians: 'فنيين التركيب والتقييمات',
+      fsTabReturns: 'سجل المرتجعات وحالات التعثر',
+      fsSearchPlaceholder: 'بحث برقم الفسح، العميل، الفني، الهاتف، أو العنوان...',
+      filterAllTechs: 'كل الفنيين',
+      thAssignedTech: 'فني التركيب المكلف',
+      thReturnDate: 'تاريخ ووقت الترجيع',
+      thReturnReason: 'سبب الترجيع والتعثر',
+      thReturnNotes: 'تقرير الفني والتفاصيل',
+      returnsNoticeTitle: 'نظام إدارة المرتجعات وحالات التعثر الميداني',
+      returnsNoticeDesc: 'يوثق هذا السجل جميع الأوردرات التي تعثر تسليمها أو تركيبها مع أسباب مفصلة وإمكانية إعادة الجدولة المباشرة.',
+      modalBookFsTitle: 'حجز موعد تركيب وتسليم ميداني',
+      modalReturnTitle: '🔄 توثيق ترجيع أوردر / تعثر التسليم والتركيب',
+      modalRateTechTitle: '⭐ تقييم أداء فني التركيب والخدمة',
+      modalAddTechTitle: 'إضافة فني تركيب جديد',
+      fetchPermitBtn: 'جلب تلقائي',
+      lblReturnOrderTarget: 'الأوردر / الموعد المستهدف',
+      lblReturnReason: 'سبب الترجيع والتعثر الأساسي *',
+      lblReturnNotes: 'تقرير وتفاصيل الفني الميداني *',
+      lblRescheduleDate: 'إعادة جدولة لموعد لاحق (اختياري)',
+      confirmReturnBtn: '⚠️ تأكيد الترجيع وتوثيق السجل',
+      lblOverallRating: 'التقييم العام لجودة التركيب والخدمة *',
+      lblPunctuality: 'الالتزام بالموعد المحدد والوقت',
+      lblClientFeedback: 'ملاحظات العميل وانطباع الخدمة',
+      submitRatingBtn: '⭐ اعتماد التقييم',
+      lblTechName: 'اسم فني التركيب',
+      lblTechSpecialty: 'التخصص ونطاق الخبرة',
+      lblTechStatus: 'حالة الفني الحالية',
+      saveAppointmentBtn: '💾 حفظ وتأكيد الموعد',
 
       // Actions
       addItem: '+ إضافة صنف / لوح',
@@ -308,6 +351,7 @@
       navMarble: 'Marble',
       navWood: 'Wood',
       navMarbleDel: 'Marble Del.',
+      navFieldService: 'Field Service',
 
       // HUD Hub
       hudTitle: 'Operational Management Hub',
@@ -320,7 +364,49 @@
       hudWoodDeliveryDesc: 'Wood permits, showroom representatives, client delivery tracking, and installation schedule.',
       hudMarbleDeliveryTitle: 'Marble Order Delivery',
       hudMarbleDeliveryDesc: 'Marble slab permits, showroom client tracking, and installation date manifests.',
+      hudFieldServiceTitle: 'Field Service & Installation',
+      hudFieldServiceDesc: 'Book and track installation appointments, technician field management, service ratings, and return workflows.',
       enterModule: 'Open Module →',
+
+      // Field Service Module
+      fsModuleTitle: 'Field Service & Installation Appointments',
+      fsModuleSubtitle: 'Schedule field jobs, technician dispatch tracking, customer satisfaction ratings, and return logs',
+      fsBookNewBtn: '➕ Book New Appointment',
+      fsRecordReturnBtn: '🔄 Record Order Return',
+      fsAddTechBtn: '👷‍♂️ Add Technician',
+      fsKpiToday: 'Today & Active Jobs',
+      fsKpiActiveTechs: 'Active Field Technicians',
+      fsKpiAvgRating: 'Avg Technician Rating',
+      fsKpiReturns: 'Returned / Failed Jobs',
+      fsTabAppointments: 'Appointments & Dispatches',
+      fsTabTechnicians: 'Technicians & Ratings',
+      fsTabReturns: 'Return Logs & Failures',
+      fsSearchPlaceholder: 'Search by permit #, client, technician, phone, or address...',
+      filterAllTechs: 'All Technicians',
+      thAssignedTech: 'Assigned Technician',
+      thReturnDate: 'Return Date & Time',
+      thReturnReason: 'Return / Failure Reason',
+      thReturnNotes: 'Technician Report',
+      returnsNoticeTitle: 'Field Return & Failure Management Registry',
+      returnsNoticeDesc: 'Tracks all failed or returned installations (client no-answer, measurement discrepancies, site unprepared) with instant reschedule options.',
+      modalBookFsTitle: 'Book Field Installation Appointment',
+      modalReturnTitle: '🔄 Record Order Return / Delivery Failure',
+      modalRateTechTitle: '⭐ Rate Technician & Service Quality',
+      modalAddTechTitle: 'Add New Field Technician',
+      fetchPermitBtn: 'Auto-Fetch',
+      lblReturnOrderTarget: 'Target Order / Permit',
+      lblReturnReason: 'Primary Return Reason *',
+      lblReturnNotes: 'Technician Incident Report *',
+      lblRescheduleDate: 'Reschedule Date (Optional)',
+      confirmReturnBtn: '⚠️ Confirm Return & Log Record',
+      lblOverallRating: 'Overall Installation Quality Rating *',
+      lblPunctuality: 'Punctuality & Schedule Adherence',
+      lblClientFeedback: 'Customer Feedback & Remarks',
+      submitRatingBtn: '⭐ Submit Rating',
+      lblTechName: 'Technician Full Name',
+      lblTechSpecialty: 'Specialty & Domain',
+      lblTechStatus: 'Current Status',
+      saveAppointmentBtn: '💾 Save & Confirm Appointment',
 
       // Actions
       addItem: '+ Add Material',
@@ -558,6 +644,7 @@
       navMarble: 'মার্বেল',
       navWood: 'কাঠ',
       navMarbleDel: 'মার্বেল ডেলি.',
+      navFieldService: 'ফিল্ড সার্ভিস',
 
       // HUD Hub
       hudTitle: 'ওয়্যারহাউস অপারেশন হাব',
@@ -570,7 +657,49 @@
       hudWoodDeliveryDesc: 'কাঠের পারমিট, শোরুম প্রতিনিধি, ক্লায়েন্ট ডেলিভারি ট্র্যাকিং এবং ইনস্টলেশন সময়সূচী।',
       hudMarbleDeliveryTitle: 'মার্বেল অর্ডার ডেলিভারি',
       hudMarbleDeliveryDesc: 'মার্বেল স্ল্যাব পারমিট, শোরুম ক্লায়েন্ট ট্র্যাকিং এবং ইনস্টলেশন তারিখ।',
+      hudFieldServiceTitle: 'ফিল্ড সার্ভিস ও ইনস্টলেশন',
+      hudFieldServiceDesc: 'ইনস্টলেশন অ্যাপয়েন্টমেন্ট বুকিং, টেকনিশিয়ান ট্র্যাকিং, মূল্যায়ন এবং রিটার্ন ম্যানেজমেন্ট।',
       enterModule: 'প্রবেশ করুন →',
+
+      // Field Service Module
+      fsModuleTitle: 'ফিল্ড সার্ভিস ও ইনস্টলেশন সময়সূচী',
+      fsModuleSubtitle: 'ফিল্ড জব সময়সূচী, টেকনিশিয়ান ট্র্যাকিং, রেটিং এবং রিটার্ন লগ',
+      fsBookNewBtn: '➕ নতুন অ্যাপয়েন্টমেন্ট বুক করুন',
+      fsRecordReturnBtn: '🔄 রিটার্ন রেকর্ড করুন',
+      fsAddTechBtn: '👷‍♂️ টেকনিশিয়ান যোগ করুন',
+      fsKpiToday: 'আজকের ও সক্রিয় কাজ',
+      fsKpiActiveTechs: 'সক্রিয় টেকনিশিয়ান',
+      fsKpiAvgRating: 'গড় রেটিং',
+      fsKpiReturns: 'রিটার্ন / ব্যর্থ কাজ',
+      fsTabAppointments: 'সময়সূচী ও ইনস্টলেশন',
+      fsTabTechnicians: 'টেকনিশিয়ান ও রেটিং',
+      fsTabReturns: 'রিটার্ন লগ ও ব্যর্থতা',
+      fsSearchPlaceholder: 'পারমিট #, ক্লায়েন্ট, টেকনিশিয়ান বা ফোন দিয়ে খুঁজুন...',
+      filterAllTechs: 'সকল টেকনিশিয়ান',
+      thAssignedTech: 'নিযুক্ত টেকনিশিয়ান',
+      thReturnDate: 'রিটার্নের তারিখ ও সময়',
+      thReturnReason: 'রিটার্নের কারণ',
+      thReturnNotes: 'টেকনিশিয়ান রিপোর্ট',
+      returnsNoticeTitle: 'ফিল্ড রিটার্ন ও ব্যর্থতা ব্যবস্থাপনা রেজিস্ট্রি',
+      returnsNoticeDesc: 'ব্যর্থ বা ফেরত আসা ইনস্টলেশন রেকর্ড করুন (ক্লায়েন্টের নো-অ্যানসার, পরিমাপ ত্রুটি, সাইট প্রস্তুত নয়)।',
+      modalBookFsTitle: 'ইনস্টলেশন অ্যাপয়েন্টমেন্ট বুকিং',
+      modalReturnTitle: '🔄 অর্ডার রিটার্ন ও ব্যর্থতা রেকর্ড',
+      modalRateTechTitle: '⭐ টেকনিশিয়ান মূল্যায়ন ও রেটিং',
+      modalAddTechTitle: 'নতুন টেকনিশিয়ান যোগ করুন',
+      fetchPermitBtn: 'অটো-ফেচ',
+      lblReturnOrderTarget: 'টার্গেট অর্ডার / পারমিট',
+      lblReturnReason: 'প্রধান রিটার্ন কারণ *',
+      lblReturnNotes: 'টেকনিশিয়ান বিস্তারিত রিপোর্ট *',
+      lblRescheduleDate: 'পুনঃনির্ধারিত তারিখ (ঐচ্ছিক)',
+      confirmReturnBtn: '⚠️ রিটার্ন নিশ্চিত করুন',
+      lblOverallRating: 'সামগ্রিক কাজের গুণমান রেটিং *',
+      lblPunctuality: 'সময়ানুবর্তিতা',
+      lblClientFeedback: 'গ্রাহক প্রতিক্রিয়া ও মন্তব্য',
+      submitRatingBtn: '⭐ রেটিং জমা দিন',
+      lblTechName: 'টেকনিশিয়ানের পুরো নাম',
+      lblTechSpecialty: 'দক্ষতা ও বিশেষত্ব',
+      lblTechStatus: 'বর্তমান অবস্থা',
+      saveAppointmentBtn: '💾 অ্যাপয়েন্টমেন্ট সংরক্ষণ করুন',
 
       // Actions
       addItem: '+ নতুন স্ল্যাব যোগ করুন',
@@ -890,7 +1019,7 @@
   function navigateTo(route) {
     if (!checkAuth()) return;
 
-    const validRoutes = ['hud', 'porcelain', 'marble', 'wood-delivery', 'marble-delivery', 'porcelain-preview', 'marble-preview'];
+    const validRoutes = ['hud', 'porcelain', 'marble', 'wood-delivery', 'marble-delivery', 'field-service', 'porcelain-preview', 'marble-preview'];
     const targetRoute = validRoutes.includes(route) ? route : 'hud';
     APP.currentRoute = targetRoute;
     if (window.location.hash !== `#${targetRoute}`) {
@@ -932,6 +1061,9 @@
       case 'marble-delivery':
         renderMarbleDeliveryView();
         break;
+      case 'field-service':
+        renderFieldServiceView();
+        break;
       case 'porcelain-preview':
         renderPorcelainPreviewView();
         break;
@@ -950,19 +1082,26 @@
     const marItems = WMS_DB.getItems({ category: 'marble' });
     const woodOrders = WMS_DB.getWoodOrders();
     const marOrders = WMS_DB.getMarbleOrders();
+    const fsAppointments = WMS_DB.getFieldServices();
 
     const porBadge = document.getElementById('hud-badge-porcelain');
     const marBadge = document.getElementById('hud-badge-marble');
     const woodBadge = document.getElementById('hud-badge-wood-del');
     const marDelBadge = document.getElementById('hud-badge-mar-del');
+    const fsBadge = document.getElementById('hud-badge-field-service');
 
     const slabWord = t('unitSlab');
     const permitWord = t('unitPermit');
+    const aptWord = APP.lang === 'en' ? 'Appts' : APP.lang === 'bn' ? 'অ্যাপয়েন্টমেন্ট' : 'موعد';
 
     if (porBadge) porBadge.textContent = `${porItems.length} ${slabWord}`;
     if (marBadge) marBadge.textContent = `${marItems.length} ${slabWord}`;
     if (woodBadge) woodBadge.textContent = `${woodOrders.length} ${permitWord}`;
     if (marDelBadge) marDelBadge.textContent = `${marOrders.length} ${permitWord}`;
+    if (fsBadge) {
+      const activeFs = fsAppointments.filter(a => a.status !== 'Completed' && a.status !== 'Returned').length;
+      fsBadge.textContent = `${activeFs} ${aptWord}`;
+    }
   }
 
   // ==========================================================================
@@ -1435,6 +1574,628 @@
           `;
         }).join('');
       }
+    }
+  }
+
+  // ==========================================================================
+  // FIELD SERVICE & INSTALLATION CONTROLLER
+  // ==========================================================================
+  function renderFieldServiceView() {
+    const services = WMS_DB.getFieldServices();
+    const techs = WMS_DB.getTechnicians();
+    const today = new Date().toISOString().split('T')[0];
+
+    // 1. Calculate KPI Metrics
+    const todayCount = services.filter(s => s.scheduledDate === today || (s.status !== 'Completed' && s.status !== 'Returned')).length;
+    const activeTechs = techs.filter(t => t.status === 'Available' || t.status === 'On Site' || t.status === 'En Route').length;
+    const avgScore = techs.length > 0 
+      ? (techs.reduce((acc, t) => acc + (t.avgRating || 5), 0) / techs.length).toFixed(2)
+      : '5.0';
+    const returnsCount = services.filter(s => s.status === 'Returned').length;
+
+    const elToday = document.getElementById('fs-kpi-today-count');
+    const elTechs = document.getElementById('fs-kpi-active-techs');
+    const elRating = document.getElementById('fs-kpi-avg-rating');
+    const elReturns = document.getElementById('fs-kpi-returns-count');
+
+    if (elToday) elToday.textContent = todayCount;
+    if (elTechs) elTechs.textContent = `${activeTechs} / ${techs.length}`;
+    if (elRating) elRating.textContent = `${avgScore} ★`;
+    if (elReturns) elReturns.textContent = returnsCount;
+
+    // 2. Populate Technician filter dropdown
+    const techFilter = document.getElementById('fs-tech-filter');
+    if (techFilter && techFilter.options.length <= 1) {
+      techs.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = `${t.name} (${t.avgRating}★)`;
+        techFilter.appendChild(opt);
+      });
+    }
+
+    // 3. Render active sub-tab
+    APP.fsTab = APP.fsTab || 'appointments';
+    if (APP.fsTab === 'appointments') {
+      renderFieldServiceAppointments();
+    } else if (APP.fsTab === 'technicians') {
+      renderFieldServiceTechnicians();
+    } else if (APP.fsTab === 'returns') {
+      renderFieldServiceReturns();
+    }
+  }
+
+  function switchFieldServiceTab(tabName) {
+    APP.fsTab = tabName;
+    const tabs = ['appointments', 'technicians', 'returns'];
+    tabs.forEach(t => {
+      const btn = document.getElementById(`fs-tab-btn-${t}`);
+      const content = document.getElementById(`fs-tab-content-${t}`);
+      if (btn) btn.classList.toggle('active', t === tabName);
+      if (content) {
+        content.classList.toggle('active', t === tabName);
+        content.style.display = (t === tabName) ? 'block' : 'none';
+      }
+    });
+
+    if (tabName === 'appointments') renderFieldServiceAppointments();
+    if (tabName === 'technicians') renderFieldServiceTechnicians();
+    if (tabName === 'returns') renderFieldServiceReturns();
+  }
+
+  function renderFieldServiceAppointments() {
+    const search = (document.getElementById('fs-search-input') || {}).value || '';
+    const status = (document.getElementById('fs-status-filter') || {}).value || 'all';
+    const technicianId = (document.getElementById('fs-tech-filter') || {}).value || 'all';
+    const date = (document.getElementById('fs-date-filter') || {}).value || '';
+
+    const list = WMS_DB.getFieldServices({ search, status, technicianId, date });
+    const tbody = document.getElementById('fs-appointments-tbody');
+    if (!tbody) return;
+
+    if (list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:2.5rem; color:var(--text-muted);">لم يتم العثور على أي مواعيد تركيب مطابقة للبحث.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(item => {
+      const dayName = getDayName(item.scheduledDate);
+      const isReturned = item.status === 'Returned';
+      const isCompleted = item.status === 'Completed';
+      const isInProgress = item.status === 'In Progress';
+
+      let statusPill = '';
+      if (isCompleted) {
+        statusPill = `<span class="status-pill pill-available" style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.35);">✓ تم الإنجاز</span>`;
+      } else if (isReturned) {
+        statusPill = `<span class="status-pill pill-danger" style="background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.35);">⚠️ مرتجع / تعثر</span>`;
+      } else if (isInProgress) {
+        statusPill = `<span class="status-pill pill-warning" style="background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.35);">⏳ بالموقع / قيد العمل</span>`;
+      } else {
+        statusPill = `<span class="status-pill" style="background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.35);">📅 مجدول</span>`;
+      }
+
+      const ratingBadge = item.rating 
+        ? `<div style="font-size:0.8rem; color:#fbbf24; font-weight:800; margin-top:0.25rem;">⭐ ${item.rating.score}/5 (${escapeHtml(item.rating.feedback || 'تقييم ممتاز')})</div>`
+        : '';
+
+      const returnReasonBadge = item.returnReasonTextAr
+        ? `<div style="font-size:0.78rem; color:#f87171; background:rgba(239,68,68,0.1); padding:0.2rem 0.4rem; border-radius:4px; margin-top:0.25rem;">سبب الترجيع: ${escapeHtml(item.returnReasonTextAr)}</div>`
+        : '';
+
+      return `
+        <tr>
+          <td><span class="permit-no-badge" style="font-size:0.92rem; font-weight:800;">${escapeHtml(item.permitNo)}</span></td>
+          <td>
+            <span class="badge-wood-work" style="${item.orderType === 'marble' ? 'background:rgba(14,165,233,0.15); color:#38bdf8; border:1px solid rgba(14,165,233,0.3);' : ''}">
+              ${escapeHtml(item.orderTypeAr || (item.orderType === 'marble' ? 'فسح رخام' : 'فسح خشب'))}
+            </span>
+          </td>
+          <td>
+            <div style="font-weight:800; color:var(--text-primary); font-size:0.98rem;">${escapeHtml(item.buyerName || item.clientName)}</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHtml(item.showroom || '')} ${item.repName ? `| مندوب: ${escapeHtml(item.repName)}` : ''}</div>
+            <div style="font-size:0.8rem; color:var(--text-secondary);">📞 ${escapeHtml(item.phone || '-')}</div>
+          </td>
+          <td>
+            <div style="font-weight:700; display:flex; align-items:center; gap:0.35rem;">
+              <span>👷‍♂️</span> <span>${escapeHtml(item.technicianName || 'غير مسند')}</span>
+            </div>
+          </td>
+          <td>
+            <div style="font-weight:800; color:var(--primary); font-size:0.98rem;">${escapeHtml(item.scheduledDate || '-')}</div>
+            <div style="font-size:0.8rem; color:var(--info); font-weight:700;">${dayName} - ${escapeHtml(item.timeSlotTextAr || item.timeSlot)}</div>
+          </td>
+          <td>
+            <div style="font-size:0.88rem; font-weight:600; color:var(--text-primary); max-width:260px;">${escapeHtml(item.workType || item.notes || '-')}</div>
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem;">📍 ${escapeHtml(item.address || '-')}</div>
+            ${returnReasonBadge}
+          </td>
+          <td>
+            ${statusPill}
+            ${ratingBadge}
+          </td>
+          <td>
+            <div style="display:flex; gap:0.35rem; align-items:center; flex-wrap:wrap;">
+              ${!isCompleted && !isReturned ? `
+                <button class="btn-secondary btn-sm" onclick="WMS_APP.openRateTechnicianModal('${item.id}')" title="إنجاز وتقييم الفني" style="border-color:rgba(245,158,11,0.4); color:#fbbf24;">⭐ تقييم</button>
+                <button class="btn-secondary btn-sm" onclick="WMS_APP.openOrderReturnModal('${item.id}')" title="توثيق ترجيع أوردر" style="border-color:rgba(239,68,68,0.4); color:#f87171;">🔄 ترجيع</button>
+              ` : ''}
+              ${isReturned ? `
+                <button class="btn-primary btn-sm" onclick="WMS_APP.openEditFieldServiceModal('${item.id}')" title="إعادة جدولة الموعد" style="background:#10b981; font-size:0.8rem;">🗓️ إعادة جدولة</button>
+              ` : ''}
+              <button class="btn-secondary btn-sm" onclick="WMS_APP.openEditFieldServiceModal('${item.id}')" title="تعديل">✏</button>
+              <button class="btn-danger btn-sm" onclick="WMS_APP.deleteFieldService('${item.id}')" title="حذف">🗑</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function renderFieldServiceTechnicians() {
+    const techs = WMS_DB.getTechnicians();
+    const container = document.getElementById('fs-technicians-grid');
+    if (!container) return;
+
+    if (techs.length === 0) {
+      container.innerHTML = `<div style="text-align:center; padding:3rem; color:var(--text-muted); grid-column:1/-1;">لا يوجد فنيين مسجلين حالياً. اضغط "إضافة فني جديد" للبدء.</div>`;
+      return;
+    }
+
+    container.innerHTML = techs.map(t => {
+      const isAvailable = t.status === 'Available';
+      const isOnSite = t.status === 'On Site';
+      const isEnRoute = t.status === 'En Route';
+
+      let statusBadge = '';
+      if (isAvailable) {
+        statusBadge = `<span class="status-pill pill-available" style="font-size:0.78rem;">🟢 متاح وجاهز</span>`;
+      } else if (isOnSite) {
+        statusBadge = `<span class="status-pill pill-warning" style="font-size:0.78rem;">🔨 بموقع العميل</span>`;
+      } else if (isEnRoute) {
+        statusBadge = `<span class="status-pill" style="font-size:0.78rem; background:rgba(59,130,246,0.15); color:#60a5fa;">🚚 في الطريق</span>`;
+      } else {
+        statusBadge = `<span class="status-pill" style="font-size:0.78rem; background:rgba(100,116,139,0.2); color:#94a3b8;">⏸️ ${escapeHtml(t.status)}</span>`;
+      }
+
+      return `
+        <div class="tech-profile-card">
+          <div class="tech-card-header">
+            <div class="tech-avatar">${escapeHtml(t.avatar || '👷‍♂️')}</div>
+            <div class="tech-header-info">
+              <h4 class="tech-name">${escapeHtml(t.name)}</h4>
+              <div class="tech-specialty">${escapeHtml(t.specialty || '-')}</div>
+            </div>
+            ${statusBadge}
+          </div>
+
+          <div class="tech-metrics-row">
+            <div class="tech-metric-box">
+              <div class="tech-metric-val" style="color:#fbbf24;">${t.avgRating || 5.0} <span style="font-size:0.8rem;">★</span></div>
+              <div class="tech-metric-lbl">متوسط التقييم</div>
+            </div>
+            <div class="tech-metric-box">
+              <div class="tech-metric-val" style="color:var(--primary);">${t.ratingsCount || 0}</div>
+              <div class="tech-metric-lbl">تقييمات العملاء</div>
+            </div>
+            <div class="tech-metric-box">
+              <div class="tech-metric-val" style="color:var(--success);">${t.totalJobs || 0}</div>
+              <div class="tech-metric-lbl">إجمالي المهام</div>
+            </div>
+          </div>
+
+          <div class="tech-card-footer">
+            <div style="font-size:0.85rem; color:var(--text-secondary);">📞 <strong>${escapeHtml(t.phone || '-')}</strong></div>
+            <div style="display:flex; gap:0.35rem;">
+              <button class="btn-secondary btn-sm" onclick="WMS_APP.openEditTechnicianModal('${t.id}')">✏ تعديل</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderFieldServiceReturns() {
+    const list = WMS_DB.getFieldServices().filter(item => item.status === 'Returned');
+    const tbody = document.getElementById('fs-returns-tbody');
+    if (!tbody) return;
+
+    if (list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:3rem; color:var(--text-muted);">🎉 لا توجد أي أوردرات مرتجعة أو متعثرة حالياً. جميع الأعمال منجزة بنجاح!</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(item => {
+      const returnTime = item.returnTimestamp 
+        ? new Date(item.returnTimestamp).toLocaleDateString(APP.lang === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : item.scheduledDate;
+
+      return `
+        <tr>
+          <td><span class="permit-no-badge">${escapeHtml(item.permitNo)}</span></td>
+          <td>
+            <div style="font-weight:800; font-size:0.96rem;">${escapeHtml(item.buyerName || item.clientName)}</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHtml(item.showroom || '')} | 📞 ${escapeHtml(item.phone || '-')}</div>
+          </td>
+          <td><strong>👷‍♂️ ${escapeHtml(item.technicianName || '-')}</strong></td>
+          <td><strong style="color:#f87171; font-size:0.92rem;">${returnTime}</strong></td>
+          <td>
+            <span class="return-reason-tag">
+              ⚠️ ${escapeHtml(item.returnReasonTextAr || item.returnReason || 'تعثر التسليم')}
+            </span>
+          </td>
+          <td>
+            <div style="font-size:0.88rem; color:var(--text-primary); max-width:280px; line-height:1.4;">
+              ${escapeHtml(item.returnNotes || 'لا توجد ملاحظات إضافية')}
+            </div>
+          </td>
+          <td>
+            <button class="btn-primary btn-sm" onclick="WMS_APP.openEditFieldServiceModal('${item.id}')" style="background:#10b981; font-size:0.82rem;">
+              🗓️ إعادة جدولة
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function filterFieldServices() {
+    renderFieldServiceAppointments();
+  }
+
+  function resetFieldServiceFilters() {
+    const sInput = document.getElementById('fs-search-input');
+    const stSelect = document.getElementById('fs-status-filter');
+    const tcSelect = document.getElementById('fs-tech-filter');
+    const dInput = document.getElementById('fs-date-filter');
+    if (sInput) sInput.value = '';
+    if (stSelect) stSelect.value = 'all';
+    if (tcSelect) tcSelect.value = 'all';
+    if (dInput) dInput.value = '';
+    renderFieldServiceAppointments();
+  }
+
+  // Live Permit Number Lookup
+  function handlePermitInput(val) {
+    const statusEl = document.getElementById('fs-permit-fetch-status');
+    if (!val || val.length < 3) {
+      if (statusEl) statusEl.style.display = 'none';
+      return;
+    }
+  }
+
+  function lookupPermitData() {
+    const permitInput = document.getElementById('fs-permit-no');
+    const statusEl = document.getElementById('fs-permit-fetch-status');
+    const permitNo = permitInput ? permitInput.value.trim() : '';
+
+    if (!permitNo) {
+      showToast('يرجى إدخال رقم الفسح أولاً للبحث عنه!', 'warning');
+      return;
+    }
+
+    const orderData = WMS_DB.fetchOrderByPermitNo(permitNo);
+    if (orderData && orderData.found) {
+      if (document.getElementById('fs-order-type')) document.getElementById('fs-order-type').value = orderData.orderType;
+      if (document.getElementById('fs-showroom')) document.getElementById('fs-showroom').value = orderData.showroom || '';
+      if (document.getElementById('fs-buyer-name')) document.getElementById('fs-buyer-name').value = orderData.buyerName || '';
+      if (document.getElementById('fs-phone')) document.getElementById('fs-phone').value = orderData.phone || '';
+      if (document.getElementById('fs-rep-name')) document.getElementById('fs-rep-name').value = orderData.repName || '';
+      if (document.getElementById('fs-work-type')) document.getElementById('fs-work-type').value = orderData.workType || '';
+      if (document.getElementById('fs-scheduled-date') && orderData.expectedDate) {
+        document.getElementById('fs-scheduled-date').value = orderData.expectedDate;
+      }
+
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.style.color = '#10b981';
+        statusEl.textContent = `✓ تم جلب بيانات الأوردر (${orderData.orderTypeAr}) بنجاح!`;
+      }
+      showToast(`تم جلب بيانات الفسح [${orderData.permitNo}] تلقائياً! ⚡`, 'success');
+    } else {
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.style.color = '#f87171';
+        statusEl.textContent = 'لم يتم العثور على فسح مسجل بهذا الرقم. يمكنك ملء البيانات يدوياً.';
+      }
+      showToast('لم يتم العثور على الفسح بالرقم المدخل، يمكنك إكمال البيانات يدوياً.', 'info');
+    }
+  }
+
+  function populateTechnicianSelect(selectId, selectedId = '') {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+    const techs = WMS_DB.getTechnicians();
+    sel.innerHTML = '<option value="">-- اختر الفني الميداني --</option>';
+    techs.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = `👷‍♂️ ${t.name} (${t.specialty}) - ${t.avgRating}★`;
+      if (t.id === selectedId) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  function openNewFieldServiceModal(prefill = null) {
+    const editId = document.getElementById('fs-edit-id');
+    if (editId) editId.value = '';
+    const title = document.getElementById('modal-fs-title');
+    if (title) title.textContent = 'حجز موعد تركيب وتسليم ميداني جديد';
+
+    populateTechnicianSelect('fs-technician-select');
+
+    if (document.getElementById('fs-permit-no')) document.getElementById('fs-permit-no').value = prefill ? (prefill.permitNo || '') : '';
+    if (document.getElementById('fs-order-type')) document.getElementById('fs-order-type').value = prefill ? (prefill.orderType || 'wood') : 'wood';
+    if (document.getElementById('fs-showroom')) document.getElementById('fs-showroom').value = prefill ? (prefill.showroom || '') : '';
+    if (document.getElementById('fs-buyer-name')) document.getElementById('fs-buyer-name').value = prefill ? (prefill.buyerName || '') : '';
+    if (document.getElementById('fs-phone')) document.getElementById('fs-phone').value = prefill ? (prefill.phone || '') : '';
+    if (document.getElementById('fs-rep-name')) document.getElementById('fs-rep-name').value = prefill ? (prefill.repName || '') : '';
+    if (document.getElementById('fs-scheduled-date')) document.getElementById('fs-scheduled-date').value = new Date().toISOString().split('T')[0];
+    if (document.getElementById('fs-time-slot')) document.getElementById('fs-time-slot').value = 'morning';
+    if (document.getElementById('fs-address')) document.getElementById('fs-address').value = '';
+    if (document.getElementById('fs-work-type')) document.getElementById('fs-work-type').value = '';
+    if (document.getElementById('fs-notes')) document.getElementById('fs-notes').value = '';
+
+    const statusEl = document.getElementById('fs-permit-fetch-status');
+    if (statusEl) statusEl.style.display = 'none';
+
+    openModal('modal-field-service');
+  }
+
+  function openEditFieldServiceModal(id) {
+    const item = WMS_DB.getFieldServiceById(id);
+    if (!item) return;
+
+    document.getElementById('fs-edit-id').value = item.id;
+    const title = document.getElementById('modal-fs-title');
+    if (title) title.textContent = 'تعديل بيانات موعد التركيب';
+
+    populateTechnicianSelect('fs-technician-select', item.technicianId);
+
+    document.getElementById('fs-permit-no').value = item.permitNo || '';
+    document.getElementById('fs-order-type').value = item.orderType || 'wood';
+    document.getElementById('fs-showroom').value = item.showroom || item.clientName || '';
+    document.getElementById('fs-buyer-name').value = item.buyerName || item.clientName || '';
+    document.getElementById('fs-phone').value = item.phone || '';
+    document.getElementById('fs-rep-name').value = item.repName || '';
+    document.getElementById('fs-scheduled-date').value = item.scheduledDate || '';
+    document.getElementById('fs-time-slot').value = item.timeSlot || 'morning';
+    document.getElementById('fs-address').value = item.address || '';
+    document.getElementById('fs-work-type').value = item.workType || '';
+    document.getElementById('fs-notes').value = item.notes || '';
+
+    const statusEl = document.getElementById('fs-permit-fetch-status');
+    if (statusEl) statusEl.style.display = 'none';
+
+    openModal('modal-field-service');
+  }
+
+  function submitFieldService(e) {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+    const editId = document.getElementById('fs-edit-id').value;
+    const techSelect = document.getElementById('fs-technician-select');
+    const selectedTech = techSelect ? techSelect.options[techSelect.selectedIndex] : null;
+    const techName = selectedTech && selectedTech.value ? selectedTech.text.split('(')[0].replace('👷‍♂️', '').trim() : '';
+
+    const payload = {
+      permitNo: document.getElementById('fs-permit-no').value.trim(),
+      orderType: document.getElementById('fs-order-type').value,
+      showroom: document.getElementById('fs-showroom').value.trim(),
+      clientName: document.getElementById('fs-showroom').value.trim(),
+      buyerName: document.getElementById('fs-buyer-name').value.trim(),
+      phone: document.getElementById('fs-phone').value.trim(),
+      repName: document.getElementById('fs-rep-name').value.trim(),
+      technicianId: techSelect ? techSelect.value : '',
+      technicianName: techName,
+      scheduledDate: document.getElementById('fs-scheduled-date').value,
+      timeSlot: document.getElementById('fs-time-slot').value,
+      address: document.getElementById('fs-address').value.trim(),
+      workType: document.getElementById('fs-work-type').value.trim(),
+      notes: document.getElementById('fs-notes').value.trim()
+    };
+
+    try {
+      if (editId) {
+        WMS_DB.updateFieldService(editId, payload);
+        showToast('تم تحديث موعد التركيب بنجاح! 💾', 'success');
+      } else {
+        WMS_DB.addFieldService(payload);
+        showToast('تم حجز موعد التركيب وإسناد الفني بنجاح! 📅', 'success');
+      }
+      closeModal('modal-field-service');
+      renderFieldServiceView();
+    } catch (err) {
+      showToast(err.message, 'danger');
+    }
+  }
+
+  function deleteFieldService(id) {
+    if (confirm(APP.lang === 'ar' ? 'هل أنت متأكد من حذف هذا الموعد نهائياً؟' : 'Are you sure you want to delete this appointment?')) {
+      WMS_DB.deleteFieldService(id);
+      renderFieldServiceView();
+      showToast('تم حذف الموعد بنجاح.', 'info');
+    }
+  }
+
+  // Return Management Modal
+  function openOrderReturnModal(fsId = null) {
+    const list = WMS_DB.getFieldServices();
+    let target = fsId ? list.find(s => s.id === fsId) : null;
+    if (!target && list.length > 0) target = list[0];
+
+    const fsIdInput = document.getElementById('return-fs-id');
+    const orderInfoEl = document.getElementById('return-order-info');
+
+    if (target) {
+      if (fsIdInput) fsIdInput.value = target.id;
+      if (orderInfoEl) {
+        orderInfoEl.textContent = `[${target.permitNo}] ${target.buyerName || target.clientName} | الفني: ${target.technicianName || '-'}`;
+      }
+    }
+
+    if (document.getElementById('return-reason-select')) document.getElementById('return-reason-select').value = 'customer_no_answer';
+    if (document.getElementById('return-notes-input')) document.getElementById('return-notes-input').value = '';
+    if (document.getElementById('return-reschedule-date')) document.getElementById('return-reschedule-date').value = '';
+
+    openModal('modal-order-return');
+  }
+
+  function handleReturnReasonChange(val) {
+    const notesInput = document.getElementById('return-notes-input');
+    if (!notesInput) return;
+    if (val === 'customer_no_answer' && !notesInput.value) {
+      notesInput.value = 'تم الاتصال بالعميل أكثر من 3 مرات بدون إجابة، والانتظار بالموقع لأكثر من 30 دقيقة.';
+    } else if (val === 'measurement_error' && !notesInput.value) {
+      notesInput.value = 'المقاسات الميدانية لا تطابق أبعاد ألواح الفسح، يرجى إعادة أخذ القياسات بالورشة.';
+    } else if (val === 'site_not_ready' && !notesInput.value) {
+      notesInput.value = 'الموقع غير جاهز (أعمال الجبس والدهان والأرضيات لم تنتهِ بعد).';
+    }
+  }
+
+  function submitOrderReturn(e) {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+    const fsId = document.getElementById('return-fs-id').value;
+    const reasonSelect = document.getElementById('return-reason-select');
+    const notes = document.getElementById('return-notes-input').value.trim();
+    const rescheduleDate = document.getElementById('return-reschedule-date').value;
+
+    if (!fsId) {
+      showToast('يرجى تحديد الموعد المستهدف للترجيع!', 'warning');
+      return;
+    }
+
+    try {
+      const updated = WMS_DB.processOrderReturn(fsId, {
+        reason: reasonSelect ? reasonSelect.value : 'other',
+        reasonTextAr: reasonSelect ? reasonSelect.options[reasonSelect.selectedIndex].text : '',
+        notes: notes,
+        rescheduledDate: rescheduleDate
+      });
+
+      closeModal('modal-order-return');
+      renderFieldServiceView();
+      showToast(`تم توثيق ترجيع الأوردر [${updated.permitNo}] بنجاح في السجل ⚠️`, 'info');
+    } catch (err) {
+      showToast(err.message, 'danger');
+    }
+  }
+
+  // Rating Modal
+  function openRateTechnicianModal(fsId) {
+    const item = WMS_DB.getFieldServiceById(fsId);
+    if (!item) return;
+
+    document.getElementById('rate-fs-id').value = item.id;
+    document.getElementById('rate-tech-id').value = item.technicianId || '';
+
+    const tech = item.technicianId ? WMS_DB.getTechnicianById(item.technicianId) : null;
+    if (document.getElementById('rate-tech-avatar')) document.getElementById('rate-tech-avatar').textContent = tech ? (tech.avatar || '👷‍♂️') : '👷‍♂️';
+    if (document.getElementById('rate-tech-name')) document.getElementById('rate-tech-name').textContent = item.technicianName || (tech ? tech.name : 'فني التركيب');
+    if (document.getElementById('rate-tech-specialty')) document.getElementById('rate-tech-specialty').textContent = tech ? tech.specialty : `الفسح: ${item.permitNo}`;
+
+    setStarRating('main', 5);
+    if (document.getElementById('rate-punctuality-select')) document.getElementById('rate-punctuality-select').value = '5';
+    if (document.getElementById('rate-feedback-input')) document.getElementById('rate-feedback-input').value = '';
+
+    openModal('modal-rate-technician');
+  }
+
+  function setStarRating(widgetId, stars) {
+    document.getElementById('rate-score-value').value = stars;
+    const widget = document.getElementById('star-rating-main');
+    if (widget) {
+      const starItems = widget.querySelectorAll('.star-item');
+      starItems.forEach((s, idx) => {
+        s.classList.toggle('active', idx < stars);
+      });
+    }
+    const scoreText = document.getElementById('star-score-text');
+    if (scoreText) {
+      const labels = {
+        5: 'ممتاز جداً (5/5) 🌟',
+        4: 'جيد جداً (4/5) ⭐',
+        3: 'مقبول (3/5) 👍',
+        2: 'ضعيف (2/5) ⚠️',
+        1: 'غير مُرضي (1/5) ❌'
+      };
+      scoreText.textContent = labels[stars] || `${stars}/5`;
+    }
+  }
+
+  function submitTechnicianRating(e) {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+    const fsId = document.getElementById('rate-fs-id').value;
+    const techId = document.getElementById('rate-tech-id').value;
+    const score = Number(document.getElementById('rate-score-value').value) || 5;
+    const punctualityScore = Number(document.getElementById('rate-punctuality-select').value) || 5;
+    const feedback = document.getElementById('rate-feedback-input').value.trim();
+
+    try {
+      WMS_DB.rateTechnician(fsId, {
+        technicianId: techId,
+        score: score,
+        punctualityScore: punctualityScore,
+        feedback: feedback
+      });
+
+      closeModal('modal-rate-technician');
+      renderFieldServiceView();
+      showToast('تم اعتماد تقييم الفني بنجاح! ⭐ شكراً لملاحظاتك.', 'success');
+    } catch (err) {
+      showToast(err.message, 'danger');
+    }
+  }
+
+  // Technician Modals
+  function openNewTechnicianModal() {
+    document.getElementById('tech-edit-id').value = '';
+    document.getElementById('modal-tech-title').textContent = 'إضافة فني تركيب جديد';
+    document.getElementById('tech-name-input').value = '';
+    document.getElementById('tech-specialty-input').value = '';
+    document.getElementById('tech-phone-input').value = '';
+    document.getElementById('tech-status-input').value = 'Available';
+    openModal('modal-technician');
+  }
+
+  function openEditTechnicianModal(id) {
+    const tech = WMS_DB.getTechnicianById(id);
+    if (!tech) return;
+
+    document.getElementById('tech-edit-id').value = tech.id;
+    document.getElementById('modal-tech-title').textContent = 'تعديل بيانات الفني';
+    document.getElementById('tech-name-input').value = tech.name || '';
+    document.getElementById('tech-specialty-input').value = tech.specialty || '';
+    document.getElementById('tech-phone-input').value = tech.phone || '';
+    document.getElementById('tech-status-input').value = tech.status || 'Available';
+    openModal('modal-technician');
+  }
+
+  function submitTechnician(e) {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+    const editId = document.getElementById('tech-edit-id').value;
+    const payload = {
+      name: document.getElementById('tech-name-input').value.trim(),
+      specialty: document.getElementById('tech-specialty-input').value.trim(),
+      phone: document.getElementById('tech-phone-input').value.trim(),
+      status: document.getElementById('tech-status-input').value
+    };
+
+    try {
+      if (editId) {
+        WMS_DB.updateTechnician(editId, payload);
+        showToast('تم تحديث بيانات الفني بنجاح! 💾', 'success');
+      } else {
+        WMS_DB.addTechnician(payload);
+        showToast('تمت إضافة الفني الجديد بنجاح! 👷‍♂️', 'success');
+      }
+      closeModal('modal-technician');
+      renderFieldServiceView();
+    } catch (err) {
+      showToast(err.message, 'danger');
     }
   }
 
@@ -2541,7 +3302,28 @@
     },
     filterRoute() {
       renderCurrentView();
-    }
+    },
+
+    // Field Service API
+    renderFieldServiceView,
+    switchFieldServiceTab,
+    filterFieldServices,
+    resetFieldServiceFilters,
+    lookupPermitData,
+    handlePermitInput,
+    openNewFieldServiceModal,
+    openEditFieldServiceModal,
+    submitFieldService,
+    deleteFieldService,
+    openOrderReturnModal,
+    handleReturnReasonChange,
+    submitOrderReturn,
+    openRateTechnicianModal,
+    setStarRating,
+    submitTechnicianRating,
+    openNewTechnicianModal,
+    openEditTechnicianModal,
+    submitTechnician
   };
 
   function renderWoodPermitChips() {

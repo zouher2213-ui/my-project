@@ -44,6 +44,8 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
     RESERVATIONS: 'wms_reservations_v6',
     WOOD_ORDERS: 'wms_wood_orders_v6',
     MARBLE_ORDERS: 'wms_marble_orders_v6',
+    FIELD_SERVICES: 'wms_field_services_v6',
+    TECHNICIANS: 'wms_technicians_v6',
     PRESETS: 'wms_presets_v6',
     SETTINGS: 'wms_settings_v6',
     AUTH_USER: 'wms_auth_user_v6'
@@ -286,6 +288,186 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
     }
   ];
 
+  const INITIAL_TECHNICIANS = [
+    {
+      id: 'tech-001',
+      name: 'عمران الفاروق',
+      nameEn: 'Imran Al-Farooq',
+      nameBn: 'ইমরান আল-ফারুক',
+      specialty: 'تركيب رخام وتكسيات جدارية فاخرة',
+      specialtyEn: 'Marble & Luxury Wall Cladding',
+      specialtyBn: 'মার্বেল ও লাক্সারি ক্ল্যাডিং',
+      phone: '+971 50 111 2233',
+      status: 'Available',
+      avgRating: 4.9,
+      ratingsCount: 38,
+      totalJobs: 42,
+      avatar: '👷‍♂️',
+      createdAt: '2026-07-01T08:00:00Z'
+    },
+    {
+      id: 'tech-002',
+      name: 'يوسف النجار',
+      nameEn: 'Youssef Al-Najjar',
+      nameBn: 'ইউসুফ আল-নাজ্জার',
+      specialty: 'تركيب مطابخ وأبواب وخزائن خشبية',
+      specialtyEn: 'Wood Kitchens & Custom Doors',
+      specialtyBn: 'কাঠের রান্নাঘর ও কাস্টম দরজা',
+      phone: '+971 55 222 3344',
+      status: 'On Site',
+      avgRating: 4.8,
+      ratingsCount: 50,
+      totalJobs: 56,
+      avatar: '🪵',
+      createdAt: '2026-07-05T08:00:00Z'
+    },
+    {
+      id: 'tech-003',
+      name: 'بلال أنور',
+      nameEn: 'Bilal Anwar',
+      nameBn: 'বিলাল আনোয়ার',
+      specialty: 'ألواح بورسلان كبير وتصميم أرضيات',
+      specialtyEn: 'Large Format Porcelain & Flooring',
+      specialtyBn: 'চীনামাটির স্ল্যাব ও ফ্লোরিং',
+      phone: '+971 52 333 4455',
+      status: 'En Route',
+      avgRating: 4.95,
+      ratingsCount: 59,
+      totalJobs: 65,
+      avatar: '🏺',
+      createdAt: '2026-07-10T08:00:00Z'
+    },
+    {
+      id: 'tech-004',
+      name: 'خالد الدوسري',
+      nameEn: 'Khalid Al-Dawsari',
+      nameBn: 'খালেদ আল-দাওসারী',
+      specialty: 'معالجة وقص وتركيب رخام طبيعي',
+      specialtyEn: 'Natural Stone Processing & Fitting',
+      specialtyBn: 'প্রাকৃতিক পাথর প্রসেসিং ও ফিটিং',
+      phone: '+971 54 444 5566',
+      status: 'Available',
+      avgRating: 4.7,
+      ratingsCount: 26,
+      totalJobs: 30,
+      avatar: '💎',
+      createdAt: '2026-07-15T08:00:00Z'
+    }
+  ];
+
+  const INITIAL_FIELD_SERVICES = [
+    {
+      id: 'fs-001',
+      permitNo: 'FSH-WD-2026-01',
+      orderType: 'wood',
+      orderTypeAr: 'فسح خشب',
+      clientName: 'معرض الرويال الكبير',
+      buyerName: 'فيلا الأندلس - الشيخ زايد',
+      phone: '+971 50 334 5566',
+      showroom: 'معرض الرويال الكبير',
+      repName: 'طارق منصور',
+      technicianId: 'tech-002',
+      technicianName: 'يوسف النجار',
+      scheduledDate: '2026-08-16',
+      dayOfWeek: 'الأحد',
+      timeSlot: 'morning',
+      timeSlotTextAr: 'صباحي (08:00 ص - 01:00 م)',
+      status: 'In Progress',
+      workType: 'تصنيع وتركيب أبواب خشب سنديان ومطابخ',
+      address: 'دبي - تلال الإمارات - مجمع الزمرد فيلا 44',
+      notes: 'العميل يطلب الدقة في ضبط زوايا الأبواب الرئيسية',
+      returnReason: null,
+      returnNotes: null,
+      returnTimestamp: null,
+      rating: null,
+      createdAt: '2026-08-15T09:00:00Z'
+    },
+    {
+      id: 'fs-002',
+      permitNo: 'FSH-MAR-2026-01',
+      orderType: 'marble',
+      orderTypeAr: 'فسح رخام',
+      clientName: 'معرض الحرمين الفاخر',
+      buyerName: 'مشروع قصر الشيخ منصور',
+      phone: '+971 52 900 1122',
+      showroom: 'معرض الحرمين الفاخر',
+      repName: 'عدنان زيد',
+      technicianId: 'tech-001',
+      technicianName: 'عمران الفاروق',
+      scheduledDate: '2026-08-16',
+      dayOfWeek: 'الأحد',
+      timeSlot: 'afternoon',
+      timeSlotTextAr: 'مسائي (02:00 م - 07:00 م)',
+      status: 'Scheduled',
+      workType: 'تركيب رخام كرارة إيطالي كلاسيك للمدخل',
+      address: 'دبي - نخلة جميرا - بوابة القصور 12',
+      notes: 'تأكيد موعد الوصول مع العميل قبل ساعة',
+      returnReason: null,
+      returnNotes: null,
+      returnTimestamp: null,
+      rating: null,
+      createdAt: '2026-08-15T09:30:00Z'
+    },
+    {
+      id: 'fs-003',
+      permitNo: 'MAR-2026-881',
+      orderType: 'marble',
+      orderTypeAr: 'فسح رخام',
+      clientName: 'جاليري النخبة للتصميم',
+      buyerName: 'برج مارينا سكاي فيوز - شقة 1804',
+      phone: '+971 52 444 8899',
+      showroom: 'جاليري النخبة للتصميم',
+      repName: 'سامي حسن',
+      technicianId: 'tech-004',
+      technicianName: 'خالد الدوسري',
+      scheduledDate: '2026-08-15',
+      dayOfWeek: 'السبت',
+      timeSlot: 'morning',
+      timeSlotTextAr: 'صباحي (08:00 ص - 01:00 م)',
+      status: 'Returned',
+      workType: 'ألواح رخام فولاكاس يوناني',
+      address: 'دبي - مارينا دبي - برج سكاي فيوز',
+      notes: 'تسليم ومطابقة عينات الرخام بالموقع',
+      returnReason: 'customer_no_answer',
+      returnReasonTextAr: 'الزبون لم يرد على الهاتف بعد محاولات متكررة ووصول الفني للموقع',
+      returnNotes: 'تم الاتصال 4 مرات ورسالة واتساب بدون رد. تم إرجاع الأوردر للجدولة لاحقاً.',
+      returnTimestamp: '2026-08-15T11:20:00Z',
+      rating: null,
+      createdAt: '2026-08-14T14:00:00Z'
+    },
+    {
+      id: 'fs-004',
+      permitNo: 'FSH-WD-2026-02',
+      orderType: 'wood',
+      orderTypeAr: 'فسح خشب',
+      clientName: 'معرض الرويال الكبير',
+      buyerName: 'فيلا السعديات الملكية',
+      phone: '+971 55 889 0011',
+      showroom: 'معرض الرويال الكبير',
+      repName: 'كريم نبيل',
+      technicianId: 'tech-003',
+      technicianName: 'بلال أنور',
+      scheduledDate: '2026-08-14',
+      dayOfWeek: 'الجمعة',
+      timeSlot: 'morning',
+      timeSlotTextAr: 'صباحي (08:00 ص - 01:00 م)',
+      status: 'Completed',
+      workType: 'مطابخ وخزائن خشبية فاخرة',
+      address: 'أبوظبي - جزيرة السعديات - فيلا 9',
+      notes: 'تم استلام الموقع والتوقيع على نموذج الإنجاز',
+      returnReason: null,
+      returnNotes: null,
+      returnTimestamp: null,
+      rating: {
+        score: 5,
+        punctualityScore: 5,
+        feedback: 'فني ممتاز ومحترف جداً والتزام كامل بالمواعيد ونظافة تامة للموقع',
+        createdAt: '2026-08-14T15:30:00Z'
+      },
+      createdAt: '2026-08-13T10:00:00Z'
+    }
+  ];
+
   // ==========================================================================
   // HELPER STORAGE FUNCTIONS
   // ==========================================================================
@@ -327,6 +509,12 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
     }
     if (!localStorage.getItem(DB_KEYS.MARBLE_ORDERS)) {
       setStored(DB_KEYS.MARBLE_ORDERS, INITIAL_MARBLE_ORDERS);
+    }
+    if (!localStorage.getItem(DB_KEYS.FIELD_SERVICES)) {
+      setStored(DB_KEYS.FIELD_SERVICES, INITIAL_FIELD_SERVICES);
+    }
+    if (!localStorage.getItem(DB_KEYS.TECHNICIANS)) {
+      setStored(DB_KEYS.TECHNICIANS, INITIAL_TECHNICIANS);
     }
     if (!localStorage.getItem(DB_KEYS.PRESETS)) {
       setStored(DB_KEYS.PRESETS, INITIAL_PRESETS);
@@ -1005,6 +1193,271 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
       orders = orders.filter(o => o.id !== id);
       setStored(DB_KEYS.MARBLE_ORDERS, orders);
       return true;
+    },
+
+    // ========================================================================
+    // FIELD SERVICE & INSTALLATION MODULE
+    // ========================================================================
+    getFieldServices(filters = {}) {
+      let list = getStored(DB_KEYS.FIELD_SERVICES, INITIAL_FIELD_SERVICES);
+      const { status, technicianId, search, date } = filters;
+
+      if (status && status !== 'all') {
+        list = list.filter(item => item.status === status);
+      }
+      if (technicianId && technicianId !== 'all') {
+        list = list.filter(item => item.technicianId === technicianId);
+      }
+      if (date) {
+        list = list.filter(item => item.scheduledDate === date);
+      }
+      if (search && search.trim()) {
+        const q = search.trim().toLowerCase();
+        list = list.filter(item => 
+          (item.permitNo && item.permitNo.toLowerCase().includes(q)) ||
+          (item.clientName && item.clientName.toLowerCase().includes(q)) ||
+          (item.buyerName && item.buyerName.toLowerCase().includes(q)) ||
+          (item.technicianName && item.technicianName.toLowerCase().includes(q)) ||
+          (item.phone && item.phone.toLowerCase().includes(q)) ||
+          (item.workType && item.workType.toLowerCase().includes(q)) ||
+          (item.address && item.address.toLowerCase().includes(q)) ||
+          (item.notes && item.notes.toLowerCase().includes(q)) ||
+          (item.returnReasonTextAr && item.returnReasonTextAr.toLowerCase().includes(q))
+        );
+      }
+      return list;
+    },
+
+    getFieldServiceById(id) {
+      const list = getStored(DB_KEYS.FIELD_SERVICES, INITIAL_FIELD_SERVICES);
+      return list.find(item => item.id === id) || null;
+    },
+
+    fetchOrderByPermitNo(permitNo) {
+      if (!permitNo || !permitNo.trim()) return null;
+      const q = permitNo.trim().toLowerCase();
+
+      // Search wood orders
+      const woodOrders = getStored(DB_KEYS.WOOD_ORDERS, INITIAL_WOOD_ORDERS);
+      const matchedWood = woodOrders.find(o => 
+        (o.permitNo && o.permitNo.toLowerCase() === q) || 
+        (o.orderNo && o.orderNo.toLowerCase() === q) ||
+        (o.permitNo && o.permitNo.toLowerCase().includes(q))
+      );
+      if (matchedWood) {
+        return {
+          found: true,
+          permitNo: matchedWood.permitNo || matchedWood.orderNo,
+          orderType: 'wood',
+          orderTypeAr: 'فسح خشب',
+          clientName: matchedWood.clientNameAr || matchedWood.clientName,
+          buyerName: matchedWood.buyerNameAr || matchedWood.buyerName || matchedWood.clientNameAr,
+          showroom: matchedWood.clientNameAr || matchedWood.clientName,
+          repName: matchedWood.repNameAr || matchedWood.repName,
+          phone: matchedWood.phone || '',
+          workType: matchedWood.workTypeAr || matchedWood.workType || 'أعمال وتكسيات خشبية',
+          expectedDate: matchedWood.expectedDate,
+          rawOrder: matchedWood
+        };
+      }
+
+      // Search marble orders
+      const marbleOrders = getStored(DB_KEYS.MARBLE_ORDERS, INITIAL_MARBLE_ORDERS);
+      const matchedMarble = marbleOrders.find(o => 
+        (o.permitNo && o.permitNo.toLowerCase() === q) || 
+        (o.orderNo && o.orderNo.toLowerCase() === q) ||
+        (o.permitNo && o.permitNo.toLowerCase().includes(q))
+      );
+      if (matchedMarble) {
+        return {
+          found: true,
+          permitNo: matchedMarble.permitNo || matchedMarble.orderNo,
+          orderType: 'marble',
+          orderTypeAr: 'فسح رخام',
+          clientName: matchedMarble.clientNameAr || matchedMarble.clientName,
+          buyerName: matchedMarble.buyerNameAr || matchedMarble.buyerName || matchedMarble.clientNameAr,
+          showroom: matchedMarble.clientNameAr || matchedMarble.clientName,
+          repName: matchedMarble.repNameAr || matchedMarble.repName,
+          phone: matchedMarble.phone || '',
+          workType: matchedMarble.notes || 'توريد وتركيب رخام طبيعي',
+          expectedDate: matchedMarble.expectedDate,
+          rawOrder: matchedMarble
+        };
+      }
+
+      return { found: false };
+    },
+
+    addFieldService(data) {
+      const list = getStored(DB_KEYS.FIELD_SERVICES, INITIAL_FIELD_SERVICES);
+      const newService = {
+        id: `fs-${Date.now()}`,
+        permitNo: (data.permitNo || `FSH-${Date.now().toString().slice(-4)}`).trim(),
+        orderType: data.orderType || 'wood',
+        orderTypeAr: data.orderType === 'marble' ? 'فسح رخام' : data.orderType === 'porcelain' ? 'فسح بورسلان' : 'فسح خشب',
+        clientName: data.clientName || '',
+        buyerName: data.buyerName || data.clientName || '',
+        phone: data.phone || '',
+        showroom: data.showroom || data.clientName || '',
+        repName: data.repName || '',
+        technicianId: data.technicianId || '',
+        technicianName: data.technicianName || '',
+        scheduledDate: data.scheduledDate || new Date().toISOString().split('T')[0],
+        dayOfWeek: data.dayOfWeek || '',
+        timeSlot: data.timeSlot || 'morning',
+        timeSlotTextAr: data.timeSlot === 'morning' ? 'صباحي (08:00 ص - 01:00 م)' : 'مسائي (02:00 م - 07:00 م)',
+        status: data.status || 'Scheduled',
+        workType: data.workType || '',
+        address: data.address || '',
+        notes: data.notes || '',
+        returnReason: null,
+        returnNotes: null,
+        returnTimestamp: null,
+        rating: null,
+        createdAt: new Date().toISOString()
+      };
+      list.unshift(newService);
+      setStored(DB_KEYS.FIELD_SERVICES, list);
+      return newService;
+    },
+
+    updateFieldService(id, updates) {
+      const list = getStored(DB_KEYS.FIELD_SERVICES, INITIAL_FIELD_SERVICES);
+      const idx = list.findIndex(item => item.id === id);
+      if (idx !== -1) {
+        list[idx] = {
+          ...list[idx],
+          ...updates,
+          updatedAt: new Date().toISOString()
+        };
+        setStored(DB_KEYS.FIELD_SERVICES, list);
+        return list[idx];
+      }
+      throw new Error('Field service appointment not found');
+    },
+
+    deleteFieldService(id) {
+      let list = getStored(DB_KEYS.FIELD_SERVICES, INITIAL_FIELD_SERVICES);
+      list = list.filter(item => item.id !== id);
+      setStored(DB_KEYS.FIELD_SERVICES, list);
+      return true;
+    },
+
+    processOrderReturn(id, returnData) {
+      const list = getStored(DB_KEYS.FIELD_SERVICES, INITIAL_FIELD_SERVICES);
+      const idx = list.findIndex(item => item.id === id);
+      if (idx !== -1) {
+        const item = list[idx];
+        const reason = returnData.reason || 'other';
+        const reasonMap = {
+          customer_no_answer: 'الزبون لم يرد على الهاتف بعد عدة محاولات',
+          measurement_error: 'أخطاء في القياسات أو المقاسات غير مطابقة للموقع',
+          site_not_ready: 'الموقع غير جاهز للتركيب (أعمال مدنية غير مكتملة)',
+          material_defect: 'ملاحظة عيب فني أو كسر في المواد أثناء التسليم',
+          client_rejection: 'طلب تعديل أو رفض استلام من العميل',
+          client_postponed: 'تأجيل الموعد بناءً على طلب العميل المباشر',
+          other: returnData.reasonTextAr || 'أسباب أخرى'
+        };
+
+        list[idx] = {
+          ...item,
+          status: 'Returned',
+          returnReason: reason,
+          returnReasonTextAr: reasonMap[reason] || returnData.reasonTextAr || reason,
+          returnNotes: returnData.notes || '',
+          rescheduledDate: returnData.rescheduledDate || null,
+          returnTimestamp: new Date().toISOString()
+        };
+        setStored(DB_KEYS.FIELD_SERVICES, list);
+        return list[idx];
+      }
+      throw new Error('Appointment not found for return processing');
+    },
+
+    // Technicians
+    getTechnicians() {
+      return getStored(DB_KEYS.TECHNICIANS, INITIAL_TECHNICIANS);
+    },
+
+    getTechnicianById(id) {
+      const list = getStored(DB_KEYS.TECHNICIANS, INITIAL_TECHNICIANS);
+      return list.find(t => t.id === id) || null;
+    },
+
+    addTechnician(data) {
+      const list = getStored(DB_KEYS.TECHNICIANS, INITIAL_TECHNICIANS);
+      const newTech = {
+        id: `tech-${Date.now().toString().slice(-4)}`,
+        name: data.name || 'فني تركيب جديد',
+        nameEn: data.nameEn || data.name || 'Installation Tech',
+        nameBn: data.nameBn || data.name || '',
+        specialty: data.specialty || 'تركيب رخام وخشب وبورسلان',
+        specialtyEn: data.specialtyEn || data.specialty || '',
+        specialtyBn: data.specialtyBn || '',
+        phone: data.phone || '',
+        status: data.status || 'Available',
+        avgRating: 5.0,
+        ratingsCount: 0,
+        totalJobs: 0,
+        avatar: data.avatar || '👷‍♂️',
+        createdAt: new Date().toISOString()
+      };
+      list.push(newTech);
+      setStored(DB_KEYS.TECHNICIANS, list);
+      return newTech;
+    },
+
+    updateTechnician(id, updates) {
+      const list = getStored(DB_KEYS.TECHNICIANS, INITIAL_TECHNICIANS);
+      const idx = list.findIndex(t => t.id === id);
+      if (idx !== -1) {
+        list[idx] = { ...list[idx], ...updates };
+        setStored(DB_KEYS.TECHNICIANS, list);
+        return list[idx];
+      }
+      throw new Error('Technician not found');
+    },
+
+    rateTechnician(appointmentId, ratingData) {
+      const services = getStored(DB_KEYS.FIELD_SERVICES, INITIAL_FIELD_SERVICES);
+      const sIdx = services.findIndex(s => s.id === appointmentId);
+      
+      const score = Math.max(1, Math.min(5, Number(ratingData.score) || 5));
+      const punctuality = Math.max(1, Math.min(5, Number(ratingData.punctualityScore) || score));
+
+      const ratingObj = {
+        score: score,
+        punctualityScore: punctuality,
+        feedback: ratingData.feedback || '',
+        clientName: ratingData.clientName || '',
+        createdAt: new Date().toISOString()
+      };
+
+      if (sIdx !== -1) {
+        services[sIdx].rating = ratingObj;
+        services[sIdx].status = 'Completed';
+        setStored(DB_KEYS.FIELD_SERVICES, services);
+      }
+
+      // Update technician aggregate rating
+      const techId = ratingData.technicianId || (sIdx !== -1 ? services[sIdx].technicianId : null);
+      if (techId) {
+        const techs = getStored(DB_KEYS.TECHNICIANS, INITIAL_TECHNICIANS);
+        const tIdx = techs.findIndex(t => t.id === techId);
+        if (tIdx !== -1) {
+          const prevCount = techs[tIdx].ratingsCount || 0;
+          const prevAvg = techs[tIdx].avgRating || 5;
+          const newCount = prevCount + 1;
+          const newAvg = Number(((prevAvg * prevCount + score) / newCount).toFixed(2));
+
+          techs[tIdx].ratingsCount = newCount;
+          techs[tIdx].avgRating = newAvg;
+          techs[tIdx].totalJobs = (techs[tIdx].totalJobs || 0) + 1;
+          setStored(DB_KEYS.TECHNICIANS, techs);
+        }
+      }
+
+      return ratingObj;
     }
   };
 
@@ -1278,6 +1731,8 @@ window._triggerCloudSyncPush = function(key, val) {
         reservations: window.WMS_DB.getStored("wms_reservations_v6", []),
         woodOrders: window.WMS_DB.getStored("wms_wood_orders_v6", []),
         marbleOrders: window.WMS_DB.getStored("wms_marble_orders_v6", []),
+        fieldServices: window.WMS_DB.getStored("wms_field_services_v6", []),
+        technicians: window.WMS_DB.getStored("wms_technicians_v6", []),
         presets: window.WMS_DB.getStored("wms_presets_v6", {}),
         lastSyncTimestamp: Date.now()
       };
@@ -1320,6 +1775,14 @@ function initCloudDatabaseListener() {
         }
         if (Array.isArray(data.marbleOrders) && window.WMS_DB) {
           window.WMS_DB.setStored("wms_marble_orders_v6", data.marbleOrders);
+          changed = true;
+        }
+        if (Array.isArray(data.fieldServices) && window.WMS_DB) {
+          window.WMS_DB.setStored("wms_field_services_v6", data.fieldServices);
+          changed = true;
+        }
+        if (Array.isArray(data.technicians) && window.WMS_DB) {
+          window.WMS_DB.setStored("wms_technicians_v6", data.technicians);
           changed = true;
         }
         if (data.presets && typeof data.presets === 'object' && window.WMS_DB) {

@@ -519,6 +519,14 @@
           </div>
           <span class="dock-label" data-i18n="navMarbleDel">فسح رخام</span>
         </button>
+
+        <button class="wms-dock-tab" data-route="field-service" onclick="WMS_APP.navigate('field-service')">
+          <div class="dock-icon-box">
+            🛠️
+            <span class="wms-dock-badge" id="dock-badge-field-service">0</span>
+          </div>
+          <span class="dock-label" data-i18n="navFieldService">خدمة ميدانية</span>
+        </button>
       `;
 
       document.body.appendChild(dock);
@@ -542,6 +550,12 @@
       menu.id = 'wms-fab-menu';
       menu.className = 'wms-fab-menu';
       menu.innerHTML = `
+        <button class="wms-fab-menu-btn" onclick="WMS_MOBILE.closeQuickMenu(); WMS_APP.openNewFieldServiceModal();">
+          🛠️ <span>+ حجز موعد تركيب ميداني</span>
+        </button>
+        <button class="wms-fab-menu-btn" onclick="WMS_MOBILE.closeQuickMenu(); WMS_APP.openOrderReturnModal();">
+          🔄 <span>+ توثيق ترجيع أوردر</span>
+        </button>
         <button class="wms-fab-menu-btn" onclick="WMS_MOBILE.closeQuickMenu(); WMS_APP.openAddMaterialModal('porcelain');">
           🏺 <span>+ إضافة لوح بورسلان</span>
         </button>
@@ -631,16 +645,22 @@
         const marItems = window.WMS_DB.getItems({ category: 'marble' }) || [];
         const woodOrders = window.WMS_DB.getWoodOrders() || [];
         const marOrders = window.WMS_DB.getMarbleOrders() || [];
+        const fsAppointments = window.WMS_DB.getFieldServices() || [];
 
         const porBadge = document.getElementById('dock-badge-porcelain');
         const marBadge = document.getElementById('dock-badge-marble');
         const woodBadge = document.getElementById('dock-badge-wood');
         const marDelBadge = document.getElementById('dock-badge-marble-del');
+        const fsBadge = document.getElementById('dock-badge-field-service');
 
         if (porBadge) porBadge.textContent = porItems.length;
         if (marBadge) marBadge.textContent = marItems.length;
         if (woodBadge) woodBadge.textContent = woodOrders.length;
         if (marDelBadge) marDelBadge.textContent = marOrders.length;
+        if (fsBadge) {
+          const active = fsAppointments.filter(a => a.status !== 'Completed' && a.status !== 'Returned').length;
+          fsBadge.textContent = active;
+        }
       } catch (e) {}
     },
 
