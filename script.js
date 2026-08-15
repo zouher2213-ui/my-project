@@ -83,10 +83,10 @@
       fsAddTechBtn: '👷‍♂️ إضافة فني جديد',
       fsKpiToday: 'مواعيد اليوم والنشطة',
       fsKpiActiveTechs: 'فنيين متاحين وبالميدان',
-      fsKpiAvgRating: 'متوسط تقييم الفنيين',
+      fsKpiCompleted: 'الأوردرات المنجزة',
       fsKpiReturns: 'حالات الترجيع والتعثر',
       fsTabAppointments: 'جدول المواعيد والتركيبات',
-      fsTabTechnicians: 'فنيين التركيب والتقييمات',
+      fsTabTechnicians: 'فنيين التركيب والميدان',
       fsTabReturns: 'سجل المرتجعات وحالات التعثر',
       fsSearchPlaceholder: 'بحث برقم الفسح، العميل، الفني، الهاتف، أو العنوان...',
       filterAllTechs: 'كل الفنيين',
@@ -98,7 +98,6 @@
       returnsNoticeDesc: 'يوثق هذا السجل جميع الأوردرات التي تعثر تسليمها أو تركيبها مع أسباب مفصلة وإمكانية إعادة الجدولة المباشرة.',
       modalBookFsTitle: 'حجز موعد تركيب وتسليم ميداني',
       modalReturnTitle: '🔄 توثيق ترجيع أوردر / تعثر التسليم والتركيب',
-      modalRateTechTitle: '⭐ تقييم أداء فني التركيب والخدمة',
       modalAddTechTitle: 'إضافة فني تركيب جديد',
       fetchPermitBtn: 'جلب تلقائي',
       lblReturnOrderTarget: 'الأوردر / الموعد المستهدف',
@@ -376,10 +375,10 @@
       fsAddTechBtn: '👷‍♂️ Add Technician',
       fsKpiToday: 'Today & Active Jobs',
       fsKpiActiveTechs: 'Active Field Technicians',
-      fsKpiAvgRating: 'Avg Technician Rating',
+      fsKpiCompleted: 'Completed Orders',
       fsKpiReturns: 'Returned / Failed Jobs',
       fsTabAppointments: 'Appointments & Dispatches',
-      fsTabTechnicians: 'Technicians & Ratings',
+      fsTabTechnicians: 'Field Technicians',
       fsTabReturns: 'Return Logs & Failures',
       fsSearchPlaceholder: 'Search by permit #, client, technician, phone, or address...',
       filterAllTechs: 'All Technicians',
@@ -391,7 +390,6 @@
       returnsNoticeDesc: 'Tracks all failed or returned installations (client no-answer, measurement discrepancies, site unprepared) with instant reschedule options.',
       modalBookFsTitle: 'Book Field Installation Appointment',
       modalReturnTitle: '🔄 Record Order Return / Delivery Failure',
-      modalRateTechTitle: '⭐ Rate Technician & Service Quality',
       modalAddTechTitle: 'Add New Field Technician',
       fetchPermitBtn: 'Auto-Fetch',
       lblReturnOrderTarget: 'Target Order / Permit',
@@ -669,10 +667,10 @@
       fsAddTechBtn: '👷‍♂️ টেকনিশিয়ান যোগ করুন',
       fsKpiToday: 'আজকের ও সক্রিয় কাজ',
       fsKpiActiveTechs: 'সক্রিয় টেকনিশিয়ান',
-      fsKpiAvgRating: 'গড় রেটিং',
+      fsKpiCompleted: 'সম্পন্ন কাজ',
       fsKpiReturns: 'রিটার্ন / ব্যর্থ কাজ',
       fsTabAppointments: 'সময়সূচী ও ইনস্টলেশন',
-      fsTabTechnicians: 'টেকনিশিয়ান ও রেটিং',
+      fsTabTechnicians: 'ফিল্ড টেকনিশিয়ান',
       fsTabReturns: 'রিটার্ন লগ ও ব্যর্থতা',
       fsSearchPlaceholder: 'পারমিট #, ক্লায়েন্ট, টেকনিশিয়ান বা ফোন দিয়ে খুঁজুন...',
       filterAllTechs: 'সকল টেকনিশিয়ান',
@@ -684,7 +682,6 @@
       returnsNoticeDesc: 'ব্যর্থ বা ফেরত আসা ইনস্টলেশন রেকর্ড করুন (ক্লায়েন্টের নো-অ্যানসার, পরিমাপ ত্রুটি, সাইট প্রস্তুত নয়)।',
       modalBookFsTitle: 'ইনস্টলেশন অ্যাপয়েন্টমেন্ট বুকিং',
       modalReturnTitle: '🔄 অর্ডার রিটার্ন ও ব্যর্থতা রেকর্ড',
-      modalRateTechTitle: '⭐ টেকনিশিয়ান মূল্যায়ন ও রেটিং',
       modalAddTechTitle: 'নতুন টেকনিশিয়ান যোগ করুন',
       fetchPermitBtn: 'অটো-ফেচ',
       lblReturnOrderTarget: 'টার্গেট অর্ডার / পারমিট',
@@ -1612,19 +1609,17 @@
     // 1. Calculate KPI Metrics
     const todayCount = services.filter(s => s.scheduledDate === today || (s.status !== 'Completed' && s.status !== 'Returned')).length;
     const activeTechs = techs.filter(t => t.status === 'Available' || t.status === 'On Site' || t.status === 'En Route').length;
-    const avgScore = techs.length > 0 
-      ? (techs.reduce((acc, t) => acc + (t.avgRating || 5), 0) / techs.length).toFixed(2)
-      : '5.0';
+    const completedCount = services.filter(s => s.status === 'Completed').length;
     const returnsCount = services.filter(s => s.status === 'Returned').length;
 
     const elToday = document.getElementById('fs-kpi-today-count');
     const elTechs = document.getElementById('fs-kpi-active-techs');
-    const elRating = document.getElementById('fs-kpi-avg-rating');
+    const elCompleted = document.getElementById('fs-kpi-completed-count');
     const elReturns = document.getElementById('fs-kpi-returns-count');
 
     if (elToday) elToday.textContent = todayCount;
     if (elTechs) elTechs.textContent = `${activeTechs} / ${techs.length}`;
-    if (elRating) elRating.textContent = `${avgScore} ★`;
+    if (elCompleted) elCompleted.textContent = completedCount;
     if (elReturns) elReturns.textContent = returnsCount;
 
     // 2. Populate Technician filter dropdown
@@ -1633,7 +1628,7 @@
       techs.forEach(t => {
         const opt = document.createElement('option');
         opt.value = t.id;
-        opt.textContent = `${t.name} (${t.avgRating}★)`;
+        opt.textContent = `👷‍♂️ ${t.name} (${t.specialty || 'تركيبات'})`;
         techFilter.appendChild(opt);
       });
     }
@@ -1665,6 +1660,63 @@
     if (tabName === 'appointments') renderFieldServiceAppointments();
     if (tabName === 'technicians') renderFieldServiceTechnicians();
     if (tabName === 'returns') renderFieldServiceReturns();
+  }
+
+  // --------------------------------------------------------------------------
+  // WHATSAPP APPOINTMENT MESSAGING HELPER
+  // --------------------------------------------------------------------------
+  function buildWhatsAppAppointmentUrl(item) {
+    if (!item) return '';
+    let cleanPhone = String(item.phone || '').replace(/[\s\-\(\)\+]/g, '');
+    if (cleanPhone.startsWith('05')) {
+      cleanPhone = '971' + cleanPhone.substring(1);
+    } else if (cleanPhone.startsWith('5') && cleanPhone.length === 9) {
+      cleanPhone = '971' + cleanPhone;
+    }
+
+    const clientName = item.buyerName || item.clientName || 'العميل الكريم';
+    const permitNo = item.permitNo || 'غير محدد';
+    const scheduledDate = item.scheduledDate || 'قريباً';
+    const dayName = getDayName(item.scheduledDate);
+    const timeSlot = item.timeSlotTextAr || item.timeSlot || 'مرن / غير محدد';
+    const workType = item.workType || 'تركيب وتسليم';
+    const techName = item.technicianName || 'فريق التركيبات المعتمد';
+    const address = item.address || 'العنوان المسجل';
+
+    const msgLines = [
+      `السلام عليكم ورحمة الله وبركاته،`,
+      `أهلاً بك أستاذ/ة: ${clientName} 🌸`,
+      ``,
+      `نود إفادتكم من شركة الإنتاج بأنه تم جدولة موعد التركيب لفسح رقم: [ ${permitNo} ]`,
+      ``,
+      `🗓️ موعد التركيب: ${scheduledDate} (${dayName})`,
+      `⏱️ وقت الحضور: ${timeSlot}`,
+      `🛠️ تفاصيل العمل: ${workType}`,
+      `👷‍♂️ فني التركيب: ${techName}`,
+      `📍 العنوان: ${address}`
+    ];
+
+    if (item.houseUrl) {
+      msgLines.push(`🏠 موقع البيت: ${item.houseUrl}`);
+    } else if (item.mapsUrl) {
+      msgLines.push(`🗺️ رابط الخريطة: ${item.mapsUrl}`);
+    }
+
+    msgLines.push(``, `يرجى تأكيد مناسبة الموعد لحضرتكم. شاكرين ومقدرين تعاملكم معنا! ✨`);
+
+    const fullMsg = msgLines.join('\n');
+    return cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(fullMsg)}` : `https://wa.me/?text=${encodeURIComponent(fullMsg)}`;
+  }
+
+  function sendWhatsAppAppointment(id) {
+    const item = WMS_DB.getFieldServiceById(id);
+    if (!item) return;
+    if (!item.phone) {
+      showToast('رقم هاتف العميل غير مسجل لهذا الأوردر!', 'warning');
+      return;
+    }
+    const url = buildWhatsAppAppointmentUrl(item);
+    window.open(url, '_blank');
   }
 
   function renderFieldServiceAppointments() {
@@ -1699,13 +1751,12 @@
         statusPill = `<span class="status-pill" style="background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.35);">📅 مجدول</span>`;
       }
 
-      const ratingBadge = item.rating 
-        ? `<div style="font-size:0.8rem; color:#fbbf24; font-weight:800; margin-top:0.25rem;">⭐ ${item.rating.score}/5 (${escapeHtml(item.rating.feedback || 'تقييم ممتاز')})</div>`
-        : '';
-
       const returnReasonBadge = item.returnReasonTextAr
         ? `<div style="font-size:0.78rem; color:#f87171; background:rgba(239,68,68,0.1); padding:0.2rem 0.4rem; border-radius:4px; margin-top:0.25rem;">سبب الترجيع: ${escapeHtml(item.returnReasonTextAr)}</div>`
         : '';
+
+      const waUrl = buildWhatsAppAppointmentUrl(item);
+      const hasPhone = Boolean(item.phone && item.phone.trim());
 
       return `
         <tr>
@@ -1718,7 +1769,16 @@
           <td>
             <div style="font-weight:800; color:var(--text-primary); font-size:0.98rem;">${escapeHtml(item.buyerName || item.clientName)}</div>
             <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHtml(item.showroom || '')} ${item.repName ? `| مندوب: ${escapeHtml(item.repName)}` : ''}</div>
-            <div style="font-size:0.8rem; color:var(--text-secondary);">📞 ${escapeHtml(item.phone || '-')}</div>
+            <div style="margin-top:0.3rem; display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+              ${hasPhone ? `
+                <a href="tel:${escapeHtml(item.phone)}" style="font-weight:800; color:var(--text-primary); text-decoration:none; font-size:0.85rem; background:var(--bg-input); padding:0.15rem 0.45rem; border-radius:4px; border:1px solid rgba(255,255,255,0.08); display:inline-flex; align-items:center; gap:0.25rem;">
+                  📞 <span>${escapeHtml(item.phone)}</span>
+                </a>
+                <a href="${escapeHtml(waUrl)}" target="_blank" style="font-size:0.75rem; background:#25D366; color:#ffffff; padding:0.18rem 0.5rem; border-radius:4px; text-decoration:none; font-weight:800; display:inline-flex; align-items:center; gap:0.2rem;" title="إرسال الموعد عبر واتساب">
+                  💬 <span>واتساب</span>
+                </a>
+              ` : '<span style="font-size:0.8rem; color:var(--text-muted);">📞 غير مسجل</span>'}
+            </div>
           </td>
           <td>
             <div style="font-weight:700; display:flex; align-items:center; gap:0.35rem;">
@@ -1759,12 +1819,13 @@
           </td>
           <td>
             ${statusPill}
-            ${ratingBadge}
           </td>
           <td>
             <div style="display:flex; gap:0.35rem; align-items:center; flex-wrap:wrap;">
+              <a href="${escapeHtml(waUrl)}" target="_blank" style="background:#25D366; color:#ffffff; font-size:0.78rem; font-weight:800; padding:0.25rem 0.55rem; border-radius:4px; text-decoration:none; display:inline-flex; align-items:center; gap:0.2rem;" title="إرسال الموعد للعميل عبر واتساب">
+                💬 واتساب
+              </a>
               ${!isCompleted && !isReturned ? `
-                <button class="btn-secondary btn-sm" onclick="WMS_APP.openRateTechnicianModal('${item.id}')" title="إنجاز وتقييم الفني" style="border-color:rgba(245,158,11,0.4); color:#fbbf24;">⭐ تقييم</button>
                 <button class="btn-secondary btn-sm" onclick="WMS_APP.openOrderReturnModal('${item.id}')" title="توثيق ترجيع أوردر" style="border-color:rgba(239,68,68,0.4); color:#f87171;">🔄 ترجيع</button>
               ` : ''}
               ${isReturned ? `
@@ -1818,16 +1879,12 @@
 
           <div class="tech-metrics-row">
             <div class="tech-metric-box">
-              <div class="tech-metric-val" style="color:#fbbf24;">${t.avgRating || 5.0} <span style="font-size:0.8rem;">★</span></div>
-              <div class="tech-metric-lbl">متوسط التقييم</div>
-            </div>
-            <div class="tech-metric-box">
-              <div class="tech-metric-val" style="color:var(--primary);">${t.ratingsCount || 0}</div>
-              <div class="tech-metric-lbl">تقييمات العملاء</div>
-            </div>
-            <div class="tech-metric-box">
               <div class="tech-metric-val" style="color:var(--success);">${t.totalJobs || 0}</div>
-              <div class="tech-metric-lbl">إجمالي المهام</div>
+              <div class="tech-metric-lbl">إجمالي المهام المنجزة</div>
+            </div>
+            <div class="tech-metric-box">
+              <div class="tech-metric-val" style="color:var(--primary); font-size:1.05rem;">👷‍♂️ فني معتمد</div>
+              <div class="tech-metric-lbl">حالة الاعتماد</div>
             </div>
           </div>
 
@@ -2034,7 +2091,7 @@
     techs.forEach(t => {
       const opt = document.createElement('option');
       opt.value = t.id;
-      opt.textContent = `👷‍♂️ ${t.name} (${t.specialty}) - ${t.avgRating}★`;
+      opt.textContent = `👷‍♂️ ${t.name} (${t.specialty || 'تركيبات'})`;
       if (t.id === selectedId) opt.selected = true;
       sel.appendChild(opt);
     });
@@ -2323,26 +2380,38 @@
         else if (item.status === 'In Progress') { statusText = '⏳ بالموقع / قيد العمل'; statusColor = '#d97706'; }
 
         const mapsLink = item.mapsUrl || (item.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}` : '');
+        const waUrl = buildWhatsAppAppointmentUrl(item);
+        const hasPhone = Boolean(item.phone && item.phone.trim());
 
         return `
           <tr>
             <td style="text-align: center; font-weight: bold; width: 35px;">${idx + 1}</td>
             <td style="font-family: monospace; font-weight: 800; font-size: 0.95rem; color: #1e1b4b; white-space: nowrap;">
               ${escapeHtml(item.permitNo)}
-              <div style="font-size: 0.75rem; color: #64748b; font-family: sans-serif;">${escapeHtml(item.orderTypeAr || 'فسح ميداني')}</div>
+              <div style="font-size: 0.75rem; color: #64748b; font-family: sans-serif;">${escapeHtml(item.orderTypeAr || (item.orderType === 'marble' ? 'فسح رخام' : 'فسح خشب'))}</div>
             </td>
             <td>
               <strong style="font-size: 0.98rem; color: #0f172a; display: block;">${escapeHtml(item.buyerName || item.clientName)}</strong>
-              <span style="font-size: 0.8rem; color: #64748b;">${escapeHtml(item.showroom || '-')} | 📞 ${escapeHtml(item.phone || '-')}</span>
+              <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.1rem;">${escapeHtml(item.showroom || '-')} ${item.repName ? `| مندوب: ${escapeHtml(item.repName)}` : ''}</div>
+              <div style="margin-top: 0.25rem; display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                ${hasPhone ? `
+                  <a href="tel:${escapeHtml(item.phone)}" style="font-weight: 800; color: #0f172a; text-decoration: none; font-size: 0.86rem; background: #f1f5f9; padding: 0.15rem 0.45rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                    📞 <span>${escapeHtml(item.phone)}</span>
+                  </a>
+                  <a href="${escapeHtml(waUrl)}" target="_blank" class="no-print" style="font-size: 0.75rem; background: #25D366; color: #ffffff; padding: 0.18rem 0.5rem; border-radius: 4px; text-decoration: none; font-weight: 800; display: inline-flex; align-items: center; gap: 0.2rem;" title="إرسال الموعد عبر واتساب">
+                    💬 <span>واتساب</span>
+                  </a>
+                ` : '<span style="font-size: 0.8rem; color: #94a3b8;">📞 غير مسجل</span>'}
+              </div>
             </td>
             <td>
               <span style="font-weight: 700; color: #4338ca; background: #e0e7ff; padding: 0.2rem 0.5rem; border-radius: 4px; display: inline-block; font-size: 0.85rem;">
-                ${escapeHtml(item.workType || 'تركيب مطبخ / رخام')}
+                ${escapeHtml(item.workType || 'تركيب وتسليم')}
               </span>
             </td>
             <td style="white-space: nowrap;">
-              <strong style="color: #0f172a; font-size: 0.92rem; display: block;">${escapeHtml(item.scheduledDate || '-')}</strong>
-              <span style="font-size: 0.8rem; color: #2563eb; font-weight: 600;">${escapeHtml(item.timeSlotTextAr || item.timeSlot || 'صباحي')}</span>
+              <strong style="color: #0f172a; font-size: 0.94rem; display: block;">${escapeHtml(item.scheduledDate || '-')}</strong>
+              <span style="font-size: 0.82rem; color: #2563eb; font-weight: 700;">${escapeHtml(item.timeSlotTextAr || item.timeSlot || 'مرن')}</span>
             </td>
             <td>
               <strong style="font-size: 0.9rem; color: #0f172a;">👷‍♂️ ${escapeHtml(item.technicianName || 'غير مسند')}</strong>
@@ -2370,12 +2439,12 @@
             <!-- عمود الإجراءات (يظهر في المعاينة ويختفي تلقائياً عند الطباعة) -->
             <td class="no-print" style="text-align: center; white-space: nowrap;">
               <div style="display: flex; gap: 0.3rem; justify-content: center; align-items: center;">
+                <a href="${escapeHtml(waUrl)}" target="_blank" style="background: #25D366; color: #ffffff; font-size: 0.78rem; font-weight: 800; padding: 0.25rem 0.55rem; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.2rem;" title="إرسال تفاصيل الموعد للعميل عبر WhatsApp">
+                  💬 واتساب
+                </a>
                 ${!isCompleted && !isReturned ? `
                   <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.closeModal('modal-today-installations-preview'); WMS_APP.openOrderReturnModal('${item.id}')" title="توثيق ترجيع وتعثر" style="color: #ef4444; border-color: rgba(239,68,68,0.4); font-size: 0.78rem; padding: 0.25rem 0.5rem;">
                     🔄 ترجيع
-                  </button>
-                  <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.closeModal('modal-today-installations-preview'); WMS_APP.openRateTechnicianModal('${item.id}')" title="تقييم وإنجاز" style="color: #f59e0b; border-color: rgba(245,158,11,0.4); font-size: 0.78rem; padding: 0.25rem 0.5rem;">
-                    ⭐ تقييم
                   </button>
                 ` : ''}
                 <button type="button" class="btn-secondary btn-sm" onclick="WMS_APP.closeModal('modal-today-installations-preview'); WMS_APP.openEditFieldServiceModal('${item.id}')" title="تعديل الموعد" style="font-size: 0.78rem; padding: 0.25rem 0.45rem;">
@@ -2409,7 +2478,7 @@
           <tr>
             <th style="width: 35px; text-align: center;">#</th>
             <th>رقم الفسح</th>
-            <th>اسم الزبون / المعرض</th>
+            <th>اسم الزبون / المعرض / الهاتف</th>
             <th>نوع العمل</th>
             <th>تاريخ وموعد التركيب</th>
             <th>فني التركيب</th>
@@ -4138,7 +4207,9 @@
     renderTodayInstallationsSheet,
     printTodayInstallations,
     openReturnsReportPreview,
-    printReturnsReport
+    printReturnsReport,
+    buildWhatsAppAppointmentUrl,
+    sendWhatsAppAppointment
   };
 
   function renderWoodPermitChips() {
@@ -4156,6 +4227,8 @@
 
   window.WMS_APP = WMS_APP;
   window.showToast = showToast;
+  window.sendWhatsAppAppointment = sendWhatsAppAppointment;
+  window.buildWhatsAppAppointmentUrl = buildWhatsAppAppointmentUrl;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => WMS_APP.init());

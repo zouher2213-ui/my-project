@@ -16,6 +16,8 @@ import {
   doc,
   setDoc,
   getDoc,
+  getDocs,
+  updateDoc,
   addDoc, 
   onSnapshot, 
   serverTimestamp, 
@@ -1552,131 +1554,106 @@ const firestoreDb = getFirestore(app);
 let isSigningUp = false;
 let currentAuthMode = 'login'; // 'login' or 'signup'
 
-// Warehouse Business Roles Definition
+// Warehouse Business Roles Definition (3 Role Levels: viewer, admin, owner)
 const WMS_ROLES = {
-  PRODUCTION_ENGINEER: 'production_engineer', // مهندس الإنتاج / المالك (كامل الصلاحيات)
-  SUPERVISOR_PORCELAIN: 'supervisor_porcelain', // مشرف مستودع البورسلان (حركات البورسلان فقط)
-  SUPERVISOR_MARBLE: 'supervisor_marble', // مشرف مستودع الرخام (حركات الرخام فقط)
-  SUPERVISOR_FIELD: 'supervisor_field', // مشرف الفسوحات والميدان
-  TECHNICIAN: 'technician', // فني التركيب الميداني (خرائط ومواقع)
-  VIEWER: 'viewer' // مشاهد (قراءة فقط)
+  OWNER: 'owner',
+  ADMIN: 'admin',
+  VIEWER: 'viewer',
+  PRODUCTION_ENGINEER: 'owner',
+  SUPERVISOR_PORCELAIN: 'admin',
+  SUPERVISOR_MARBLE: 'admin',
+  SUPERVISOR_FIELD: 'admin',
+  TECHNICIAN: 'viewer'
 };
 
 // Helper: Standardized User Object Creator with Warehouse Role-Based Permissions
 function createAuthUser(email, displayName, customRole = null) {
-  const isOwner = email && (email.toLowerCase().trim() === 's@gmail.com');
+  const isOwnerEmail = email && (email.toLowerCase().trim() === 's@gmail.com');
   const isHardAdmin = email && (email.toLowerCase().trim() === 'admin');
   
-  let role = WMS_ROLES.VIEWER;
-  if (isOwner) {
-    role = WMS_ROLES.PRODUCTION_ENGINEER;
+  let role = 'viewer';
+  if (isOwnerEmail) {
+    role = 'owner';
   } else if (isHardAdmin) {
-    role = WMS_ROLES.PRODUCTION_ENGINEER;
+    role = 'admin';
   } else if (customRole) {
     role = customRole.toLowerCase();
+    if (role === 'production_engineer') role = 'owner';
   }
 
-  const isProductionEngineer = (role === WMS_ROLES.PRODUCTION_ENGINEER || role === 'owner' || role === 'admin' || isOwner);
-  const isPorcelainSupervisor = (role === WMS_ROLES.SUPERVISOR_PORCELAIN);
-  const isMarbleSupervisor = (role === WMS_ROLES.SUPERVISOR_MARBLE);
-  const isFieldSupervisor = (role === WMS_ROLES.SUPERVISOR_FIELD);
-  const isTechnician = (role === WMS_ROLES.TECHNICIAN);
-  const isViewer = (role === WMS_ROLES.VIEWER);
+  const isOwner = (role === 'owner' || isOwnerEmail);
+  const isAdmin = (role === 'admin' || isHardAdmin);
+  const isViewer = (role === 'viewer');
 
   let roleTitleAr = 'مشاهد (قراءة فقط)';
   let roleTitleEn = 'Viewer (Read Only)';
   let roleTitleBn = 'দর্শক (শুধুমাত্র দেখার অনুমতি)';
-  let allowedModules = ['*'];
-  let canAdjustStock = false;
-  let canEditAll = false;
 
-  if (isProductionEngineer) {
-    roleTitleAr = 'مهندس الإنتاج / المالك (كامل الصلاحيات لجميع الأقسام)';
-    roleTitleEn = 'Production Engineer / Owner (Full Unrestricted Access)';
-    roleTitleBn = 'উৎপাদন প্রকৌশলী / মালিক (পূর্ণ প্রবেশাধিকার)';
-    allowedModules = ['*'];
-    canAdjustStock = true;
-    canEditAll = true;
-  } else if (isPorcelainSupervisor) {
-    roleTitleAr = 'مشرف مستودع البورسلان (حركات البورسلان فقط)';
-    roleTitleEn = 'Porcelain Warehouse Supervisor (Porcelain Only)';
-    roleTitleBn = 'চীনামাটির বাসন গুদাম সুপারভাইজার';
-    allowedModules = ['porcelain'];
-    canAdjustStock = true;
-    canEditAll = false;
-  } else if (isMarbleSupervisor) {
-    roleTitleAr = 'مشرف مستودع الرخام (حركات الرخام فقط)';
-    roleTitleEn = 'Marble Warehouse Supervisor (Marble Only)';
-    roleTitleBn = 'মার্বেল গুদাম সুপারভাইজার';
-    allowedModules = ['marble'];
-    canAdjustStock = true;
-    canEditAll = false;
-  } else if (isFieldSupervisor) {
-    roleTitleAr = 'مشرف الفسوحات والخدمات الميدانية';
-    roleTitleEn = 'Field & Delivery Supervisor';
-    roleTitleBn = 'ফিল্ড এবং ডেলিভারি সুপারভাইজার';
-    allowedModules = ['field-service', 'wood-delivery', 'marble-delivery'];
-    canAdjustStock = false;
-    canEditAll = false;
-  } else if (isTechnician) {
-    roleTitleAr = 'فني تركيب ميداني (المهام ومواقع الخرائط)';
-    roleTitleEn = 'Installation Technician (Tasks & Maps)';
-    roleTitleBn = 'ইনস্টলেশন টেকনিশিয়ান (মানচিত্র)';
-    allowedModules = ['field-service'];
-    canAdjustStock = false;
-    canEditAll = false;
+  if (isOwner) {
+    roleTitleAr = 'المالك / صاحب المنشأة (Owner)';
+    roleTitleEn = 'Owner (Full Access & Role Management)';
+    roleTitleBn = 'মালিক (Owner)';
+  } else if (isAdmin) {
+    roleTitleAr = 'المدير العام (Admin)';
+    roleTitleEn = 'Administrator (Full Access & Broadcasts)';
+    roleTitleBn = 'অ্যাডমিন (Admin)';
   }
 
   return { 
     username: email, 
     email: email,
-    name: displayName || (isProductionEngineer ? 'مهندس الإنتاج (Production Engineer)' : (email ? email.split('@')[0] : 'admin')),
-    role: role,
+    name: displayName || (isOwner ? 'المالك (Owner)' : (isAdmin ? 'المدير (Admin)' : (email ? email.split('@')[0] : 'viewer'))),
+    role: isOwner ? 'owner' : (isAdmin ? 'admin' : 'viewer'),
     roleTitleAr: roleTitleAr,
     roleTitleEn: roleTitleEn,
     roleTitleBn: roleTitleBn,
-    allowedModules: allowedModules,
-    fullAccess: isProductionEngineer,
-    canAdjustStock: canAdjustStock,
-    canEditAll: canEditAll,
+    allowedModules: ['*'],
+    fullAccess: isOwner || isAdmin,
+    canAdjustStock: isOwner || isAdmin,
+    canEditAll: isOwner || isAdmin,
     canWrite: !isViewer,
     canRead: true,
-    isOwner: isProductionEngineer
+    isOwner: isOwner
   };
 }
 
-// Role-Based Access Control: Fetch role from Owner assignments and Firestore users collection
+// Role-Based Access Control: Fetch role from Firestore users collection & Owner local assignments
 async function fetchUserRole(user) {
-  if (!user) return WMS_ROLES.VIEWER;
+  if (!user) return 'viewer';
   const isOwner = user.email && (user.email.toLowerCase().trim() === 's@gmail.com');
-  if (isOwner) return WMS_ROLES.PRODUCTION_ENGINEER;
-  if (user.email && user.email.toLowerCase().trim() === 'admin') return WMS_ROLES.PRODUCTION_ENGINEER;
+  if (isOwner) return 'owner';
+  if (user.email && user.email.toLowerCase().trim() === 'admin') return 'admin';
 
   // 1. Check Owner Assigned User Roles in WMS_DB
-  if (window.WMS_DB && user.email) {
+  if (window.WMS_DB && user.email && typeof window.WMS_DB.getUserRolesList === 'function') {
     const rolesList = window.WMS_DB.getUserRolesList();
     const matched = rolesList.find(u => u.email.toLowerCase() === user.email.toLowerCase().trim());
     if (matched && matched.role) {
       console.log(`👑 Found Owner Assigned Role for [${user.email}]: ${matched.role}`);
-      return matched.role;
+      let role = matched.role.toLowerCase();
+      if (role === 'production_engineer') role = 'owner';
+      if (!['viewer', 'admin', 'owner'].includes(role)) role = 'viewer';
+      return role;
     }
   }
 
-  if (!user.uid) return WMS_ROLES.VIEWER;
+  if (!user.uid) return 'viewer';
 
-  // 2. Check Firestore 'users' collection
+  // 2. Fetch specific document from 'users' collection in Firestore
   try {
     if (firestoreDb) {
       const userDocRef = doc(firestoreDb, "users", user.uid);
       const userDocSnap = await getDoc(userDocRef);
       if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
-        const role = userData.role || WMS_ROLES.VIEWER;
+        let role = (userData.role || 'viewer').toLowerCase();
+        if (role === 'production_engineer') role = 'owner';
+        if (!['viewer', 'admin', 'owner'].includes(role)) role = 'viewer';
         console.log(`👤 Fetched role from Firestore for [${user.email}]: ${role}`);
         return role;
       } else {
         // Document does not exist yet; create with default role
-        const defaultRole = isOwner ? WMS_ROLES.PRODUCTION_ENGINEER : WMS_ROLES.VIEWER;
+        const defaultRole = isOwner ? 'owner' : 'viewer';
         await setDoc(userDocRef, {
           uid: user.uid,
           email: user.email,
@@ -1690,61 +1667,201 @@ async function fetchUserRole(user) {
   } catch (err) {
     console.warn("Could not fetch user role from Firestore:", err);
   }
-  return isOwner ? WMS_ROLES.PRODUCTION_ENGINEER : WMS_ROLES.VIEWER;
+  return isOwner ? 'owner' : 'viewer';
 }
 
-// UI Permissions Engine: Controls HUD cards and navigation based on warehouse role
+// UI Permissions Engine: Controls HUD cards, Admin Dashboard and Messages based on warehouse role
 function applyRolePermissions(role) {
-  const normRole = (role || 'viewer').toLowerCase();
-  const isProductionEngineer = (normRole === 'production_engineer' || normRole === 'owner' || normRole === 'admin');
-  const isPorcelainSupervisor = (normRole === 'supervisor_porcelain');
-  const isMarbleSupervisor = (normRole === 'supervisor_marble');
-  const isFieldSupervisor = (normRole === 'supervisor_field');
-  const isTechnician = (normRole === 'technician');
+  let normRole = (role || 'viewer').toLowerCase();
+  if (normRole === 'production_engineer') normRole = 'owner';
+
+  const isOwner = (normRole === 'owner');
+  const isAdmin = (normRole === 'admin');
   const isViewer = (normRole === 'viewer');
 
   // 1. Set root attribute and classes
   document.documentElement.setAttribute('data-role', normRole);
-  document.documentElement.classList.remove('is-admin-role', 'is-owner-role', 'is-viewer-role', 'is-porcelain-role', 'is-marble-role', 'is-field-role', 'is-tech-role');
+  document.documentElement.classList.remove('is-admin-role', 'is-owner-role', 'is-viewer-role');
 
-  if (isProductionEngineer) {
+  if (isOwner) {
     document.documentElement.classList.add('is-owner-role', 'is-admin-role');
-  } else if (isPorcelainSupervisor) {
-    document.documentElement.classList.add('is-porcelain-role');
-  } else if (isMarbleSupervisor) {
-    document.documentElement.classList.add('is-marble-role');
-  } else if (isFieldSupervisor) {
-    document.documentElement.classList.add('is-field-role');
-  } else if (isTechnician) {
-    document.documentElement.classList.add('is-tech-role');
-  } else if (isViewer) {
+  } else if (isAdmin) {
+    document.documentElement.classList.add('is-admin-role');
+  } else {
     document.documentElement.classList.add('is-viewer-role');
   }
 
-  // 2. Control HUD Cards visibility based on assigned role
+  // 2. Control Admin Dashboard UI (Visible ONLY for 'owner')
+  const adminDashboardEl = document.getElementById("admin-dashboard");
+  if (adminDashboardEl) {
+    if (isOwner) {
+      adminDashboardEl.style.display = "block";
+      loadAdminDashboardUsers();
+    } else {
+      adminDashboardEl.style.display = "none";
+    }
+  }
+
+  // 3. Control Messages Section & Input Visibility
+  const messagesSectionEl = document.getElementById("messages-section");
+  const messageInputEl = document.getElementById("message-input");
+  const btnSendMessageEl = document.getElementById("btn-send-message");
+  const messageFormEl = document.getElementById("message-form");
+
+  if (messagesSectionEl) {
+    messagesSectionEl.style.display = "block";
+  }
+
+  if (isViewer) {
+    // Viewer: Read-only messages list (hide input and send button)
+    if (messageInputEl) messageInputEl.style.display = "none";
+    if (btnSendMessageEl) btnSendMessageEl.style.display = "none";
+    if (messageFormEl) messageFormEl.style.display = "none";
+  } else {
+    // Admin or Owner: Full access to read and write messages
+    if (messageInputEl) messageInputEl.style.display = "";
+    if (btnSendMessageEl) btnSendMessageEl.style.display = "";
+    if (messageFormEl) messageFormEl.style.display = "flex";
+  }
+
+  // 4. Control HUD Cards visibility (Accessible for all authenticated roles)
   const cardPorcelain = document.querySelector('.card-porcelain');
   const cardMarble = document.querySelector('.card-marble');
   const cardWoodDel = document.querySelector('.card-wood-del');
   const cardMarbleDel = document.querySelector('.card-marble-del');
   const cardFieldService = document.querySelector('.card-field-service');
 
-  if (cardPorcelain) cardPorcelain.style.display = (isProductionEngineer || isPorcelainSupervisor || isViewer) ? '' : 'none';
-  if (cardMarble) cardMarble.style.display = (isProductionEngineer || isMarbleSupervisor || isViewer) ? '' : 'none';
-  if (cardWoodDel) cardWoodDel.style.display = (isProductionEngineer || isFieldSupervisor || isViewer) ? '' : 'none';
-  if (cardMarbleDel) cardMarbleDel.style.display = (isProductionEngineer || isFieldSupervisor || isViewer) ? '' : 'none';
-  if (cardFieldService) cardFieldService.style.display = (isProductionEngineer || isFieldSupervisor || isTechnician || isViewer) ? '' : 'none';
+  if (cardPorcelain) cardPorcelain.style.display = '';
+  if (cardMarble) cardMarble.style.display = '';
+  if (cardWoodDel) cardWoodDel.style.display = '';
+  if (cardMarbleDel) cardMarbleDel.style.display = '';
+  if (cardFieldService) cardFieldService.style.display = '';
 
-  // 3. Update Mobile Dock tabs if mobile controller exists
+  // 5. Update Mobile Dock tabs if mobile controller exists
   if (window.WMS_MOBILE && typeof window.WMS_MOBILE.updateRoleDock === 'function') {
     window.WMS_MOBILE.updateRoleDock(normRole);
   }
 
-  console.log(`🔒 Role Permissions Applied: [${normRole}] (Porcelain Only: ${isPorcelainSupervisor}, Marble Only: ${isMarbleSupervisor})`);
+  console.log(`🔒 Role Permissions Applied: [${normRole}] (Owner: ${isOwner}, Admin: ${isAdmin}, Viewer: ${isViewer})`);
+}
+
+// Admin Dashboard: Fetch all documents from 'users' collection in Firestore
+async function loadAdminDashboardUsers() {
+  const tbody = document.getElementById("admin-dashboard-users-tbody");
+  if (!tbody) return;
+
+  try {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 1.25rem;">جاري جلب بيانات المستخدمين من Firestore...</td></tr>`;
+
+    let users = [];
+
+    if (firestoreDb) {
+      try {
+        const usersSnapshot = await getDocs(collection(firestoreDb, "users"));
+        usersSnapshot.forEach(docSnap => {
+          users.push({
+            uid: docSnap.id,
+            ...docSnap.data()
+          });
+        });
+      } catch (err) {
+        console.warn("Could not fetch users from Firestore:", err);
+      }
+    }
+
+    // Fallback to local stored user roles if Firestore is empty or offline
+    if (users.length === 0) {
+      if (window.WMS_DB && typeof window.WMS_DB.getUserRolesList === 'function') {
+        const localList = window.WMS_DB.getUserRolesList();
+        users = localList.map((u, i) => ({
+          uid: u.uid || `user-${i + 1}-${u.email.split('@')[0]}`,
+          email: u.email,
+          role: u.role
+        }));
+      }
+    }
+
+    if (users.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">لا يوجد مستخدمين مسجلين بعد في قاعدة البيانات.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = users.map(user => {
+      const userUid = user.uid || user.id || user.email;
+      const userEmail = user.email || user.username || userUid;
+      let currentRole = (user.role || 'viewer').toLowerCase();
+      if (currentRole === 'production_engineer') currentRole = 'owner';
+      if (!['viewer', 'admin', 'owner'].includes(currentRole)) currentRole = 'viewer';
+
+      const isOwnerUser = (userEmail.toLowerCase().trim() === 's@gmail.com');
+
+      let roleBadge = '<span style="color:#94a3b8; font-weight:700; background:rgba(148,163,184,0.15); padding:0.25rem 0.6rem; border-radius:4px;">👁️ viewer</span>';
+      if (currentRole === 'owner') {
+        roleBadge = '<span style="color:#fbbf24; font-weight:800; background:rgba(245,158,11,0.15); padding:0.25rem 0.6rem; border-radius:4px;">👑 owner</span>';
+      } else if (currentRole === 'admin') {
+        roleBadge = '<span style="color:#38bdf8; font-weight:800; background:rgba(56,189,248,0.15); padding:0.25rem 0.6rem; border-radius:4px;">🛡️ admin</span>';
+      }
+
+      return `
+        <tr>
+          <td>
+            <strong style="color: var(--text-primary); font-size: 0.92rem;">${escapeHtml(userEmail)}</strong>
+            ${isOwnerUser ? '<span style="background: rgba(245,158,11,0.2); color: #fbbf24; padding: 0.15rem 0.45rem; border-radius: 4px; font-size: 0.72rem; margin-right: 0.35rem; font-weight: 800;">المالك الأساسي</span>' : ''}
+          </td>
+          <td style="font-family: monospace; font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(userUid)}</td>
+          <td>${roleBadge}</td>
+          <td>
+            <select class="form-select" style="padding: 0.35rem 0.75rem; font-size: 0.85rem; width: auto; background: var(--bg-input); border-color: rgba(255,255,255,0.15);" onchange="handleAdminChangeUserRole('${escapeHtml(userUid)}', '${escapeHtml(userEmail)}', this.value)">
+              <option value="viewer" ${currentRole === 'viewer' ? 'selected' : ''}>👁️ viewer (مشاهد)</option>
+              <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>🛡️ admin (مدير)</option>
+              <option value="owner" ${currentRole === 'owner' ? 'selected' : ''}>👑 owner (مالك)</option>
+            </select>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (e) {
+    console.error("Error in loadAdminDashboardUsers:", e);
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-danger); padding: 1rem;">خطأ في تحميل المستخدمين: ${e.message}</td></tr>`;
+  }
+}
+
+// Change user role directly in Firestore 'users' collection
+async function handleAdminChangeUserRole(uid, email, newRole) {
+  try {
+    if (firestoreDb && uid) {
+      const userDocRef = doc(firestoreDb, "users", uid);
+      await setDoc(userDocRef, {
+        uid: uid,
+        email: email,
+        role: newRole,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      console.log(`👤 Updated user role in Firestore: [${email}] (${uid}) -> ${newRole}`);
+    }
+
+    if (window.WMS_DB && typeof window.WMS_DB.setUserRole === 'function') {
+      window.WMS_DB.setUserRole(email, newRole);
+    }
+
+    if (window.showToast) {
+      window.showToast(`تم تغيير دور [${email}] إلى [${newRole}] في Firestore بنجاح! 👑`, 'success');
+    }
+
+    loadAdminDashboardUsers();
+  } catch (error) {
+    console.error("Error updating user role in Firestore:", error);
+    if (window.showToast) {
+      window.showToast(`فشل تحديث الصلاحية: ${error.message}`, 'danger');
+    }
+  }
 }
 
 window.WMS_ROLES = WMS_ROLES;
 window.fetchUserRole = fetchUserRole;
 window.applyRolePermissions = applyRolePermissions;
+window.loadAdminDashboardUsers = loadAdminDashboardUsers;
+window.handleAdminChangeUserRole = handleAdminChangeUserRole;
 
 // Helper: Show custom HUD alert inside the Login Card
 function showAuthHUDMessage(message, type = 'info') {
@@ -1780,17 +1897,11 @@ function switchAuthMode(mode) {
   const loginOptions = document.getElementById('auth-login-options');
   const btnLogin = document.getElementById('btn-login');
   const btnOwnerLogin = document.getElementById('btn-owner-login');
-  const btnRolePorcelain = document.getElementById('btn-role-porcelain');
-  const btnRoleMarble = document.getElementById('btn-role-marble');
-  const btnRoleField = document.getElementById('btn-role-field');
-  const btnRoleTech = document.getElementById('btn-role-tech');
   const btnSignup = document.getElementById('btn-signup');
   const signupNote = document.getElementById('auth-signup-note');
   const alertBox = document.getElementById('auth-hud-alert');
 
   if (alertBox) alertBox.style.display = 'none';
-
-  const roleBtns = [btnOwnerLogin, btnRolePorcelain, btnRoleMarble, btnRoleField, btnRoleTech];
 
   if (currentAuthMode === 'signup') {
     if (loginTab) loginTab.classList.remove('active');
@@ -1798,7 +1909,7 @@ function switchAuthMode(mode) {
     if (confirmPwdGroup) confirmPwdGroup.style.display = 'block';
     if (loginOptions) loginOptions.style.display = 'none';
     if (btnLogin) btnLogin.style.display = 'none';
-    roleBtns.forEach(btn => { if (btn) btn.style.display = 'none'; });
+    if (btnOwnerLogin) btnOwnerLogin.style.display = 'none';
     if (btnSignup) btnSignup.style.display = 'flex';
     if (signupNote) signupNote.style.display = 'block';
   } else {
@@ -1807,7 +1918,7 @@ function switchAuthMode(mode) {
     if (confirmPwdGroup) confirmPwdGroup.style.display = 'none';
     if (loginOptions) loginOptions.style.display = 'flex';
     if (btnLogin) btnLogin.style.display = 'flex';
-    roleBtns.forEach(btn => { if (btn) btn.style.display = 'flex'; });
+    if (btnOwnerLogin) btnOwnerLogin.style.display = 'flex';
     if (btnSignup) btnSignup.style.display = 'none';
     if (signupNote) signupNote.style.display = 'none';
   }
@@ -1882,7 +1993,7 @@ async function handleSignUp(e) {
   }
 
   if (password.length < 6) {
-    showAuthHUDMessage("تنبيه: يجب أن تتكون كلمة المرور من 6 خانات على الأقل (شروط Firebase).", "warning");
+    showAuthHUDMessage("تنبيه: يجب ألا تقل كلمة المرور عن 6 خانات (شروط Firebase).", "warning");
     if (passwordInput) passwordInput.focus();
     return;
   }
