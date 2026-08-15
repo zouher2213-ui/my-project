@@ -1895,8 +1895,14 @@
     onCloudDataReceived() {
       renderCurrentView();
       updateHudBadges();
+      renderReserveChips();
+      renderWoodPermitChips();
+      renderMarblePermitChips();
       if (window.WMS_MOBILE && typeof window.WMS_MOBILE.onViewRendered === 'function') {
         window.WMS_MOBILE.onViewRendered();
+      }
+      if (window.WMS_MOBILE && typeof window.WMS_MOBILE.updateDockBadges === 'function') {
+        window.WMS_MOBILE.updateDockBadges();
       }
     },
 

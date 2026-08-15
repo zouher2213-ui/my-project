@@ -314,34 +314,6 @@
             </div>
           </div>
         </div>
-
-        <!-- ================================================================== -->
-        <!-- بطاقة الرسائل الفورية (Cloud Firestore Realtime Messaging) -->
-        <!-- ================================================================== -->
-        <div class="hud-card" style="margin-top: 1.75rem; padding: 1.5rem; cursor: default; border-top: 3px solid var(--primary);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h3 style="font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary);">
-              💬 <span>الرسائل الفورية (Cloud Firestore Realtime)</span>
-            </h3>
-            <span class="status-pill pill-available" style="font-size: 0.8rem;">نشط في الوقت الفعلي</span>
-          </div>
-
-          <div style="display: flex; gap: 0.6rem; margin-bottom: 1rem;">
-            <input type="text" id="message-input" class="form-input" placeholder="اكتب رسالة للمزامنة الفورية مع السيرفر..." style="flex: 1;">
-            <button type="button" id="btn-send-msg" onclick="handleSendMessage()" class="btn-primary" style="min-width: 100px;">Send</button>
-          </div>
-
-          <div style="background: var(--bg-input); border: var(--border-glass); border-radius: var(--radius-md); padding: 0.85rem; max-height: 220px; overflow-y: auto;">
-            <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 700;">
-              قائمة الرسائل المستلمة (Live Messages List):
-            </div>
-            <ul id="messages-list" style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; padding: 0; margin: 0;">
-              <li style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem 0;">
-                جاري الاستماع للرسائل في الوقت الفعلي...
-              </li>
-            </ul>
-          </div>
-        </div>
       </div>
     </main>
 

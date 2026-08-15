@@ -1287,7 +1287,7 @@ window._triggerCloudSyncPush = function(key, val) {
     } catch (err) {
       console.warn("Cloud push note:", err);
     }
-  }, 250);
+  }, 40);
 };
 
 function initCloudDatabaseListener() {
@@ -1556,62 +1556,6 @@ async function handleLogOut(e) {
   }
 }
 
-// Firestore: Save Message ('messages' collection)
-async function handleSendMessage(e) {
-  if (e && typeof e.preventDefault === 'function') e.preventDefault();
-
-  const messageInput = document.getElementById("message-input");
-  const messageText = messageInput ? messageInput.value.trim() : "";
-
-  if (!messageText) {
-    if (window.showToast) window.showToast("يرجى كتابة نص الرسالة أولاً.", "warning");
-    return;
-  }
-
-  try {
-    await addDoc(collection(firestoreDb, "messages"), {
-      text: messageText,
-      timestamp: serverTimestamp()
-    });
-    if (messageInput) messageInput.value = "";
-  } catch (error) {
-    console.error("Error sending message:", error);
-    if (window.showToast) window.showToast(`خطأ في إرسال الرسالة: ${error.message}`, "danger");
-  }
-}
-
-// Firestore: Realtime Snapshot Listener
-let unsubscribeRealtime = null;
-
-function initRealtimeMessagesListener() {
-  const messagesList = document.getElementById("messages-list");
-  if (!messagesList) return null;
-
-  const messagesQuery = query(collection(firestoreDb, "messages"), orderBy("timestamp", "asc"));
-
-  return onSnapshot(messagesQuery, (snapshot) => {
-    messagesList.innerHTML = "";
-
-    if (snapshot.empty) {
-      messagesList.innerHTML = `<li style="color:var(--text-muted); font-size:0.85rem; text-align:center; padding:1rem 0;">No messages yet. Send one above!</li>`;
-      return;
-    }
-
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      const li = document.createElement("li");
-      li.style.cssText = "background:var(--card-bg); border:var(--border-glass); border-left:4px solid var(--primary); padding:0.6rem 0.85rem; border-radius:6px; font-size:0.9rem; line-height:1.4; word-break:break-word;";
-      li.textContent = data.text || "";
-      messagesList.appendChild(li);
-    });
-
-    const container = messagesList.parentElement;
-    if (container) container.scrollTop = container.scrollHeight;
-  }, (error) => {
-    console.error("Firestore snapshot error:", error);
-  });
-}
-
 // ============================================================================
 // Auth State Observer (onAuthStateChanged)
 // Controls visibility of auth-section and app-section & realtime listener
@@ -1639,10 +1583,6 @@ onAuthStateChanged(auth, (user) => {
     if (window.WMS_APP && typeof window.WMS_APP.updateUserHeader === 'function') {
       window.WMS_APP.updateUserHeader();
     }
-
-    if (!unsubscribeRealtime) {
-      unsubscribeRealtime = initRealtimeMessagesListener();
-    }
   } else {
     // Check if WMS_DB has any active session (local demo or stored user)
     const localUser = window.WMS_DB ? window.WMS_DB.getAuthUser() : null;
@@ -1659,11 +1599,6 @@ onAuthStateChanged(auth, (user) => {
       if (authSection) authSection.style.display = "flex";
       if (appSection) appSection.style.display = "none";
     }
-
-    if (unsubscribeRealtime) {
-      unsubscribeRealtime();
-      unsubscribeRealtime = null;
-    }
   }
 });
 
@@ -1677,7 +1612,6 @@ window.handleForgotPassword = handleForgotPassword;
 window.switchAuthMode = switchAuthMode;
 window.togglePasswordVisibility = togglePasswordVisibility;
 window.showAuthHUDMessage = showAuthHUDMessage;
-window.handleSendMessage = handleSendMessage;
 window.initCloudDatabaseListener = initCloudDatabaseListener;
 
 // Attach Event Listeners immediately or on DOM ready
@@ -1685,7 +1619,6 @@ function attachFirebaseEvents() {
   const btnSignUp = document.getElementById("btn-signup");
   const btnLogIn = document.getElementById("btn-login");
   const btnLogOut = document.getElementById("btn-logout");
-  const btnSendMsg = document.getElementById("btn-send-msg");
   const btnDemoLogin = document.getElementById("btn-demo-login");
   const btnOwnerLogin = document.getElementById("btn-owner-login");
   const authFormEl = document.getElementById("auth-form-el");
@@ -1704,7 +1637,6 @@ function attachFirebaseEvents() {
   if (btnSignUp) btnSignUp.onclick = (e) => { e.preventDefault(); handleSignUp(e); };
   if (btnLogIn) btnLogIn.onclick = (e) => { e.preventDefault(); handleLogIn(e); };
   if (btnLogOut) btnLogOut.onclick = (e) => { e.preventDefault(); handleLogOut(e); };
-  if (btnSendMsg) btnSendMsg.onclick = (e) => { e.preventDefault(); handleSendMessage(e); };
   if (btnDemoLogin) btnDemoLogin.onclick = (e) => { e.preventDefault(); handleQuickDemoLogin(e); };
   if (btnOwnerLogin) btnOwnerLogin.onclick = (e) => { e.preventDefault(); handleOwnerQuickLogin(e); };
 
@@ -1722,16 +1654,6 @@ function attachFirebaseEvents() {
       }
     });
   });
-
-  const msgInput = document.getElementById("message-input");
-  if (msgInput) {
-    msgInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleSendMessage(e);
-      }
-    });
-  }
 }
 
 if (document.readyState === "loading") {
