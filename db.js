@@ -1110,8 +1110,24 @@ function setAuthLoading(isLoading, text = "") {
   }
 }
 
-// Authentication: Sign Up (Create Account -> Do NOT auto login -> Redirect to Sign In)
-async function handleSignUp() {
+// Synchronize auth state immediately on script load to prevent flicker/kick back
+(function syncInitialAuthState() {
+  try {
+    const localUser = window.WMS_DB ? window.WMS_DB.getAuthUser() : JSON.parse(localStorage.getItem('wms_auth_user_v6') || 'null');
+    const authSection = document.getElementById("auth-section");
+    const appSection = document.getElementById("app-section");
+    if (localUser) {
+      if (document.documentElement) document.documentElement.classList.add('is-authenticated');
+      if (authSection) authSection.style.display = "none";
+      if (appSection) appSection.style.display = "block";
+    }
+  } catch (e) {}
+})();
+
+// Authentication: Sign Up
+async function handleSignUp(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
   const emailInput = document.getElementById("auth-email");
   const passwordInput = document.getElementById("auth-password");
   const confirmPasswordInput = document.getElementById("auth-password-confirm");
@@ -1153,6 +1169,9 @@ async function handleSignUp() {
     // Reset local database storage user state
     if (window.WMS_DB) {
       window.WMS_DB.setStored("wms_auth_user_v6", null);
+    }
+    if (document.documentElement) {
+      document.documentElement.classList.remove('is-authenticated');
     }
 
     // Switch back to Login Tab view
@@ -1196,7 +1215,9 @@ async function handleSignUp() {
 }
 
 // Authentication: Log In
-async function handleLogIn() {
+async function handleLogIn(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
   const emailInput = document.getElementById("auth-email");
   const passwordInput = document.getElementById("auth-password");
 
@@ -1223,6 +1244,10 @@ async function handleLogIn() {
         permissions: ['*']
       };
       window.WMS_DB.setStored("wms_auth_user_v6", authUser);
+    }
+
+    if (document.documentElement) {
+      document.documentElement.classList.add('is-authenticated');
     }
 
     const authSection = document.getElementById("auth-section");
@@ -1264,9 +1289,14 @@ async function handleLogIn() {
 }
 
 // Quick Demo Login (Admin Demo)
-function handleQuickDemoLogin() {
+function handleQuickDemoLogin(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
   if (window.WMS_DB) {
     window.WMS_DB.login('admin', '123456');
+    if (document.documentElement) {
+      document.documentElement.classList.add('is-authenticated');
+    }
     const authSection = document.getElementById("auth-section");
     const appSection = document.getElementById("app-section");
     if (authSection) authSection.style.display = "none";
@@ -1282,7 +1312,9 @@ function handleQuickDemoLogin() {
 }
 
 // Forgot Password (Send Reset Email)
-async function handleForgotPassword() {
+async function handleForgotPassword(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
   const emailInput = document.getElementById("auth-email");
   const email = emailInput ? emailInput.value.trim() : "";
 
@@ -1314,10 +1346,16 @@ async function handleForgotPassword() {
 }
 
 // Authentication: Log Out
-async function handleLogOut() {
+async function handleLogOut(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
   try {
     if (window.WMS_DB) {
       window.WMS_DB.logout();
+    }
+    localStorage.removeItem("wms_auth_user_v6");
+    if (document.documentElement) {
+      document.documentElement.classList.remove('is-authenticated');
     }
     const authSection = document.getElementById("auth-section");
     const appSection = document.getElementById("app-section");
@@ -1342,12 +1380,14 @@ async function handleLogOut() {
 }
 
 // Firestore: Save Message ('messages' collection)
-async function handleSendMessage() {
+async function handleSendMessage(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
   const messageInput = document.getElementById("message-input");
   const messageText = messageInput ? messageInput.value.trim() : "";
 
   if (!messageText) {
-    alert("Please type a message before sending.");
+    if (window.showToast) window.showToast("يرجى كتابة نص الرسالة أولاً.", "warning");
     return;
   }
 
@@ -1358,7 +1398,8 @@ async function handleSendMessage() {
     });
     if (messageInput) messageInput.value = "";
   } catch (error) {
-    alert(`Error sending message: ${error.message}`);
+    console.error("Error sending message:", error);
+    if (window.showToast) window.showToast(`خطأ في إرسال الرسالة: ${error.message}`, "danger");
   }
 }
 
@@ -1409,6 +1450,7 @@ onAuthStateChanged(auth, (user) => {
 
   if (user) {
     // User is logged in via Firebase
+    if (document.documentElement) document.documentElement.classList.add('is-authenticated');
     if (authSection) authSection.style.display = "none";
     if (appSection) appSection.style.display = "block";
 
@@ -1435,6 +1477,7 @@ onAuthStateChanged(auth, (user) => {
     // Check if WMS_DB has any active session (local demo or stored user)
     const localUser = window.WMS_DB ? window.WMS_DB.getAuthUser() : null;
     if (localUser) {
+      if (document.documentElement) document.documentElement.classList.add('is-authenticated');
       if (authSection) authSection.style.display = "none";
       if (appSection) appSection.style.display = "block";
       if (window.WMS_APP && typeof window.WMS_APP.updateUserHeader === 'function') {
@@ -1442,6 +1485,7 @@ onAuthStateChanged(auth, (user) => {
       }
     } else {
       // Truly logged out
+      if (document.documentElement) document.documentElement.classList.remove('is-authenticated');
       if (authSection) authSection.style.display = "flex";
       if (appSection) appSection.style.display = "none";
     }
@@ -1471,12 +1515,24 @@ function attachFirebaseEvents() {
   const btnLogOut = document.getElementById("btn-logout");
   const btnSendMsg = document.getElementById("btn-send-msg");
   const btnDemoLogin = document.getElementById("btn-demo-login");
+  const authFormEl = document.getElementById("auth-form-el");
 
-  if (btnSignUp) btnSignUp.onclick = handleSignUp;
-  if (btnLogIn) btnLogIn.onclick = handleLogIn;
-  if (btnLogOut) btnLogOut.onclick = handleLogOut;
-  if (btnSendMsg) btnSendMsg.onclick = handleSendMessage;
-  if (btnDemoLogin) btnDemoLogin.onclick = handleQuickDemoLogin;
+  if (authFormEl) {
+    authFormEl.onsubmit = (e) => {
+      e.preventDefault();
+      if (currentAuthMode === "signup") {
+        handleSignUp(e);
+      } else {
+        handleLogIn(e);
+      }
+    };
+  }
+
+  if (btnSignUp) btnSignUp.onclick = (e) => { e.preventDefault(); handleSignUp(e); };
+  if (btnLogIn) btnLogIn.onclick = (e) => { e.preventDefault(); handleLogIn(e); };
+  if (btnLogOut) btnLogOut.onclick = (e) => { e.preventDefault(); handleLogOut(e); };
+  if (btnSendMsg) btnSendMsg.onclick = (e) => { e.preventDefault(); handleSendMessage(e); };
+  if (btnDemoLogin) btnDemoLogin.onclick = (e) => { e.preventDefault(); handleQuickDemoLogin(e); };
 
   // Keyboard shortcut: Press Enter to submit active form action
   const authInputs = document.querySelectorAll("#auth-email, #auth-password, #auth-password-confirm");
@@ -1485,13 +1541,23 @@ function attachFirebaseEvents() {
       if (e.key === "Enter") {
         e.preventDefault();
         if (currentAuthMode === "signup") {
-          handleSignUp();
+          handleSignUp(e);
         } else {
-          handleLogIn();
+          handleLogIn(e);
         }
       }
     });
   });
+
+  const msgInput = document.getElementById("message-input");
+  if (msgInput) {
+    msgInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleSendMessage(e);
+      }
+    });
+  }
 }
 
 if (document.readyState === "loading") {

@@ -11,6 +11,18 @@
   <!-- رابط نسبي متوافق 100% مع صفحات GitHub Pages -->
   <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/png" href="logo.png">
+
+  <!-- فحص فوري لحالة المصادقة لمنع أي وميض أو خروج عند التحديث اليدوي -->
+  <script>
+    (function() {
+      try {
+        var u = localStorage.getItem('wms_auth_user_v6');
+        if (u && u !== 'null') {
+          document.documentElement.classList.add('is-authenticated');
+        }
+      } catch(e) {}
+    })();
+  </script>
 </head>
 
 <body>
@@ -57,9 +69,7 @@
           <img src="logo.png" alt="شعار المستودع" class="auth-logo-img"
             onerror="this.outerHTML='<span style=\'font-size:2.2rem;\'>📦</span>'">
         </div>
-        <div class="auth-badge-version">WMS Cloud Platform v6.0</div>
-        <h2 data-i18n="loginTitle" class="auth-main-title">مستودع الإنتاج الذكي</h2>
-        <p data-i18n="loginSubtitle" class="auth-main-subtitle">منظومة إدارة وحركات المخازن واللوجستيات المتقدمة</p>
+        <h2 data-i18n="loginTitle" class="auth-main-title">الإنتاج</h2>
       </div>
 
       <!-- تبويبات التبديل بين تسجيل الدخول وإنشاء الحساب -->
@@ -141,19 +151,19 @@
         <!-- أزرار الإجراءات -->
         <div class="auth-actions-stack">
           <!-- زر تسجيل الدخول (وضع الدخول) -->
-          <button type="button" id="btn-login" onclick="handleLogIn()" class="btn-primary auth-submit-btn">
+          <button type="button" id="btn-login" onclick="handleLogIn(event)" class="btn-primary auth-submit-btn">
             <span class="btn-text" data-i18n="signInBtn">تسجيل الدخول للنظام</span>
             <span class="btn-arrow">➔</span>
           </button>
 
           <!-- زر الدخول التجريبي السريع (وضع الدخول) -->
-          <button type="button" id="btn-demo-login" onclick="handleQuickDemoLogin()" class="btn-secondary auth-demo-btn">
+          <button type="button" id="btn-demo-login" onclick="handleQuickDemoLogin(event)" class="btn-secondary auth-demo-btn">
             <span>⚡</span>
             <span data-i18n="demoLogin">دخول تجريبي سريع (Admin)</span>
           </button>
 
           <!-- زر إنشاء الحساب (وضع التسجيل) -->
-          <button type="button" id="btn-signup" onclick="handleSignUp()" class="btn-primary auth-submit-btn"
+          <button type="button" id="btn-signup" onclick="handleSignUp(event)" class="btn-primary auth-submit-btn"
             style="display: none;">
             <span class="btn-text" data-i18n="createAccountBtn">إنشاء الحساب والمتابعة</span>
             <span class="btn-arrow">➔</span>
@@ -165,22 +175,6 @@
           </p>
         </div>
       </form>
-
-      <!-- شريط مميزات النظام السفلية في الـ HUD -->
-      <div class="auth-features-hud">
-        <div class="auth-feature-pill">
-          <span class="feat-icon">⚡</span>
-          <span data-i18n="featureSync">مزامنة سحابية فورية</span>
-        </div>
-        <div class="auth-feature-pill">
-          <span class="feat-icon">🛡️</span>
-          <span data-i18n="featureSecure">مصادقة آمنة ومشفرة</span>
-        </div>
-        <div class="auth-feature-pill">
-          <span class="feat-icon">📦</span>
-          <span data-i18n="featureMaterials">رخام • بورسلان • خشب</span>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -526,7 +520,7 @@
 
       <div class="filter-bar" style="margin-bottom: 1.25rem;">
         <input type="text" id="porcelain-prev-search-input" class="form-input" placeholder="بحث فوري في أصناف الجرد..."
-          data-i18n-placeholder="searchPreviewPlaceholder" oninput="WMS_APP.navigate('porcelain-preview')">
+          data-i18n-placeholder="searchPreviewPlaceholder" oninput="WMS_APP.renderPorcelainPreviewView()">
       </div>
 
       <div class="table-card">
@@ -729,7 +723,7 @@
       <div class="filter-bar" style="margin-bottom: 1.25rem;">
         <input type="text" id="marble-prev-search-input" class="form-input"
           placeholder="بحث فوري في أصناف جرد الرخام..." data-i18n-placeholder="searchPreviewPlaceholder"
-          oninput="WMS_APP.navigate('marble-preview')">
+          oninput="WMS_APP.renderMarblePreviewView()">
       </div>
 
       <div class="table-card">

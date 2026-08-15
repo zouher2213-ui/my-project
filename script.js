@@ -23,8 +23,8 @@
     ar: {
       appTitle: 'مستودع الإنتاج',
       appSubtitle: 'نظام إدارة المخازن واللوجستيات المتقدم',
-      loginTitle: 'مستودع الإنتاج الذكي',
-      loginSubtitle: 'منظومة إدارة وحركات المخازن واللوجستيات المتقدمة',
+      loginTitle: 'الإنتاج',
+      loginSubtitle: '',
       loginTab: 'تسجيل الدخول',
       signupTab: 'إنشاء حساب جديد',
       emailLabel: 'البريد الإلكتروني',
@@ -264,8 +264,8 @@
     en: {
       appTitle: 'AL-ENTEJ WMS',
       appSubtitle: 'Global Warehouse Logistics Hub',
-      loginTitle: 'Smart Production Warehouse',
-      loginSubtitle: 'Advanced Warehouse & Logistics Operations Platform',
+      loginTitle: 'Al-Intaj',
+      loginSubtitle: '',
       loginTab: 'Sign In',
       signupTab: 'Create New Account',
       emailLabel: 'Email Address',
@@ -505,8 +505,8 @@
     bn: {
       appTitle: 'আল-ইনতেজ ডব্লিউএমএস',
       appSubtitle: 'ওয়্যারহাউস ম্যানেজমেন্ট এবং লজিস্টিকস',
-      loginTitle: 'স্মার্ট প্রোডাকশন ওয়্যারহাউস',
-      loginSubtitle: 'উন্নত ওয়্যারহাউস এবং লজিস্টিকস প্ল্যাটফর্ম',
+      loginTitle: 'আল-ইনতেজ',
+      loginSubtitle: '',
       loginTab: 'লগইন করুন',
       signupTab: 'নতুন একাউন্ট খুলুন',
       emailLabel: 'ইমেইল অ্যাড্রেস',
@@ -861,8 +861,10 @@
     document.querySelectorAll('.module-view').forEach(v => {
       if (v.id === `view-${targetRoute}`) {
         v.classList.add('active');
+        v.style.display = 'block';
       } else {
         v.classList.remove('active');
+        v.style.display = 'none';
       }
     });
 
@@ -2418,6 +2420,14 @@
 
     previewInventory(category = 'porcelain') {
       navigateTo(category === 'porcelain' ? 'porcelain-preview' : 'marble-preview');
+    },
+
+    renderPorcelainPreviewView() {
+      renderPorcelainPreviewView();
+    },
+
+    renderMarblePreviewView() {
+      renderMarblePreviewView();
     },
 
     exportFormattedExcel,

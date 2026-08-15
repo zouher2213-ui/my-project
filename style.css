@@ -73,6 +73,14 @@
   --shadow-lg: 0 20px 45px rgba(0, 0, 0, 0.1);
 }
 
+/* Authenticated View States (Zero flicker on refresh) */
+html.is-authenticated #auth-section {
+  display: none !important;
+}
+html.is-authenticated #app-section {
+  display: block !important;
+}
+
 /* Scaled Typography */
 html[lang="ar"], [dir="rtl"] {
   font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
@@ -258,13 +266,13 @@ button {
 }
 
 .auth-header {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.35rem;
 }
 
 .auth-logo-box-glow {
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 0.65rem;
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 0.75rem;
   border-radius: 16px;
   background: linear-gradient(135deg, #4f46e5, #0ea5e9);
   display: flex;
@@ -275,36 +283,17 @@ button {
 }
 
 .auth-logo-img {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
 }
 
-.auth-badge-version {
-  display: inline-block;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--accent-porcelain);
-  background: rgba(14, 165, 233, 0.12);
-  border: 1px solid rgba(14, 165, 233, 0.3);
-  padding: 0.15rem 0.55rem;
-  border-radius: var(--radius-full);
-  margin-bottom: 0.45rem;
-  letter-spacing: 0.4px;
-}
-
 .auth-main-title {
-  font-size: 1.45rem;
+  font-size: 1.7rem;
   font-weight: 800;
-  margin-bottom: 0.2rem;
   color: var(--text-primary);
-  letter-spacing: -0.2px;
-}
-
-.auth-main-subtitle {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  line-height: 1.4;
+  letter-spacing: -0.3px;
+  margin: 0;
 }
 
 /* Segmented Tabs (Straight & Symmetrical) */
