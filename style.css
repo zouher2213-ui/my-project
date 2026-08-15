@@ -614,13 +614,44 @@ button {
   display: inline-block;
 }
 
+.auth-owner-btn {
+  width: 100%;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(217, 119, 6, 0.32));
+  border: 1px solid rgba(245, 158, 11, 0.55);
+  color: #fbbf24;
+  font-size: 0.92rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.2);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.auth-owner-btn:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(217, 119, 6, 0.45));
+  border-color: #fbbf24;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35);
+  transform: translateY(-1px);
+}
+
+[data-theme="light"] .auth-owner-btn {
+  background: #fffbeb;
+  border-color: #d97706;
+  color: #b45309;
+}
+
 .auth-demo-btn {
   width: 100%;
   height: 42px;
   border-radius: 10px;
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  color: #f59e0b;
+  background: rgba(79, 70, 229, 0.1);
+  border: 1px solid rgba(79, 70, 229, 0.3);
+  color: #818cf8;
   font-size: 0.88rem;
   font-weight: 700;
   display: flex;
@@ -632,8 +663,8 @@ button {
 }
 
 .auth-demo-btn:hover {
-  background: rgba(245, 158, 11, 0.18);
-  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(79, 70, 229, 0.2);
+  border-color: rgba(79, 70, 229, 0.5);
 }
 
 .auth-signup-note {

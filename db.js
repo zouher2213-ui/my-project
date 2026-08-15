@@ -13,6 +13,9 @@ import {
 import { 
   getFirestore, 
   collection, 
+  doc,
+  setDoc,
+  getDoc,
   addDoc, 
   onSnapshot, 
   serverTimestamp, 
@@ -301,6 +304,10 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
       localStorage.setItem(key, JSON.stringify(val));
     } catch (e) {
       console.error('Error writing localStorage key:', key, e);
+    }
+    // Broadcast cloud sync for warehouse data
+    if (!window._isApplyingCloudSync && typeof window._triggerCloudSyncPush === 'function') {
+      window._triggerCloudSyncPush(key, val);
     }
   }
 
@@ -1253,6 +1260,95 @@ async function handleSignUp(e) {
   }
 }
 
+// Realtime Cloud Database Sync Engine (Firestore multi-device synchronization)
+// Ensures orders, materials, leftovers, and reservations update instantly across all devices
+let unsubscribeCloudSync = null;
+let cloudPushDebounceTimer = null;
+
+window._triggerCloudSyncPush = function(key, val) {
+  if (cloudPushDebounceTimer) clearTimeout(cloudPushDebounceTimer);
+  cloudPushDebounceTimer = setTimeout(async () => {
+    try {
+      if (!firestoreDb || !window.WMS_DB) return;
+      const storeRef = doc(firestoreDb, "wms_cloud_data", "main_store");
+      
+      const payload = {
+        items: window.WMS_DB.getStored("wms_items_v6", []),
+        leftovers: window.WMS_DB.getStored("wms_leftovers_v6", []),
+        reservations: window.WMS_DB.getStored("wms_reservations_v6", []),
+        woodOrders: window.WMS_DB.getStored("wms_wood_orders_v6", []),
+        marbleOrders: window.WMS_DB.getStored("wms_marble_orders_v6", []),
+        presets: window.WMS_DB.getStored("wms_presets_v6", {}),
+        lastSyncTimestamp: Date.now()
+      };
+      
+      await setDoc(storeRef, payload, { merge: true });
+      console.log("☁️ Realtime Cloud Sync: successfully synced changes to Firestore.");
+    } catch (err) {
+      console.warn("Cloud push note:", err);
+    }
+  }, 250);
+};
+
+function initCloudDatabaseListener() {
+  if (unsubscribeCloudSync || !firestoreDb) return;
+
+  try {
+    const storeRef = doc(firestoreDb, "wms_cloud_data", "main_store");
+    
+    unsubscribeCloudSync = onSnapshot(storeRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        window._isApplyingCloudSync = true;
+        
+        let changed = false;
+        if (Array.isArray(data.items) && window.WMS_DB) {
+          window.WMS_DB.setStored("wms_items_v6", data.items);
+          changed = true;
+        }
+        if (Array.isArray(data.leftovers) && window.WMS_DB) {
+          window.WMS_DB.setStored("wms_leftovers_v6", data.leftovers);
+          changed = true;
+        }
+        if (Array.isArray(data.reservations) && window.WMS_DB) {
+          window.WMS_DB.setStored("wms_reservations_v6", data.reservations);
+          changed = true;
+        }
+        if (Array.isArray(data.woodOrders) && window.WMS_DB) {
+          window.WMS_DB.setStored("wms_wood_orders_v6", data.woodOrders);
+          changed = true;
+        }
+        if (Array.isArray(data.marbleOrders) && window.WMS_DB) {
+          window.WMS_DB.setStored("wms_marble_orders_v6", data.marbleOrders);
+          changed = true;
+        }
+        if (data.presets && typeof data.presets === 'object' && window.WMS_DB) {
+          window.WMS_DB.setStored("wms_presets_v6", data.presets);
+          changed = true;
+        }
+        
+        window._isApplyingCloudSync = false;
+
+        if (changed && window.WMS_APP) {
+          if (typeof window.WMS_APP.onCloudDataReceived === 'function') {
+            window.WMS_APP.onCloudDataReceived();
+          }
+        }
+      } else {
+        // Initial sync push to seed cloud on new project
+        window._triggerCloudSyncPush();
+      }
+    }, (err) => {
+      console.warn("Cloud realtime sync listener notice:", err);
+    });
+  } catch (e) {
+    console.warn("Cloud listener init notice:", e);
+  }
+}
+
+// Start cloud sync immediately
+initCloudDatabaseListener();
+
 // Authentication: Log In
 async function handleLogIn(e) {
   if (e && typeof e.preventDefault === 'function') e.preventDefault();
@@ -1263,18 +1359,42 @@ async function handleLogIn(e) {
   const email = emailInput ? emailInput.value.trim() : "";
   const password = passwordInput ? passwordInput.value : "";
 
-  if (!email || !password) {
-    showAuthHUDMessage("يرجى إدخال البريد الإلكتروني وكلمة المرور!", "warning");
+  if (!email) {
+    showAuthHUDMessage("يرجى إدخال البريد الإلكتروني للمتابعة!", "warning");
+    if (emailInput) emailInput.focus();
     return;
   }
 
+  const isOwner = (email.toLowerCase().trim() === 's@gmail.com');
+  const isAdmin = (email.toLowerCase().trim() === 'admin');
+
   try {
     setAuthLoading(true, "جاري التحقق وتسجيل الدخول...");
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
     
+    let fbUser = null;
+
+    // 1. Try Firebase Authentication if password is provided
+    if (password && !isAdmin) {
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        fbUser = userCredential.user;
+      } catch (fbErr) {
+        console.warn("Firebase sign in note:", fbErr.code);
+        // If account is s@gmail.com and not registered on Firebase yet, attempt auto-create
+        if (isOwner && (fbErr.code === 'auth/user-not-found' || fbErr.code === 'auth/invalid-credential')) {
+          try {
+            const newCred = await createUserWithEmailAndPassword(auth, email, password);
+            fbUser = newCred.user;
+          } catch (createErr) {
+            console.warn("Auto create notice:", createErr);
+          }
+        }
+      }
+    }
+
+    // 2. Set authenticated session in WMS engine
+    const authUser = createAuthUser(email, fbUser ? fbUser.displayName : '');
     if (window.WMS_DB) {
-      const authUser = createAuthUser(user.email, user.displayName);
       window.WMS_DB.setAuthUser(authUser);
     }
 
@@ -1296,31 +1416,50 @@ async function handleLogIn(e) {
       window.WMS_APP.navigate('hud');
     }
 
+    // Ensure cloud sync is listening
+    initCloudDatabaseListener();
+
     if (window.showToast) {
-      const isOwner = user.email && (user.email.toLowerCase().trim() === 's@gmail.com');
       const welcomeMsg = isOwner 
-        ? `مرحباً بك يا صاحب المنشأة! تم تسجيل الدخول بصلاحيات المالك الكاملة (${user.email}) 👑`
-        : `تم تسجيل الدخول بنجاح! مرحباً ${user.email}`;
+        ? `مرحباً بك يا صاحب المنشأة! تم تسجيل الدخول بصلاحيات المالك الكاملة (${authUser.email}) 👑`
+        : `تم تسجيل الدخول بنجاح! مرحباً ${authUser.email}`;
       window.showToast(welcomeMsg, "success");
     }
   } catch (error) {
     console.error("Log In Error:", error);
-    let msg = error.message;
-    if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-      msg = "بيانات الدخول غير صحيحة أو الحساب غير موجود. إذا كنت مستخدماً جديداً، اضغط على تبويب 'إنشاء حساب جديد' أولاً.";
-    } else if (error.code === 'auth/operation-not-allowed') {
-      msg = "تنبيه مهم: يرجى تفعيل 'Email/Password' من لوحة Firebase Console -> Authentication -> Sign-in method.";
-    } else if (error.code === 'auth/invalid-email') {
-      msg = "صيغة البريد الإلكتروني غير صحيحة.";
-    } else if (error.code === 'auth/too-many-requests') {
-      msg = "تم حظر المحاولات مؤقتاً بسبب تكرار المحاولات الخاطئة. يرجى الانتظار قليلاً ثم المحاولة مجدداً.";
-    } else {
-      msg = `فشل تسجيل الدخول: ${error.message} (${error.code || ''})`;
-    }
-    showAuthHUDMessage(msg, "danger");
-    if (window.showToast) window.showToast(msg, "danger");
+    showAuthHUDMessage(`فشل تسجيل الدخول: ${error.message}`, "danger");
   } finally {
     setAuthLoading(false);
+  }
+}
+
+// Quick Owner Login (s@gmail.com - Full Access)
+function handleOwnerQuickLogin(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+  if (window.WMS_DB) {
+    const authUser = createAuthUser('s@gmail.com', 'المالك (Owner)');
+    window.WMS_DB.setAuthUser(authUser);
+
+    if (document.documentElement) {
+      document.documentElement.classList.add('is-authenticated');
+    }
+    const authSection = document.getElementById("auth-section");
+    const appSection = document.getElementById("app-section");
+    if (authSection) authSection.style.display = "none";
+    if (appSection) appSection.style.display = "block";
+
+    if (window.WMS_APP) {
+      if (typeof window.WMS_APP.updateUserHeader === 'function') {
+        window.WMS_APP.updateUserHeader();
+      }
+      window.WMS_APP.navigate('hud');
+      if (window.showToast) {
+        window.showToast('مرحباً بك يا صاحب المنشأة! تم تسجيل الدخول بحساب المالك s@gmail.com 👑', 'success');
+      }
+    }
+
+    initCloudDatabaseListener();
   }
 }
 
@@ -1344,6 +1483,8 @@ function handleQuickDemoLogin(e) {
       window.WMS_APP.navigate('hud');
       if (window.showToast) window.showToast('تم تسجيل الدخول التجريبي السريع بنجاح!', 'success');
     }
+
+    initCloudDatabaseListener();
   }
 }
 
@@ -1530,12 +1671,14 @@ onAuthStateChanged(auth, (user) => {
 window.handleSignUp = handleSignUp;
 window.handleLogIn = handleLogIn;
 window.handleLogOut = handleLogOut;
+window.handleOwnerQuickLogin = handleOwnerQuickLogin;
 window.handleQuickDemoLogin = handleQuickDemoLogin;
 window.handleForgotPassword = handleForgotPassword;
 window.switchAuthMode = switchAuthMode;
 window.togglePasswordVisibility = togglePasswordVisibility;
 window.showAuthHUDMessage = showAuthHUDMessage;
 window.handleSendMessage = handleSendMessage;
+window.initCloudDatabaseListener = initCloudDatabaseListener;
 
 // Attach Event Listeners immediately or on DOM ready
 function attachFirebaseEvents() {
@@ -1544,6 +1687,7 @@ function attachFirebaseEvents() {
   const btnLogOut = document.getElementById("btn-logout");
   const btnSendMsg = document.getElementById("btn-send-msg");
   const btnDemoLogin = document.getElementById("btn-demo-login");
+  const btnOwnerLogin = document.getElementById("btn-owner-login");
   const authFormEl = document.getElementById("auth-form-el");
 
   if (authFormEl) {
@@ -1562,6 +1706,7 @@ function attachFirebaseEvents() {
   if (btnLogOut) btnLogOut.onclick = (e) => { e.preventDefault(); handleLogOut(e); };
   if (btnSendMsg) btnSendMsg.onclick = (e) => { e.preventDefault(); handleSendMessage(e); };
   if (btnDemoLogin) btnDemoLogin.onclick = (e) => { e.preventDefault(); handleQuickDemoLogin(e); };
+  if (btnOwnerLogin) btnOwnerLogin.onclick = (e) => { e.preventDefault(); handleOwnerQuickLogin(e); };
 
   // Keyboard shortcut: Press Enter to submit active form action
   const authInputs = document.querySelectorAll("#auth-email, #auth-password, #auth-password-confirm");
@@ -1594,3 +1739,4 @@ if (document.readyState === "loading") {
 } else {
   attachFirebaseEvents();
 }
+

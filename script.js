@@ -36,6 +36,7 @@
       signInBtn: 'تسجيل الدخول للنظام',
       createAccountBtn: 'إنشاء الحساب والمتابعة',
       demoLogin: 'دخول تجريبي سريع (Admin)',
+      ownerLogin: 'دخول المالك السريع (Owner: s@gmail.com)',
       signupNotice: 'ℹ️ ملاحظة: بعد إنشاء الحساب بنجاح، سيتم توجيهك مباشرة لشاشة تسجيل الدخول لإدخال بياناتك والمتابعة.',
       cloudStatus: 'السحابة متصلة ونشطة (Firebase V10)',
       featureSync: 'مزامنة سحابية فورية',
@@ -285,6 +286,7 @@
       signInBtn: 'Sign In to System',
       createAccountBtn: 'Create Account & Continue',
       demoLogin: 'Quick Demo Sign In (Admin)',
+      ownerLogin: 'Quick Owner Sign In (s@gmail.com)',
       signupNotice: 'ℹ️ Note: After account creation, you will be redirected to sign in to verify credentials.',
       cloudStatus: 'Cloud Live & Active (Firebase V10)',
       featureSync: 'Realtime Cloud Sync',
@@ -534,6 +536,7 @@
       signInBtn: 'সিস্টেমে লগইন করুন',
       createAccountBtn: 'একাউন্ট তৈরি করুন এবং এগিয়ে যান',
       demoLogin: 'দ্রুত ডেমো লগইন (Admin)',
+      ownerLogin: 'দ্রুত মালিক লগইন (s@gmail.com)',
       signupNotice: 'ℹ️ বিজ্ঞপ্তি: অ্যাকাউন্ট তৈরির পরে, আপনি লগইন করার জন্য পুনর্নির্দেশিত হবেন।',
       cloudStatus: 'ক্লাউড সক্রিয় (Firebase V10)',
       featureSync: 'রিয়েলটাইম সিঙ্ক',
@@ -1887,6 +1890,14 @@
       renderMarblePermitChips();
       this.updateUserHeader();
       renderCurrentView();
+    },
+
+    onCloudDataReceived() {
+      renderCurrentView();
+      updateHudBadges();
+      if (window.WMS_MOBILE && typeof window.WMS_MOBILE.onViewRendered === 'function') {
+        window.WMS_MOBILE.onViewRendered();
+      }
     },
 
     updateUserHeader() {
